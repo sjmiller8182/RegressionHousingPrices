@@ -29,5 +29,5 @@ The [Codebook](https://github.com/sjmiller8182/RegressionHousingPrices/blob/mast
     ├── analysis                # Primary analysis files
     │    └── data               # Raw data and merge automation files
     ├── CodeBook.md             # Information regarding the computational environment, code, and data
-    ├── Licence                 # All code and analysis is licenced under the MIT licence. Data is provided by Kaggle.com.
+    ├── LICENSE                 # All code and analysis is licensed under the MIT license. Data is provided by Kaggle.com.
     └── README.md
