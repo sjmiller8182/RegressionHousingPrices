@@ -22,7 +22,7 @@ The [data description](https://github.com/sjmiller8182/RegressionHousingPrices/b
 
 ## Codebook
 
-The [Codebook](NULL) provides additional details on the regarding the computational environment, code, and data.
+The [Codebook](https://github.com/sjmiller8182/RegressionHousingPrices/blob/master/CodeBook.md) provides additional details on the regarding the computational environment, code, and data.
 
 ## Repo Structure
     .
