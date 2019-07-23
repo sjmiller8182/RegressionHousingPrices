@@ -26,3 +26,7 @@ The following R packages are required for running the code or paper generation.
 * [tidyverse](https://www.tidyverse.org/): R packages for data science
   * ggplot2
   * dplyr
+
+## Other Dependencies
+
+Paper was generated with TeX (requires MiKTeX on Windows, MacTeX 2013+ on OS X, or Tex Live 2013+ on Linux)
