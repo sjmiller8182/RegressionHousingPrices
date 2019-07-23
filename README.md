@@ -1,6 +1,6 @@
 # RegressionHousingPrices
 
-Created by [Stuart Miller](), [Paul Adams](), and [Chance Robinson]().
+Created by [Stuart Miller](https://github.com/sjmiller8182), [Paul Adams](https://github.com/PaulAdams4361), and [Chance Robinson](https://github.com/RobinsonCW).
 
 ## Purpose
 
