@@ -26,8 +26,9 @@ The [Codebook](https://github.com/sjmiller8182/RegressionHousingPrices/blob/mast
 
 ## Repo Structure
     .
-    ├── analysis                # Primary analysis files
-    │    └── data               # Raw data and merge automation files
-    ├── CodeBook.md             # Information regarding the computational environment, code, and data
-    ├── LICENSE                 # All code and analysis is licensed under the MIT license. Data is provided by Kaggle.com.
+    ├── analysis                            # Primary analysis files
+    |    ├── Exploratory_Data_Analysis      # Rmarkdown files for EDA
+    │    └── data                           # Raw data and merge automation files
+    ├── CodeBook.md                         # Information regarding the computational environment, code, and data
+    ├── LICENSE                             # All code and analysis is licensed under the MIT license. Data is provided by Kaggle.com.
     └── README.md
