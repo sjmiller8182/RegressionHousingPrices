@@ -6,9 +6,13 @@ July 23, 2019
 # Setup
 
 ``` r
+# libraries
 library(tidyverse)
 library(naniar)
 library(Hmisc)
+
+# helper files
+source('../helper/data_munging.R')
 ```
 
 # Initial Data Exploration
@@ -172,24 +176,10 @@ imbued value. The feature LotFrontage is missing at a rate of ~17% and ~
 15% in the training and testing set respectively. This is also a fairly
 high missing rate, but the usefulness of the feature should be
 investigated. Fortunately, the rate of missingness for each feature is
-approximately the same between the training and testing datasets.
+approximately the same between the training and testing
+datasets.
 
 ## Correlation of Numeric Features (Training Set)
-
-``` r
-# Helper for flattening the correlation matrix
-# from:
-# http://www.sthda.com/english/wiki/correlation-matrix-a-quick-start-guide-to-analyze-format-and-visualize-a-correlation-matrix-using-r-software
-flattenCorrMatrix <- function(cormat, pmat) {
-  ut <- upper.tri(cormat)
-  data.frame(
-    row = rownames(cormat)[row(cormat)[ut]],
-    column = rownames(cormat)[col(cormat)[ut]],
-    cor  =(cormat)[ut],
-    p = pmat[ut]
-    )
-}
-```
 
 ``` r
 train.dropna <- train.numeric %>% drop_na() %>% select(-one_of(c('SalePrice')))
