@@ -15,6 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r message=FALSE}
 # libraries
+library(knitr)
 library(tidyverse)
 library(naniar)
 library(Hmisc)
@@ -23,7 +24,7 @@ library(Hmisc)
 source('../helper/data_munging.R')
 ```
 
-# Initial Data Exploration
+# Exploratory Analysis
 
 ### Load the data into R
 
@@ -64,6 +65,8 @@ dim(test.nonnumeric)
 
 ## Missing Data
 
+5 of the features, `PoolQC`, `MiscFeature`, `Alley`, `Fence`, and `FireplaceQu`, have very high missing rates in both sets of data. It seems unlikely that these features would provide value as imbuing values for the missing values would likely bias the training set towards the imbued value. The feature `LotFrontage` is missing at a rate of ~17% and ~ 15% in the training and testing set respectively. This is also a fairly high missing rate, but the usefulness of the feature should be investigated. Fortunately, the rate of missingness for each feature is approximately the same between the training and testing datasets.
+
 ```{r}
 train.nabular <- train %>% bind_shadow()
 train.missing.summary <- train.nabular %>% miss_var_summary()
@@ -75,7 +78,11 @@ train.missing.summary %>%
   theme(axis.text.x = element_text(angle = 70, hjust = 1)) +
   labs(title = 'Percent Missing Values of Features (Training Set)',
        y = '% Observations Missing', x = 'Feature Name')
+```
 
+`PoolQC`, `MiscFeature`, `Alley`, `Fence`, `FireplaceQu`, and `LotFrontage` are the primary missing values in the training dataset.
+
+```{r}
 test.nabular <- test %>% bind_shadow()
 test.missing.summary <- test.nabular %>% miss_var_summary()
 #test.missing.summary
@@ -87,6 +94,8 @@ test.missing.summary %>%
   labs(title = 'Percent Missing Values of Features (Test Set)',
        y = '% Observations Missing', x = 'Feature Name')
 ```
+
+`PoolQC`, `MiscFeature`, `Alley`, `Fence`,`FireplaceQu`, and `LotFrontage` are the primary missing values in the testing dataset.
 
 **Summary of the Data Missing per Feature from the Datasets**
 
@@ -127,55 +136,243 @@ test.missing.summary %>%
 |GarageArea     | N/A                   | N/A                    | 1                    | 0.07%                  |
 |SaleType       | N/A                   | N/A                    | 1                    | 0.07%                  |
 
-**Summary of Missing Data**
-
-5 of the features, `PoolQC`, `MiscFeature`, `Alley`, `Fence`, and `FireplaceQu`, have very high missing rates in both sets of data. It seems unlikely that these features would provide value as imbuing values for the missing values would likely bias the training set towards the imbued value. The feature LotFrontage is missing at a rate of ~17% and ~ 15% in the training and testing set respectively. This is also a fairly high missing rate, but the usefulness of the feature should be investigated. Fortunately, the rate of missingness for each feature is approximately the same between the training and testing datasets.
 
 ## Correlation of Numeric Features (Training Set)
+
+**Table of Correlated Features from Training Set (r > 0.5)**
 
 ```{r}
 train.dropna <- train.numeric %>% drop_na() %>% select(-one_of(c('SalePrice')))
 res2<-rcorr(as.matrix(train.dropna))
 flattenedCor <- flattenCorrMatrix(res2$r, res2$P) %>% arrange(desc(cor))
-flattenedCor[1:15,]
+flattenedCor <- flattenedCor %>% filter(cor > 0.5) %>% select(-one_of(c('p')))
+names(flattenedCor) <- c('Feature1','Feature2','Correlation Coefficient')
+kable(flattenedCor)
 ```
 
-**Table of Correlated Features from Training Set (r > 0.5)**
+## Univariate Exploration
 
-|	Feature 1	|	Feature 2	|	Correlation	|
-|-----------|-----------|-------------|
-|	GarageCars	|	GarageArea	|	0.8394149	|
-|	TotalBsmtSF	|	1stFlrSF	|	0.8359994	|
-|	GrLivArea	|	TotRmsAbvGrd	|	0.8243121	|
-|	YearBuilt	|	GarageYrBlt	|	0.8235195	|
-|	2ndFlrSF	|	GrLivArea	|	0.6882916	|
-|	BsmtFinSF1	|	BsmtFullBath	|	0.6517267	|
-|	BedroomAbvGr	|	TotRmsAbvGrd	|	0.6502846	|
-|	YearRemodAdd	|	GarageYrBlt	|	0.6458085	|
-|	YearBuilt	|	YearRemodAdd	|	0.6231713	|
-|	2ndFlrSF	|	TotRmsAbvGrd	|	0.6177759	|
-|	GrLivArea	|	FullBath	|	0.6148873	|
-|	OverallQual	|	GrLivArea	|	0.6074661	|
-|	2ndFlrSF	|	HalfBath	|	0.6063367	|
-|	GarageYrBlt	|	GarageCars	|	0.6009034	|
-|	OverallQual	|	GarageCars	|	0.5938029	|
-|	GarageYrBlt	|	GarageArea	|	0.5926352	|
-|	OverallQual	|	YearBuilt	|	0.5893845	|
-|	OverallQual	|	FullBath	|	0.5768747	|
-|	OverallQual	|	YearRemodAdd	|	0.5707571	|
-|	OverallQual	|	TotalBsmtSF	|	0.5639597	|
-|	1stFlrSF	|	GrLivArea	|	0.5613723	|
-|	OverallQual	|	GarageYrBlt	|	0.5604251	|
-|	OverallQual	|	GarageArea	|	0.5506589	|
-|	FullBath	|	TotRmsAbvGrd	|	0.5404489	|
-|	YearBuilt	|	GarageCars	|	0.5325628	|
-|	BsmtFinSF1	|	TotalBsmtSF	|	0.5309165	|
-|	TotalBsmtSF	|	GarageArea	|	0.5220512	|
-|	1stFlrSF	|	GarageArea	|	0.521183	|
-|	FullBath	|	GarageCars	|	0.520857	|
-|	OverallQual	|	1stFlrSF	|	0.5144529	|
+### Continuous Variables
+
+#### Distribution of Response Variable
+
+`SalePrice` is the response variable. This is only contained in the training set.
+
+```{r}
+ggplot(aes_string(x = 'SalePrice'), data = train) + 
+  geom_histogram()
+```
+
+#### Distribution of Explanatory Variable
+
+```{r}
+# get the names of the continuous variables
+cont.names <- names(train.numeric)
+print(cont.names)
+
+# add factors for test and train
+train.numeric$Set <- rep('train', (dim(train.numeric)[1]))
+test.numeric$Set <- rep('test', (dim(test.numeric)[1]))
+
+# combine the training and testing set for histogram plotting
+numeric.both <- rbind(train.numeric %>% select(-one_of(c('SalePrice','Id'))),
+                      test.numeric %>% select(-one_of(c('Id'))))
+numeric.both$Set <- as.factor(numeric.both$Set)
+```
 
 
+```{r}
+ggplot(aes_string(x = 'MasVnrArea'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'LotArea'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'LotFrontage'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'OverallQual'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'YearBuilt'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'YearRemodAdd'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'BsmtFinSF1'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'MasVnrArea'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'BsmtFinSF2'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'BsmtUnfSF'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'TotalBsmtSF'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = '`1stFlrSF`'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = '`2ndFlrSF`'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'LowQualFinSF'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'GrLivArea'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'BsmtFullBath'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'BsmtHalfBath'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'BedroomAbvGr'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+```
 
 
+```{r}
+ggplot(aes_string(x = 'FullBath'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+```
 
+```{r}
+ggplot(aes_string(x = 'KitchenAbvGr'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'TotRmsAbvGrd'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'HalfBath'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'Fireplaces'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'HalfBath'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'GarageYrBlt'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'GarageCars'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'GarageArea'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'WoodDeckSF'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'OpenPorchSF'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'EnclosedPorch'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = '`3SsnPorch`'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'ScreenPorch'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'PoolArea'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'MiscVal'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'MoSold'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'YrSold'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+```
+
+#### Varaince of Explanatory Variables
+
+
+```{r}
+temp.table <- train.numeric %>%
+  select(-one_of(c('Id', 'Set'))) %>%
+  summarise_all(funs(sd(., na.rm=TRUE))) %>%
+  rownames_to_column %>%
+  gather(var, value, -rowname) %>%
+  arrange(-value) %>%
+  select(-one_of(c('rowname')))
+names(temp.table) <- c('Feature','Correlation Coefficient')
+kable(temp.table)
+```
