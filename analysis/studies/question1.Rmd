@@ -1,0 +1,111 @@
+---
+title: "Question 1"
+author: "Stuart Miller"
+date: "July 24, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Requested Analysis
+
+Century 21 Ames wawnts to understand if there is a relationship between the square footage of the living areas of houses and sale price in the neighborhood where they operate (NAmes, Edwards and BrkSide).
+
+# Setup
+
+```{r results='hide', message=FALSE}
+# libraries
+library(knitr)
+library(tidyverse)
+library(recipes)
+
+# load data
+train <- read_csv('../data/train.csv')
+test <- read_csv('../data/test.csv')
+```
+
+# Analysis
+
+## Build the Model
+
+```{r results='hide', message=FALSE}
+# select data of interest
+train <- train %>% 
+  select(c('SalePrice','GrLivArea','Neighborhood')) %>%
+  filter(Neighborhood == 'NAmes' | Neighborhood == 'Edwards' | Neighborhood == 'BrkSide')
+train$Neighborhood <- as.factor(train$Neighborhood)
+```
+
+### Plots of Data
+
+Histogram of `SalePrice`, which is the sale price of the houses in the dataset.
+
+```{r, message=FALSE}
+train %>% ggplot(aes(x = SalePrice)) +
+  geom_histogram()
+```
+
+Histogram of `GrLivArea`, which is the square footage of the living areas of houses in the dataset.
+
+```{r, message=FALSE}
+train %>% ggplot(aes(x = GrLivArea)) +
+  geom_histogram()
+```
+
+Barplot of `Neighborhood`, which is the square footage of the living areas of houses in the dataset.
+
+```{r, message=FALSE}
+train %>% ggplot(aes(x = Neighborhood)) +
+  geom_bar()
+```
+
+### Model
+
+```{r, message=FALSE}
+lm(SalePrice ~  GrLivArea, data = train) %>% summary()
+```
+
+```{r}
+dum <- train %>% 
+  recipe(~ .) %>% 
+  step_dummy(Neighborhood) %>%
+  prep(training = train) %>% 
+  bake(newdata = train)
+dum
+```
+
+```{r, message=FALSE}
+lm(SalePrice ~  GrLivArea + 
+     Neighborhood_Edwards + 
+     Neighborhood_NAmes +
+     GrLivArea * Neighborhood_Edwards + 
+     GrLivArea * Neighborhood_NAmes, data = dum) %>% summary()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
