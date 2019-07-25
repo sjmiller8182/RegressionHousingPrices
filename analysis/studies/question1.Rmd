@@ -2,7 +2,9 @@
 title: "Question 1"
 author: "Stuart Miller"
 date: "July 24, 2019"
-output: html_document
+output: 
+  github_document:
+    toc: true
 ---
 
 ```{r setup, include=FALSE}
