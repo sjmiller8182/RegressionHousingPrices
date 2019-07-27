@@ -15,7 +15,7 @@ neighborhood where they operate (NAmes, Edwards and BrkSide).
 # libraries
 library(knitr)
 library(tidyverse)
-library(recipes)
+library(olsrr)
 
 # load data
 train <- read_csv('../data/train.csv')
@@ -24,7 +24,7 @@ test <- read_csv('../data/test.csv')
 
 # Analysis
 
-## Build the Model
+## Extract Data of Interest
 
 ``` r
 # select data of interest
@@ -34,14 +34,16 @@ train <- train %>%
 train$Neighborhood <- as.factor(train$Neighborhood)
 ```
 
-### Plots of Data
+## Plots of Data
 
 Histogram of `SalePrice`, which is the sale price of the houses in the
 dataset.
 
 ``` r
 train %>% ggplot(aes(x = SalePrice)) +
-  geom_histogram()
+  geom_histogram() + 
+  labs(title = 'Histogram of Sale Price', 
+       y = 'Frequency', x = 'Sale Price')
 ```
 
 ![](question1_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
@@ -51,99 +53,188 @@ areas of houses in the dataset.
 
 ``` r
 train %>% ggplot(aes(x = GrLivArea)) +
-  geom_histogram()
+  geom_histogram() + 
+  labs(title = 'Histogram of Living Room Area', 
+       y = 'Frequency', x = 'Living Room Area')
 ```
 
 ![](question1_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+
+Both variables (`SalePrice` and `GrLivArea`) show evidence of right
+skew. This could indicate need for a log transform.
+
+Scatter plot of `SalePrice` vs `GrLivArea` shows that the large values
+in `GrLivArea` are pulling the regression line. A log transfrom on
+`GrLivArea` may help correct this.
+
+``` r
+train %>% ggplot(aes(x = GrLivArea, y = SalePrice)) +
+  geom_point() +
+  geom_smooth(method = 'lm') + 
+  labs(title = 'Sale Price vs Living Room Area', 
+       y = 'Log of Sale Price', x = 'Living Room Area')
+```
+
+![](question1_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+
+Scatter plot of `SalePrice` vs log transform of `GrLivArea` shows taking
+the log transform of `GrLivArea` does improve the linear relationship.
+However, it appears that a larger value of `GrLivArea` is associated
+with an increase in varaince of `SalePrice`. A log transform of
+`SalePrice` may help control for this change in varaince.
+
+``` r
+train %>% ggplot(aes(x = log(GrLivArea), y = SalePrice)) +
+  geom_point() +
+  geom_smooth(method = 'lm') + 
+  labs(title = 'Sale Price vs Log of Living Room Area', 
+       y = 'Sale Price', x = 'Log of Living Room Area')
+```
+
+![](question1_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+
+Scatter plot the log transform of `SalePrice` vs the log transform of
+`GrLivArea` shows evidece of a linear relationship without sufficient
+evidence of changing variance.
+
+``` r
+train %>% ggplot(aes(x = log(GrLivArea), y = log(SalePrice))) +
+  geom_point() +
+  geom_smooth(method = 'lm') + 
+  labs(title = 'Log of Sale Price vs Lof of Living Room Area', 
+       y = 'Log of Sale Price', x = 'Log of Living Room Area')
+```
+
+![](question1_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
 Barplot of `Neighborhood`, which is the square footage of the living
 areas of houses in the dataset.
 
 ``` r
-train %>% ggplot(aes(x = Neighborhood)) +
-  geom_bar()
+train %>% ggplot(aes(x = Neighborhood)) + geom_bar() + 
+  labs(title = 'Count of Levels of Neighborhood', 
+       y = 'Count')
 ```
 
-![](question1_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
-
-### Model
+![](question1_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
 
 ``` r
-lm(SalePrice ~  GrLivArea, data = train) %>% summary()
+# create dummy variables with Neighborhood == 'Edwards' as reference
+train$Neighborhood_BrkSide <-  as.numeric(train$Neighborhood == 'BrkSide')
+train$Neighborhood_NAmes <-  as.numeric(train$Neighborhood == 'NAmes')
 ```
 
-    ## 
-    ## Call:
-    ## lm(formula = SalePrice ~ GrLivArea, data = train)
-    ## 
-    ## Residuals:
-    ##     Min      1Q  Median      3Q     Max 
-    ## -177619  -17918     919   15227  163722 
-    ## 
-    ## Coefficients:
-    ##              Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept) 78205.578   4536.054   17.24   <2e-16 ***
-    ## GrLivArea      45.979      3.265   14.08   <2e-16 ***
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ## 
-    ## Residual standard error: 30980 on 381 degrees of freedom
-    ## Multiple R-squared:  0.3423, Adjusted R-squared:  0.3406 
-    ## F-statistic: 198.3 on 1 and 381 DF,  p-value: < 2.2e-16
+## Model
+
+Based on the log-log plot above, the response will be modeled as
+
+![model\_equation](./question1_files/model_equation.png)
 
 ``` r
-dum <- train %>% 
-  recipe(~ .) %>% 
-  step_dummy(Neighborhood) %>%
-  prep(training = train) %>% 
-  bake(newdata = train)
-dum
-```
-
-    ## # A tibble: 383 x 4
-    ##    SalePrice GrLivArea Neighborhood_Edwards Neighborhood_NAmes
-    ##        <int>     <int>                <dbl>              <dbl>
-    ##  1    118000      1077                    0                  0
-    ##  2    157000      1253                    0                  1
-    ##  3    132000       854                    0                  0
-    ##  4    149000      1004                    0                  1
-    ##  5    139000      1339                    0                  1
-    ##  6    134800       900                    0                  1
-    ##  7    207500      1600                    0                  1
-    ##  8     68500       520                    0                  0
-    ##  9    165500      1700                    0                  1
-    ## 10    153000      1297                    0                  1
-    ## # ... with 373 more rows
-
-``` r
-lm(SalePrice ~  GrLivArea + 
-     Neighborhood_Edwards + 
+# model the mean response given equation above
+model <- lm(formula = log(SalePrice) ~ log(GrLivArea) + 
+     Neighborhood_BrkSide + 
      Neighborhood_NAmes +
-     GrLivArea * Neighborhood_Edwards + 
-     GrLivArea * Neighborhood_NAmes, data = dum) %>% summary()
+     log(GrLivArea) * Neighborhood_BrkSide + 
+     log(GrLivArea) * Neighborhood_NAmes, data = train)
+summary(model)
 ```
 
     ## 
     ## Call:
-    ## lm(formula = SalePrice ~ GrLivArea + Neighborhood_Edwards + Neighborhood_NAmes + 
-    ##     GrLivArea * Neighborhood_Edwards + GrLivArea * Neighborhood_NAmes, 
-    ##     data = dum)
+    ## lm(formula = log(SalePrice) ~ log(GrLivArea) + Neighborhood_BrkSide + 
+    ##     Neighborhood_NAmes + log(GrLivArea) * Neighborhood_BrkSide + 
+    ##     log(GrLivArea) * Neighborhood_NAmes, data = train)
     ## 
     ## Residuals:
-    ##    Min     1Q Median     3Q    Max 
-    ## -96204 -14568   -310  12601 181131 
+    ##      Min       1Q   Median       3Q      Max 
+    ## -0.72080 -0.10353  0.02184  0.10586  0.80470 
     ## 
     ## Coefficients:
-    ##                                 Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)                    19971.514  12351.125   1.617  0.10672    
-    ## GrLivArea                         87.163      9.782   8.911  < 2e-16 ***
-    ## Neighborhood_Edwards           68381.591  13969.511   4.895 1.46e-06 ***
-    ## Neighborhood_NAmes             54704.888  13882.334   3.941 9.69e-05 ***
-    ## GrLivArea:Neighborhood_Edwards   -57.412     10.718  -5.357 1.48e-07 ***
-    ## GrLivArea:Neighborhood_NAmes     -32.847     10.815  -3.037  0.00256 ** 
+    ##                                     Estimate Std. Error t value Pr(>|t|)
+    ## (Intercept)                          8.00651    0.40320  19.858   <2e-16
+    ## log(GrLivArea)                       0.51967    0.05648   9.202   <2e-16
+    ## Neighborhood_BrkSide                -2.09359    0.64589  -3.241   0.0013
+    ## Neighborhood_NAmes                   0.48622    0.51751   0.940   0.3481
+    ## log(GrLivArea):Neighborhood_BrkSide  0.29998    0.09122   3.289   0.0011
+    ## log(GrLivArea):Neighborhood_NAmes   -0.04664    0.07248  -0.644   0.5203
+    ##                                        
+    ## (Intercept)                         ***
+    ## log(GrLivArea)                      ***
+    ## Neighborhood_BrkSide                ** 
+    ## Neighborhood_NAmes                     
+    ## log(GrLivArea):Neighborhood_BrkSide ** 
+    ## log(GrLivArea):Neighborhood_NAmes      
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 28550 on 377 degrees of freedom
-    ## Multiple R-squared:  0.4474, Adjusted R-squared:   0.44 
-    ## F-statistic: 61.04 on 5 and 377 DF,  p-value: < 2.2e-16
+    ## Residual standard error: 0.1923 on 377 degrees of freedom
+    ## Multiple R-squared:  0.5121, Adjusted R-squared:  0.5056 
+    ## F-statistic: 79.14 on 5 and 377 DF,  p-value: < 2.2e-16
+
+## Model Assumption Assessment
+
+``` r
+# get predicted values
+train$Predicted <- predict(model, train[,c('GrLivArea','Neighborhood_BrkSide','Neighborhood_NAmes')])
+train$Resid <- model$residuals
+```
+
+### Normality
+
+``` r
+qqnorm(model$residuals)
+```
+
+![](question1_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+
+``` r
+hist(model$residuals)
+```
+
+![](question1_files/figure-gfm/unnamed-chunk-11-2.png)<!-- -->
+
+### Linear Trend
+
+``` r
+train %>% ggplot(aes(x = log(GrLivArea), y = log(SalePrice))) +
+  geom_point() +
+  geom_smooth(method = 'lm') + 
+  labs(title = 'Log of Sale Price vs Lof of Living Room Area', 
+       y = 'Log of Sale Price', x = 'Log of Living Room Area')
+```
+
+![](question1_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+
+### Equal Variances
+
+``` r
+train %>% ggplot(aes(x = Predicted, y = Resid)) +
+  geom_point() +
+  geom_abline(slope = 0)
+```
+
+![](question1_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+
+### Other Plots
+
+``` r
+# Rstudent vs leverage
+ols_plot_resid_lev(model)
+```
+
+![](question1_files/figure-gfm/assumption_plots-1.png)<!-- -->
+
+``` r
+ols_plot_resid_stand(model)
+```
+
+![](question1_files/figure-gfm/assumption_plots-2.png)<!-- -->
+
+``` r
+ols_plot_cooksd_bar(model)
+```
+
+![](question1_files/figure-gfm/assumption_plots-3.png)<!-- -->
+
+\[ASE = \frac{\sum_{n=1}^{N} (y_i - \hat{y}_i)^2 }{N}\]
