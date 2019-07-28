@@ -1,13 +1,14 @@
 Question 1
 ================
 Stuart Miller
-July 24, 2019
+July 28, 2019
 
 # Requested Analysis
 
 Century 21 Ames wawnts to understand if there is a relationship between
-the square footage of the living areas of houses and sale price in the
-neighborhood where they operate (NAmes, Edwards and BrkSide).
+the square footage of the living areas of houses (`GrLivArea`) and sale
+price in the neighborhood where they operate Northwest Ames, Edwards,
+and Brookside (`NAmes`, `Edwards` and `BrkSide`).
 
 # Setup
 
@@ -129,6 +130,8 @@ train$Neighborhood_NAmes <-  as.numeric(train$Neighborhood == 'NAmes')
 Based on the log-log plot above, the response will be modeled as
 
 ![model\_equation](./question1_files/model_equation.png)
+
+where Edwards neighborhood is used for reference.
 
 ``` r
 # model the mean response given equation above

@@ -1,7 +1,7 @@
 ---
 title: "Question 1"
 author: "Stuart Miller"
-date: "July 24, 2019"
+date: "July 28, 2019"
 output: 
   github_document:
     toc: true
@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Requested Analysis
 
-Century 21 Ames wawnts to understand if there is a relationship between the square footage of the living areas of houses and sale price in the neighborhood where they operate (NAmes, Edwards and BrkSide).
+Century 21 Ames wawnts to understand if there is a relationship between the square footage of the living areas of houses (`GrLivArea`) and sale price in the neighborhood where they operate Northwest Ames, Edwards, and Brookside (`NAmes`, `Edwards` and `BrkSide`).
 
 # Setup
 
@@ -111,6 +111,8 @@ train$Neighborhood_NAmes <-  as.numeric(train$Neighborhood == 'NAmes')
 Based on the log-log plot above, the response will be modeled as
 
 ![model_equation](./question1_files/model_equation.png)
+
+where Edwards neighborhood is used for reference.
 
 ```{r, message=FALSE}
 # model the mean response given equation above
