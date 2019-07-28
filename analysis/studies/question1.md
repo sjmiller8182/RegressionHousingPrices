@@ -30,12 +30,22 @@ test <- read_csv('../data/test.csv')
 ``` r
 # select data of interest
 train <- train %>% 
-  select(c('SalePrice','GrLivArea','Neighborhood')) %>%
+#  select(c('SalePrice','GrLivArea','Neighborhood')) %>%
   filter(Neighborhood == 'NAmes' | Neighborhood == 'Edwards' | Neighborhood == 'BrkSide')
 train$Neighborhood <- as.factor(train$Neighborhood)
 ```
 
 ## Plots of Data
+
+Barplot of count houses in `Neighborhood`s of interest.
+
+``` r
+train %>% ggplot(aes(x = Neighborhood)) + geom_bar() + 
+  labs(title = 'Count of Levels of Neighborhood', 
+       y = 'Count')
+```
+
+![](question1_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
 
 Histogram of `SalePrice`, which is the sale price of the houses in the
 dataset.
@@ -47,7 +57,7 @@ train %>% ggplot(aes(x = SalePrice)) +
        y = 'Frequency', x = 'Sale Price')
 ```
 
-![](question1_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+![](question1_files/figure-gfm/SalePriceHist-1.png)<!-- -->
 
 Histogram of `GrLivArea`, which is the square footage of the living
 areas of houses in the dataset.
@@ -59,7 +69,7 @@ train %>% ggplot(aes(x = GrLivArea)) +
        y = 'Frequency', x = 'Living Room Area')
 ```
 
-![](question1_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+![](question1_files/figure-gfm/LivingRoomHist-1.png)<!-- -->
 
 Both variables (`SalePrice` and `GrLivArea`) show evidence of right
 skew. This could indicate need for a log transform.
@@ -76,7 +86,7 @@ train %>% ggplot(aes(x = GrLivArea, y = SalePrice)) +
        y = 'Log of Sale Price', x = 'Living Room Area')
 ```
 
-![](question1_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+![](question1_files/figure-gfm/regression-original-scale-1.png)<!-- -->
 
 Scatter plot of `SalePrice` vs log transform of `GrLivArea` shows taking
 the log transform of `GrLivArea` does improve the linear relationship.
@@ -92,11 +102,13 @@ train %>% ggplot(aes(x = log(GrLivArea), y = SalePrice)) +
        y = 'Sale Price', x = 'Log of Living Room Area')
 ```
 
-![](question1_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](question1_files/figure-gfm/linear-log-plot-1.png)<!-- -->
 
 Scatter plot the log transform of `SalePrice` vs the log transform of
 `GrLivArea` shows evidece of a linear relationship without sufficient
-evidence of changing variance.
+evidence of changing variance. Two points to the right side of the plot
+appear to be pulling the regression line to the right. These points
+should be investigated.
 
 ``` r
 train %>% ggplot(aes(x = log(GrLivArea), y = log(SalePrice))) +
@@ -106,18 +118,35 @@ train %>% ggplot(aes(x = log(GrLivArea), y = log(SalePrice))) +
        y = 'Log of Sale Price', x = 'Log of Living Room Area')
 ```
 
-![](question1_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+![](question1_files/figure-gfm/log-log-plot-1.png)<!-- -->
 
-Barplot of `Neighborhood`, which is the square footage of the living
-areas of houses in the dataset.
+Add labels of `SaleCondition` of the two points of interest and some
+neighboring points to the scatter plot the log transform of `SalePrice`
+vs the log transform of `GrLivArea`. This indicates the influential
+points are of type `Partial` `SaleCondition`, which means the houses
+were not completed at the time of assessment.
 
 ``` r
-train %>% ggplot(aes(x = Neighborhood)) + geom_bar() + 
-  labs(title = 'Count of Levels of Neighborhood', 
-       y = 'Count')
+train %>% ggplot(aes(x = log(GrLivArea), y = log(SalePrice))) +
+  geom_point() +
+  geom_smooth(method = 'lm') + 
+  labs(title = 'Log of Sale Price vs Lof of Living Room Area', 
+       y = 'Log of Sale Price', x = 'Log of Living Room Area') +
+  geom_text(aes(label = ifelse((log(GrLivArea) > 7.75 & log(SalePrice) > 11) |
+                                 (log(SalePrice) > 12.45),
+                               SaleCondition, '')),
+            hjust=0,
+            vjust=0)
 ```
 
-![](question1_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+![](question1_files/figure-gfm/log-log-plot-labeled-1.png)<!-- -->
+
+``` r
+train %>% ggplot(aes(x = SaleCondition)) + 
+  geom_bar()
+```
+
+![](question1_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
 
 ``` r
 # create dummy variables with Neighborhood == 'Edwards' as reference
@@ -189,13 +218,13 @@ train$Resid <- model$residuals
 qqnorm(model$residuals)
 ```
 
-![](question1_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+![](question1_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
 ``` r
 hist(model$residuals)
 ```
 
-![](question1_files/figure-gfm/unnamed-chunk-11-2.png)<!-- -->
+![](question1_files/figure-gfm/unnamed-chunk-5-2.png)<!-- -->
 
 ### Linear Trend
 
@@ -207,7 +236,7 @@ train %>% ggplot(aes(x = log(GrLivArea), y = log(SalePrice))) +
        y = 'Log of Sale Price', x = 'Log of Living Room Area')
 ```
 
-![](question1_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+![](question1_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
 ### Equal Variances
 
@@ -217,7 +246,7 @@ train %>% ggplot(aes(x = Predicted, y = Resid)) +
   geom_abline(slope = 0)
 ```
 
-![](question1_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+![](question1_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
 ### Other Plots
 
