@@ -18,10 +18,15 @@ library(knitr)
 library(tidyverse)
 library(olsrr)
 library(gridExtra)
+library(caret)
+
+# set a random seed for repodicibility
+set.seed(123)
 
 # helper code
 source('../helper/visual.R')
 source('../helper/data_munging.R')
+source('../helper/performance.R')
 
 # load data
 train <- read_csv('../data/train.csv')
@@ -195,7 +200,17 @@ Based on the log-log plot above, the response will be modeled as
 
 where Edwards neighborhood is used for reference.
 
+### Parameter Estimation
+
+Estimate parameters in the model by fitting to the entire dataset.
+
 ``` r
+model.formula = log(SalePrice) ~ log(GrLivArea) + 
+     Neighborhood_BrkSide + 
+     Neighborhood_NAmes +
+     log(GrLivArea) * Neighborhood_BrkSide + 
+     log(GrLivArea) * Neighborhood_NAmes
+
 # create dummy variables with Neighborhood == 'Edwards' as reference
 train <- get.dummies(train, "Neighborhood", 'Edwards')
 ```
@@ -205,19 +220,13 @@ train <- get.dummies(train, "Neighborhood", 'Edwards')
 
 ``` r
 # model the mean response given equation above
-model <- lm(formula = log(SalePrice) ~ log(GrLivArea) + 
-     Neighborhood_BrkSide + 
-     Neighborhood_NAmes +
-     log(GrLivArea) * Neighborhood_BrkSide + 
-     log(GrLivArea) * Neighborhood_NAmes, data = train)
+model <- lm(formula = model.formula, data = train)
 summary(model)
 ```
 
     ## 
     ## Call:
-    ## lm(formula = log(SalePrice) ~ log(GrLivArea) + Neighborhood_BrkSide + 
-    ##     Neighborhood_NAmes + log(GrLivArea) * Neighborhood_BrkSide + 
-    ##     log(GrLivArea) * Neighborhood_NAmes, data = train)
+    ## lm(formula = model.formula, data = train)
     ## 
     ## Residuals:
     ##      Min       1Q   Median       3Q      Max 
@@ -245,7 +254,56 @@ summary(model)
     ## Multiple R-squared:  0.5121, Adjusted R-squared:  0.5056 
     ## F-statistic: 79.14 on 5 and 377 DF,  p-value: < 2.2e-16
 
-## Model Assumption Assessment
+### Model Accuracy Estimation
+
+Use 10-fold cross validation to estimate the accuracy metrics of the
+model.
+
+``` r
+# Set up repeated k-fold cross-validation
+train.control <- trainControl(method = "cv", number = 10)
+# Train the model
+model.cv <- train(model.formula, 
+                    data = train,
+                    method = 'lm',
+                    trControl = train.control)
+# print model summary
+model.cv
+```
+
+    ## Linear Regression 
+    ## 
+    ## 383 samples
+    ##   3 predictor
+    ## 
+    ## No pre-processing
+    ## Resampling: Cross-Validated (10 fold) 
+    ## Summary of sample sizes: 344, 345, 345, 345, 345, 343, ... 
+    ## Resampling results:
+    ## 
+    ##   RMSE       Rsquared   MAE     
+    ##   0.1925072  0.5094893  0.146381
+    ## 
+    ## Tuning parameter 'intercept' was held constant at a value of TRUE
+
+``` r
+# get the CV results
+res <- model.cv$results
+
+# get cross-validated PRESS statistic
+PCV <- PRESS.cv(model.cv)
+
+# print accuracy metrics to md table
+kable(data.frame('RMSE'=res$RMSE,
+           'CV Press'=PCV,
+           'Adjused_R_Squared'=res$Rsquared))
+```
+
+|      RMSE | CV.Press | Adjused\_R\_Squared |
+| --------: | -------: | ------------------: |
+| 0.1925072 | 12.77424 |           0.5094893 |
+
+## Model Assumptions Assessment
 
 ``` r
 basic.fit.plots(train, model)

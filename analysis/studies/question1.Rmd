@@ -23,10 +23,15 @@ library(knitr)
 library(tidyverse)
 library(olsrr)
 library(gridExtra)
+library(caret)
+
+# set a random seed for repodicibility
+set.seed(123)
 
 # helper code
 source('../helper/visual.R')
 source('../helper/data_munging.R')
+source('../helper/performance.R')
 
 # load data
 train <- read_csv('../data/train.csv')
@@ -161,27 +166,63 @@ Based on the log-log plot above, the response will be modeled as
 
 where Edwards neighborhood is used for reference.
 
+### Parameter Estimation
+
+Estimate parameters in the model by fitting to the entire dataset.
 
 ```{r, modeling, message=FALSE}
+model.formula = log(SalePrice) ~ log(GrLivArea) + 
+     Neighborhood_BrkSide + 
+     Neighborhood_NAmes +
+     log(GrLivArea) * Neighborhood_BrkSide + 
+     log(GrLivArea) * Neighborhood_NAmes
+
 # create dummy variables with Neighborhood == 'Edwards' as reference
 train <- get.dummies(train, "Neighborhood", 'Edwards')
 
 # model the mean response given equation above
-model <- lm(formula = log(SalePrice) ~ log(GrLivArea) + 
-     Neighborhood_BrkSide + 
-     Neighborhood_NAmes +
-     log(GrLivArea) * Neighborhood_BrkSide + 
-     log(GrLivArea) * Neighborhood_NAmes, data = train)
+model <- lm(formula = model.formula, data = train)
 summary(model)
 ```
 
-## Model Assumption Assessment
+### Model Accuracy Estimation
+
+Use 10-fold cross validation to estimate the accuracy metrics of the model.
+
+```{r, cross-validation}
+# Set up repeated k-fold cross-validation
+train.control <- trainControl(method = "cv", number = 10)
+# Train the model
+model.cv <- train(model.formula, 
+                    data = train,
+                    method = 'lm',
+                    trControl = train.control)
+# print model summary
+model.cv
+
+# get the CV results
+res <- model.cv$results
+
+# get cross-validated PRESS statistic
+PCV <- PRESS.cv(model.cv)
+
+# print accuracy metrics to md table
+kable(data.frame('RMSE'=res$RMSE,
+           'CV Press'=PCV,
+           'Adjused_R_Squared'=res$Rsquared))
+```
+
+
+## Model Assumptions Assessment
+
+
 
 ```{r, diag-plots}
 basic.fit.plots(train, model)
 ols_plot_resid_lev(model)
 ols_plot_cooksd_bar(model)
 ```
+
 
 
 
