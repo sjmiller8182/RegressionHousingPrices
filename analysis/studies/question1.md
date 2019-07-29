@@ -17,6 +17,11 @@ and Brookside (`NAmes`, `Edwards` and `BrkSide`).
 library(knitr)
 library(tidyverse)
 library(olsrr)
+library(gridExtra)
+
+# helper code
+source('../helper/visual.R')
+source('../helper/data_munging.R')
 
 # load data
 train <- read_csv('../data/train.csv')
@@ -30,7 +35,6 @@ test <- read_csv('../data/test.csv')
 ``` r
 # select data of interest
 train <- train %>% 
-#  select(c('SalePrice','GrLivArea','Neighborhood')) %>%
   filter(Neighborhood == 'NAmes' | Neighborhood == 'Edwards' | Neighborhood == 'BrkSide')
 train$Neighborhood <- as.factor(train$Neighborhood)
 ```
@@ -80,7 +84,7 @@ in `GrLivArea` are pulling the regression line. A log transfrom on
 
 ``` r
 train %>% ggplot(aes(x = GrLivArea, y = SalePrice)) +
-  geom_point() +
+  geom_point(alpha = 0.3) +
   geom_smooth(method = 'lm') + 
   labs(title = 'Sale Price vs Living Room Area', 
        y = 'Log of Sale Price', x = 'Living Room Area')
@@ -96,7 +100,7 @@ with an increase in varaince of `SalePrice`. A log transform of
 
 ``` r
 train %>% ggplot(aes(x = log(GrLivArea), y = SalePrice)) +
-  geom_point() +
+  geom_point(alpha = 0.3) +
   geom_smooth(method = 'lm') + 
   labs(title = 'Sale Price vs Log of Living Room Area', 
        y = 'Sale Price', x = 'Log of Living Room Area')
@@ -112,9 +116,9 @@ should be investigated.
 
 ``` r
 train %>% ggplot(aes(x = log(GrLivArea), y = log(SalePrice))) +
-  geom_point() +
+  geom_point(alpha = 0.3) +
   geom_smooth(method = 'lm') + 
-  labs(title = 'Log of Sale Price vs Lof of Living Room Area', 
+  labs(title = 'Log of Sale Price vs Log of Living Room Area', 
        y = 'Log of Sale Price', x = 'Log of Living Room Area')
 ```
 
@@ -128,31 +132,60 @@ were not completed at the time of assessment.
 
 ``` r
 train %>% ggplot(aes(x = log(GrLivArea), y = log(SalePrice))) +
-  geom_point() +
+  geom_point(alpha = 0.3) +
   geom_smooth(method = 'lm') + 
-  labs(title = 'Log of Sale Price vs Lof of Living Room Area', 
+  labs(title = 'Log of Sale Price vs Log of Living Room Area', 
        y = 'Log of Sale Price', x = 'Log of Living Room Area') +
   geom_text(aes(label = ifelse((log(GrLivArea) > 7.75 & log(SalePrice) > 11) |
                                  (log(SalePrice) > 12.45),
-                               SaleCondition, '')),
-            hjust=0,
-            vjust=0)
+                               SaleCondition, '')), hjust=0, vjust=0)
 ```
 
 ![](question1_files/figure-gfm/log-log-plot-labeled-1.png)<!-- -->
 
-``` r
-train %>% ggplot(aes(x = SaleCondition)) + 
-  geom_bar()
-```
-
-![](question1_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+Reploting without the influential values as little difference on the
+regression line. These points will be included in the regression
+analysis.
 
 ``` r
-# create dummy variables with Neighborhood == 'Edwards' as reference
-train$Neighborhood_BrkSide <-  as.numeric(train$Neighborhood == 'BrkSide')
-train$Neighborhood_NAmes <-  as.numeric(train$Neighborhood == 'NAmes')
+temp <- train %>% filter(SaleCondition != 'Partial')
+temp %>% ggplot(aes(x = log(GrLivArea), y = log(SalePrice))) +
+  geom_point(alpha = 0.3) +
+  geom_smooth(method = 'lm') + 
+  labs(title = 'Log of Sale Price vs Log of Living Room Area', 
+       y = 'Log of Sale Price', x = 'Log of Living Room Area')
 ```
+
+![](question1_files/figure-gfm/repolt-without-partial-points-1.png)<!-- -->
+
+Scatter plot log of sale price vs log of living room area for each
+neighborhood. In each case, there is not sigificant evidence again the
+assumption of linearity.
+
+``` r
+regplot.names <- train %>% filter(Neighborhood == 'NAmes') %>%
+  ggplot(aes(x = log(GrLivArea), y = log(SalePrice))) +
+  geom_point(alpha = 0.3) +
+  geom_smooth(method = 'lm') + 
+  labs(subtitle = 'Northwest Ames', 
+       y = 'Log of Sale Price', x = 'Log of Living Room Area')
+regplot.ed <- train %>% filter(Neighborhood == 'Edwards') %>%
+  ggplot(aes(x = log(GrLivArea), y = log(SalePrice))) +
+  geom_point(alpha = 0.3) +
+  geom_smooth(method = 'lm') + 
+  labs(subtitle = 'Edwards', 
+       y = 'Log of Sale Price', x = 'Log of Living Room Area')
+regplot.brk <- train %>% filter(Neighborhood == 'BrkSide') %>%
+  ggplot(aes(x = log(GrLivArea), y = log(SalePrice))) +
+  geom_point(alpha = 0.3) +
+  geom_smooth(method = 'lm') + 
+  labs(subtitle = 'Brook Side', 
+       y = 'Log of Sale Price', x = 'Log of Living Room Area')
+grid.arrange(regplot.names,regplot.ed,regplot.brk, nrow = 2,
+             top = 'Regression Plots for Neighborhoods')
+```
+
+![](question1_files/figure-gfm/log-log-plot-by-N-1.png)<!-- -->
 
 ## Model
 
@@ -161,6 +194,14 @@ Based on the log-log plot above, the response will be modeled as
 ![model\_equation](./question1_files/model_equation.png)
 
 where Edwards neighborhood is used for reference.
+
+``` r
+# create dummy variables with Neighborhood == 'Edwards' as reference
+train <- get.dummies(train, "Neighborhood", 'Edwards')
+```
+
+    ## [1] "Neighborhood_BrkSide"
+    ## [1] "Neighborhood_NAmes"
 
 ``` r
 # model the mean response given equation above
@@ -207,66 +248,19 @@ summary(model)
 ## Model Assumption Assessment
 
 ``` r
-# get predicted values
-train$Predicted <- predict(model, train[,c('GrLivArea','Neighborhood_BrkSide','Neighborhood_NAmes')])
-train$Resid <- model$residuals
+basic.fit.plots(train, model)
 ```
 
-### Normality
+![](question1_files/figure-gfm/diag-plots-1.png)<!-- -->
 
 ``` r
-qqnorm(model$residuals)
-```
-
-![](question1_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
-
-``` r
-hist(model$residuals)
-```
-
-![](question1_files/figure-gfm/unnamed-chunk-5-2.png)<!-- -->
-
-### Linear Trend
-
-``` r
-train %>% ggplot(aes(x = log(GrLivArea), y = log(SalePrice))) +
-  geom_point() +
-  geom_smooth(method = 'lm') + 
-  labs(title = 'Log of Sale Price vs Lof of Living Room Area', 
-       y = 'Log of Sale Price', x = 'Log of Living Room Area')
-```
-
-![](question1_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
-
-### Equal Variances
-
-``` r
-train %>% ggplot(aes(x = Predicted, y = Resid)) +
-  geom_point() +
-  geom_abline(slope = 0)
-```
-
-![](question1_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
-
-### Other Plots
-
-``` r
-# Rstudent vs leverage
 ols_plot_resid_lev(model)
 ```
 
-![](question1_files/figure-gfm/assumption_plots-1.png)<!-- -->
-
-``` r
-ols_plot_resid_stand(model)
-```
-
-![](question1_files/figure-gfm/assumption_plots-2.png)<!-- -->
+![](question1_files/figure-gfm/diag-plots-2.png)<!-- -->
 
 ``` r
 ols_plot_cooksd_bar(model)
 ```
 
-![](question1_files/figure-gfm/assumption_plots-3.png)<!-- -->
-
-\[ASE = \frac{\sum_{n=1}^{N} (y_i - \hat{y}_i)^2 }{N}\]
+![](question1_files/figure-gfm/diag-plots-3.png)<!-- -->

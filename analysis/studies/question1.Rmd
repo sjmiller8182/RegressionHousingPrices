@@ -22,6 +22,11 @@ Century 21 Ames wawnts to understand if there is a relationship between the squa
 library(knitr)
 library(tidyverse)
 library(olsrr)
+library(gridExtra)
+
+# helper code
+source('../helper/visual.R')
+source('../helper/data_munging.R')
 
 # load data
 train <- read_csv('../data/train.csv')
@@ -35,7 +40,6 @@ test <- read_csv('../data/test.csv')
 ```{r data-filtering, results='hide', message=FALSE}
 # select data of interest
 train <- train %>% 
-#  select(c('SalePrice','GrLivArea','Neighborhood')) %>%
   filter(Neighborhood == 'NAmes' | Neighborhood == 'Edwards' | Neighborhood == 'BrkSide')
 train$Neighborhood <- as.factor(train$Neighborhood)
 ```
@@ -124,6 +128,31 @@ temp %>% ggplot(aes(x = log(GrLivArea), y = log(SalePrice))) +
        y = 'Log of Sale Price', x = 'Log of Living Room Area')
 ```
 
+Scatter plot log of sale price vs log of living room area for each neighborhood. In each case, there is not sigificant evidence again the assumption of linearity.
+
+```{r, log-log-plot-by-N}
+regplot.names <- train %>% filter(Neighborhood == 'NAmes') %>%
+  ggplot(aes(x = log(GrLivArea), y = log(SalePrice))) +
+  geom_point(alpha = 0.3) +
+  geom_smooth(method = 'lm') + 
+  labs(subtitle = 'Northwest Ames', 
+       y = 'Log of Sale Price', x = 'Log of Living Room Area')
+regplot.ed <- train %>% filter(Neighborhood == 'Edwards') %>%
+  ggplot(aes(x = log(GrLivArea), y = log(SalePrice))) +
+  geom_point(alpha = 0.3) +
+  geom_smooth(method = 'lm') + 
+  labs(subtitle = 'Edwards', 
+       y = 'Log of Sale Price', x = 'Log of Living Room Area')
+regplot.brk <- train %>% filter(Neighborhood == 'BrkSide') %>%
+  ggplot(aes(x = log(GrLivArea), y = log(SalePrice))) +
+  geom_point(alpha = 0.3) +
+  geom_smooth(method = 'lm') + 
+  labs(subtitle = 'Brook Side', 
+       y = 'Log of Sale Price', x = 'Log of Living Room Area')
+grid.arrange(regplot.names,regplot.ed,regplot.brk, nrow = 2,
+             top = 'Regression Plots for Neighborhoods')
+```
+
 ## Model
 
 Based on the log-log plot above, the response will be modeled as
@@ -132,10 +161,10 @@ Based on the log-log plot above, the response will be modeled as
 
 where Edwards neighborhood is used for reference.
 
+
 ```{r, modeling, message=FALSE}
 # create dummy variables with Neighborhood == 'Edwards' as reference
-train$Neighborhood_BrkSide <-  as.numeric(train$Neighborhood == 'BrkSide')
-train$Neighborhood_NAmes <-  as.numeric(train$Neighborhood == 'NAmes')
+train <- get.dummies(train, "Neighborhood", 'Edwards')
 
 # model the mean response given equation above
 model <- lm(formula = log(SalePrice) ~ log(GrLivArea) + 
@@ -148,57 +177,14 @@ summary(model)
 
 ## Model Assumption Assessment
 
-```{r}
-# get predicted values
-train$Predicted <- predict(model, train[,c('GrLivArea','Neighborhood_BrkSide','Neighborhood_NAmes')])
-train$Resid <- model$residuals
-```
-
-
-### Normality
-
-```{r}
-qqnorm(model$residuals)
-hist(model$residuals)
-```
-
-### Linear Trend
-
-```{r}
-train %>% ggplot(aes(x = log(GrLivArea), y = log(SalePrice))) +
-  geom_point(alpha = 0.3) +
-  geom_smooth(method = 'lm') + 
-  labs(title = 'Log of Sale Price vs Lof of Living Room Area', 
-       y = 'Log of Sale Price', x = 'Log of Living Room Area')
-```
-
-### Equal Variances
-
-```{r}
-train %>% ggplot(aes(x = Predicted, y = Resid)) +
-  geom_point() +
-  geom_abline(slope = 0)
-```
-
-### Other Plots
-
-```{r, assumption_plots}
-# Rstudent vs leverage
+```{r, diag-plots}
+basic.fit.plots(train, model)
 ols_plot_resid_lev(model)
-ols_plot_resid_stand(model)
 ols_plot_cooksd_bar(model)
 ```
 
 
 
-
-
-
-
-
-
-
-$$ASE = \frac{\sum_{n=1}^{N} (y_i - \hat{y}_i)^2 }{N}$$
 
 
 
