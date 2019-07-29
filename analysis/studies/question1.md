@@ -5,33 +5,10 @@ July 28, 2019
 
 # Requested Analysis
 
-Century 21 Ames wawnts to understand if there is a relationship between
+Century 21 Ames wants to understand if there is a relationship between
 the square footage of the living areas of houses (`GrLivArea`) and sale
 price in the neighborhood where they operate Northwest Ames, Edwards,
 and Brookside (`NAmes`, `Edwards` and `BrkSide`).
-
-# Setup
-
-``` r
-# libraries
-library(knitr)
-library(tidyverse)
-library(olsrr)
-library(gridExtra)
-library(caret)
-
-# set a random seed for repodicibility
-set.seed(123)
-
-# helper code
-source('../helper/visual.R')
-source('../helper/data_munging.R')
-source('../helper/performance.R')
-
-# load data
-train <- read_csv('../data/train.csv')
-test <- read_csv('../data/test.csv')
-```
 
 # Analysis
 
@@ -254,6 +231,18 @@ summary(model)
     ## Multiple R-squared:  0.5121, Adjusted R-squared:  0.5056 
     ## F-statistic: 79.14 on 5 and 377 DF,  p-value: < 2.2e-16
 
+``` r
+confint(model)
+```
+
+    ##                                          2.5 %      97.5 %
+    ## (Intercept)                          7.2137090  8.79930538
+    ## log(GrLivArea)                       0.4086192  0.63071533
+    ## Neighborhood_BrkSide                -3.3635933 -0.82357954
+    ## Neighborhood_NAmes                  -0.5313439  1.50378486
+    ## log(GrLivArea):Neighborhood_BrkSide  0.1206263  0.47933532
+    ## log(GrLivArea):Neighborhood_NAmes   -0.1891596  0.09587228
+
 ### Model Accuracy Estimation
 
 Use 10-fold cross validation to estimate the accuracy metrics of the
@@ -296,14 +285,27 @@ PCV <- PRESS.cv(model.cv)
 # print accuracy metrics to md table
 kable(data.frame('RMSE'=res$RMSE,
            'CV Press'=PCV,
-           'Adjused_R_Squared'=res$Rsquared))
+           'Adjused R Squared'=res$Rsquared))
 ```
 
-|      RMSE | CV.Press | Adjused\_R\_Squared |
-| --------: | -------: | ------------------: |
-| 0.1925072 | 12.77424 |           0.5094893 |
+|      RMSE | CV.Press | Adjused.R.Squared |
+| --------: | -------: | ----------------: |
+| 0.1925072 | 12.77424 |         0.5094893 |
 
 ## Model Assumptions Assessment
+
+  - **Linearity**: It appear reasonable that the log of sale price and
+    the log of living room area could be linearly related based on a
+    scatter plot.
+  - **Normality**: The residuals from the model fit appear to be
+    normally distributed based on a histogram and qq plot.
+  - **Constant Variance**: There is no discernable pattern from a
+    scatter plot of residuals and studentized residuals plotted vs
+    predicted value.
+  - **Independence**: It is not clear how the data was sampled. We will
+    assume this is true and continue.
+
+<!-- end list -->
 
 ``` r
 basic.fit.plots(train, model)
@@ -322,3 +324,17 @@ ols_plot_cooksd_bar(model)
 ```
 
 ![](question1_files/figure-gfm/diag-plots-3.png)<!-- -->
+
+## Conclusion
+
+TODO
+
+  - Provide model
+  - Interpretation
+      - Statistally significant relationship between edwards
+        neighborhood and sale price
+      - No statistical difference between Edwards and Northwest Ames
+      - Statistical difference between Edwards and Brook Side
+  - Scope
+      - Unknown sampling method -\> no extension
+      - Observational
