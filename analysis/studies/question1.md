@@ -17,7 +17,7 @@ and Brookside (`NAmes`, `Edwards` and `BrkSide`).
 ``` r
 # select data of interest
 train <- train %>% 
-  filter(Neighborhood == 'NAmes' | Neighborhood == 'Edwards' | Neighborhood == 'BrkSide')
+  filter(Neighborhood %in% c("Edwards", "BrkSide", "NAmes"))
 train$Neighborhood <- as.factor(train$Neighborhood)
 ```
 
@@ -67,7 +67,6 @@ in `GrLivArea` are pulling the regression line. A log transfrom on
 ``` r
 train %>% ggplot(aes(x = GrLivArea, y = SalePrice)) +
   geom_point(alpha = 0.3) +
-  geom_smooth(method = 'lm') + 
   labs(title = 'Sale Price vs Living Room Area', 
        y = 'Log of Sale Price', x = 'Living Room Area')
 ```
@@ -83,7 +82,6 @@ with an increase in varaince of `SalePrice`. A log transform of
 ``` r
 train %>% ggplot(aes(x = log(GrLivArea), y = SalePrice)) +
   geom_point(alpha = 0.3) +
-  geom_smooth(method = 'lm') + 
   labs(title = 'Sale Price vs Log of Living Room Area', 
        y = 'Sale Price', x = 'Log of Living Room Area')
 ```
@@ -98,8 +96,7 @@ should be investigated.
 
 ``` r
 train %>% ggplot(aes(x = log(GrLivArea), y = log(SalePrice))) +
-  geom_point(alpha = 0.3) +
-  geom_smooth(method = 'lm') + 
+  geom_point(alpha = 0.3) + 
   labs(title = 'Log of Sale Price vs Log of Living Room Area', 
        y = 'Log of Sale Price', x = 'Log of Living Room Area')
 ```
@@ -115,7 +112,6 @@ were not completed at the time of assessment.
 ``` r
 train %>% ggplot(aes(x = log(GrLivArea), y = log(SalePrice))) +
   geom_point(alpha = 0.3) +
-  geom_smooth(method = 'lm') + 
   labs(title = 'Log of Sale Price vs Log of Living Room Area', 
        y = 'Log of Sale Price', x = 'Log of Living Room Area') +
   geom_text(aes(label = ifelse((log(GrLivArea) > 7.75 & log(SalePrice) > 11) |
@@ -125,42 +121,35 @@ train %>% ggplot(aes(x = log(GrLivArea), y = log(SalePrice))) +
 
 ![](question1_files/figure-gfm/log-log-plot-labeled-1.png)<!-- -->
 
-Reploting without the influential values as little difference on the
-regression line. These points will be included in the regression
-analysis.
-
-``` r
-temp <- train %>% filter(SaleCondition != 'Partial')
-temp %>% ggplot(aes(x = log(GrLivArea), y = log(SalePrice))) +
-  geom_point(alpha = 0.3) +
-  geom_smooth(method = 'lm') + 
-  labs(title = 'Log of Sale Price vs Log of Living Room Area', 
-       y = 'Log of Sale Price', x = 'Log of Living Room Area')
-```
-
-![](question1_files/figure-gfm/repolt-without-partial-points-1.png)<!-- -->
-
 Scatter plot log of sale price vs log of living room area for each
-neighborhood. In each case, there is not sigificant evidence again the
+neighborhood. In each case, there is not sigificant evidence against the
 assumption of linearity.
 
 ``` r
 regplot.names <- train %>% filter(Neighborhood == 'NAmes') %>%
   ggplot(aes(x = log(GrLivArea), y = log(SalePrice))) +
   geom_point(alpha = 0.3) +
-  geom_smooth(method = 'lm') + 
+  ylim(10.5, 13) +
+  xlim(5.5, 9) +
+  geom_smooth(method = 'lm') +
   labs(subtitle = 'Northwest Ames', 
        y = 'Log of Sale Price', x = 'Log of Living Room Area')
+
 regplot.ed <- train %>% filter(Neighborhood == 'Edwards') %>%
   ggplot(aes(x = log(GrLivArea), y = log(SalePrice))) +
   geom_point(alpha = 0.3) +
-  geom_smooth(method = 'lm') + 
+  ylim(10.5, 13) +
+  xlim(5.5, 9) +
+  geom_smooth(method = 'lm') +
   labs(subtitle = 'Edwards', 
        y = 'Log of Sale Price', x = 'Log of Living Room Area')
+
 regplot.brk <- train %>% filter(Neighborhood == 'BrkSide') %>%
   ggplot(aes(x = log(GrLivArea), y = log(SalePrice))) +
   geom_point(alpha = 0.3) +
-  geom_smooth(method = 'lm') + 
+  ylim(10.5, 13) +
+  xlim(5.5, 9) +
+  geom_smooth(method = 'lm') +
   labs(subtitle = 'Brook Side', 
        y = 'Log of Sale Price', x = 'Log of Living Room Area')
 grid.arrange(regplot.names,regplot.ed,regplot.brk, nrow = 2,
@@ -168,6 +157,15 @@ grid.arrange(regplot.names,regplot.ed,regplot.brk, nrow = 2,
 ```
 
 ![](question1_files/figure-gfm/log-log-plot-by-N-1.png)<!-- -->
+
+``` r
+train %>% ggplot(aes(x = log(GrLivArea), y = log(SalePrice), color = Neighborhood)) +
+  geom_point(alpha = 0.3) + 
+  labs(subtitle = 'Brook Side', 
+       y = 'Log of Sale Price', x = 'Log of Living Room Area')
+```
+
+![](question1_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
 
 ## Model
 
@@ -177,25 +175,65 @@ Based on the log-log plot above, the response will be modeled as
 
 where Edwards neighborhood is used for reference.
 
-### Parameter Estimation
+### Interaction Terms
 
-Estimate parameters in the model by fitting to the entire dataset.
+We will use an extra sums of square test to verify that the interaction
+terms are useful for the model. The ESS test provides strong evidence
+that the interaction terms are useful (p-value = 0.0002); thus, we will
+continue with the full model.
 
 ``` r
-model.formula = log(SalePrice) ~ log(GrLivArea) + 
-     Neighborhood_BrkSide + 
-     Neighborhood_NAmes +
-     log(GrLivArea) * Neighborhood_BrkSide + 
-     log(GrLivArea) * Neighborhood_NAmes
-
 # create dummy variables with Neighborhood == 'Edwards' as reference
-train <- get.dummies(train, "Neighborhood", 'Edwards')
+train <- get.dummies(train, "Neighborhood", reference = 'Edwards')
 ```
 
     ## [1] "Neighborhood_BrkSide"
     ## [1] "Neighborhood_NAmes"
 
 ``` r
+# full model formula
+model.formula = log(SalePrice) ~ log(GrLivArea) + 
+     Neighborhood_BrkSide + 
+     Neighborhood_NAmes +
+     log(GrLivArea) * Neighborhood_BrkSide + 
+     log(GrLivArea) * Neighborhood_NAmes
+# reduced model formula
+model.reduced.formula = log(SalePrice) ~ log(GrLivArea) + 
+     Neighborhood_BrkSide + 
+     Neighborhood_NAmes
+
+# fit models
+model <- lm(formula = model.formula, data = train)
+model.reduced <- lm(formula = model.reduced.formula, data = train)
+# ESS test on models
+anova(model.reduced, model)
+```
+
+    ## Analysis of Variance Table
+    ## 
+    ## Model 1: log(SalePrice) ~ log(GrLivArea) + Neighborhood_BrkSide + Neighborhood_NAmes
+    ## Model 2: log(SalePrice) ~ log(GrLivArea) + Neighborhood_BrkSide + Neighborhood_NAmes + 
+    ##     log(GrLivArea) * Neighborhood_BrkSide + log(GrLivArea) * 
+    ##     Neighborhood_NAmes
+    ##   Res.Df    RSS Df Sum of Sq     F    Pr(>F)    
+    ## 1    379 14.577                                 
+    ## 2    377 13.938  2   0.63951 8.649 0.0002125 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+### Parameter Estimation
+
+Estimate parameters in the model by fitting to the entire dataset to the
+chosen model.
+
+``` r
+# formula for model
+model.formula = log(SalePrice) ~ log(GrLivArea) + 
+     Neighborhood_BrkSide + 
+     Neighborhood_NAmes +
+     log(GrLivArea) * Neighborhood_BrkSide + 
+     log(GrLivArea) * Neighborhood_NAmes
+
 # model the mean response given equation above
 model <- lm(formula = model.formula, data = train)
 summary(model)
