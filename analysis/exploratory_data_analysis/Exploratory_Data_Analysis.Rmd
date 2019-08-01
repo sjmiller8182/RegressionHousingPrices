@@ -137,7 +137,23 @@ test.missing.summary %>%
 |SaleType       | N/A                   | N/A                    | 1                    | 0.07%                  |
 
 
-## Correlation of Numeric Features (Training Set)
+
+
+## Univariate Exploration
+
+### Continuous Variables
+
+
+#### Distribution of Response Variable
+
+`SalePrice` is the response variable. This is only contained in the training set.
+
+```{r}
+ggplot(aes_string(x = 'SalePrice'), data = train) + 
+  geom_histogram()
+```
+
+#### Correlation of Numeric Features (Training Set)
 
 **Table of Correlated Features from Training Set (r > 0.5)**
 
@@ -150,18 +166,21 @@ names(flattenedCor) <- c('Feature1','Feature2','Correlation Coefficient')
 kable(flattenedCor)
 ```
 
-## Univariate Exploration
+#### Varaince of Explanatory Variables
 
-### Continuous Variables
-
-#### Distribution of Response Variable
-
-`SalePrice` is the response variable. This is only contained in the training set.
 
 ```{r}
-ggplot(aes_string(x = 'SalePrice'), data = train) + 
-  geom_histogram()
+temp.table <- train.numeric %>%
+  select(-one_of(c('Id', 'Set'))) %>%
+  summarise_all(funs(sd(., na.rm=TRUE))) %>%
+  rownames_to_column %>%
+  gather(var, value, -rowname) %>%
+  arrange(-value) %>%
+  select(-one_of(c('rowname')))
+names(temp.table) <- c('Feature','Correlation Coefficient')
+kable(temp.table)
 ```
+
 
 #### Distribution of Explanatory Variable
 
@@ -362,17 +381,8 @@ ggplot(aes_string(x = 'YrSold'), data = numeric.both) +
   geom_histogram() + facet_wrap(~ Set)
 ```
 
-#### Varaince of Explanatory Variables
-
 
 ```{r}
-temp.table <- train.numeric %>%
-  select(-one_of(c('Id', 'Set'))) %>%
-  summarise_all(funs(sd(., na.rm=TRUE))) %>%
-  rownames_to_column %>%
-  gather(var, value, -rowname) %>%
-  arrange(-value) %>%
-  select(-one_of(c('rowname')))
-names(temp.table) <- c('Feature','Correlation Coefficient')
-kable(temp.table)
+
 ```
+

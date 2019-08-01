@@ -1,7 +1,7 @@
 ---
 title: "Question 1"
 author: "Stuart Miller"
-date: "July 28, 2019"
+date: "July 31, 2019"
 output: 
   github_document:
     toc: true
@@ -63,6 +63,7 @@ Histogram of `SalePrice`, which is the sale price of the houses in the dataset.
 ```{r, SalePriceHist, message=FALSE}
 train %>% ggplot(aes(x = SalePrice)) +
   geom_histogram() + 
+  facet_grid(. ~ Neighborhood) +
   labs(title = 'Histogram of Sale Price', 
        y = 'Frequency', x = 'Sale Price')
 ```
@@ -72,40 +73,30 @@ Histogram of `GrLivArea`, which is the square footage of the living areas of hou
 ```{r, LivingRoomHist, message=FALSE}
 train %>% ggplot(aes(x = GrLivArea)) +
   geom_histogram() + 
+  facet_grid(. ~ Neighborhood) +
   labs(title = 'Histogram of Living Room Area', 
        y = 'Frequency', x = 'Living Room Area')
 ```
 
-Both variables (`SalePrice` and `GrLivArea`) show evidence of right skew. This could indicate need for a log transform.
-
-Scatter plot of `SalePrice` vs `GrLivArea` shows that the large values in `GrLivArea` are pulling the regression line. A log transfrom on `GrLivArea` may help correct this.
+Scatter plot of `SalePrice` vs `GrLivArea` shows that the large values in `GrLivArea` are pulling the regression line. A log transfrom on `SalePrice` may help correct this.
 
 ```{r, regression-original-scale}
 train %>% ggplot(aes(x = GrLivArea, y = SalePrice)) +
   geom_point(alpha = 0.3) +
   labs(title = 'Sale Price vs Living Room Area', 
+       y = 'Sale Price', x = 'Living Room Area')
+```
+
+Scatter plot of the log transform of `SalePrice` vs `GrLivArea` shows taking the log transform of `GrLivArea` does improve the linear relationship. It seem reasible that the relationship could be linear, excluding the two anomalous points on the right of the graph. These points will need some investigation.
+
+```{r, linear-log-plot}
+train %>% ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
+  geom_point(alpha = 0.3) +
+  labs(title = 'Log of Sale Price vs Living Room Area', 
        y = 'Log of Sale Price', x = 'Living Room Area')
 ```
 
-Scatter plot of `SalePrice` vs log transform of `GrLivArea` shows taking the log transform of `GrLivArea` does improve the linear relationship. However, it appears that a larger value of `GrLivArea` is associated with an increase in varaince of `SalePrice`. A log transform of `SalePrice` may help control for this change in varaince.
-
-```{r, linear-log-plot}
-train %>% ggplot(aes(x = log(GrLivArea), y = SalePrice)) +
-  geom_point(alpha = 0.3) +
-  labs(title = 'Sale Price vs Log of Living Room Area', 
-       y = 'Sale Price', x = 'Log of Living Room Area')
-```
-
-Scatter plot the log transform of `SalePrice` vs the log transform of `GrLivArea` shows evidece of a linear relationship without sufficient evidence of changing variance. Two points to the right side of the plot appear to be pulling the regression line to the right. These points should be investigated.
-
-```{r, log-log-plot}
-train %>% ggplot(aes(x = log(GrLivArea), y = log(SalePrice))) +
-  geom_point(alpha = 0.3) + 
-  labs(title = 'Log of Sale Price vs Log of Living Room Area', 
-       y = 'Log of Sale Price', x = 'Log of Living Room Area')
-```
-
-Add labels of `SaleCondition` of the two points of interest and some neighboring points to the scatter plot the log transform of `SalePrice` vs the log transform of `GrLivArea`. This indicates the influential points are of type `Partial` `SaleCondition`, which means the houses were not completed at the time of assessment.
+Add labels of `SaleCondition` of the two points of interest and some neighboring points to the scatter plot the log transform of `SalePrice` vs the log transform of `GrLivArea`. This indicates the influential points are of type `Partial` `SaleCondition`, which means the houses were not completed at the time of assessment. This could mean the assess prices are not correct. These points will be excluded from the analysis becasue they may not be correct.
 
 ```{r, log-log-plot-labeled}
 train %>% ggplot(aes(x = log(GrLivArea), y = log(SalePrice))) +
@@ -117,48 +108,43 @@ train %>% ggplot(aes(x = log(GrLivArea), y = log(SalePrice))) +
                                SaleCondition, '')), hjust=0, vjust=0)
 ```
 
-
-Scatter plot log of sale price vs log of living room area for each neighborhood. In each case, there is not sigificant evidence against the assumption of linearity.
+Scatter plot log of sale price vs log of living room area for each neighborhood with the suspect points excluded. In each case, there is not sigificant evidence against the assumption of linearity.
 
 ```{r, log-log-plot-by-N}
 regplot.names <- train %>% filter(Neighborhood == 'NAmes') %>%
-  ggplot(aes(x = log(GrLivArea), y = log(SalePrice))) +
+  ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
   geom_point(alpha = 0.3) +
-  ylim(10.5, 13) +
-  xlim(5.5, 9) +
+  ylim(10, 13) +
+  xlim(0, 3500) +
   geom_smooth(method = 'lm') +
   labs(subtitle = 'Northwest Ames', 
-       y = 'Log of Sale Price', x = 'Log of Living Room Area')
+       y = 'Log of Sale Price', x = 'Living Room Area')
 
-regplot.ed <- train %>% filter(Neighborhood == 'Edwards') %>%
-  ggplot(aes(x = log(GrLivArea), y = log(SalePrice))) +
+regplot.ed <- train %>%
+  filter(GrLivArea < 4000) %>%
+  filter(Neighborhood == 'Edwards') %>%
+  ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
   geom_point(alpha = 0.3) +
-  ylim(10.5, 13) +
-  xlim(5.5, 9) +
+  ylim(10, 13) +
+  xlim(0, 3500) +
   geom_smooth(method = 'lm') +
   labs(subtitle = 'Edwards', 
-       y = 'Log of Sale Price', x = 'Log of Living Room Area')
+       y = 'Log of Sale Price', x = 'Living Room Area')
 
 regplot.brk <- train %>% filter(Neighborhood == 'BrkSide') %>%
-  ggplot(aes(x = log(GrLivArea), y = log(SalePrice))) +
+  ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
   geom_point(alpha = 0.3) +
-  ylim(10.5, 13) +
-  xlim(5.5, 9) +
+  ylim(10, 13) +
+  xlim(0, 3500) +
   geom_smooth(method = 'lm') +
   labs(subtitle = 'Brook Side', 
-       y = 'Log of Sale Price', x = 'Log of Living Room Area')
+       y = 'Log of Sale Price', x = 'Living Room Area')
 grid.arrange(regplot.names,regplot.ed,regplot.brk, nrow = 2,
              top = 'Regression Plots for Neighborhoods')
 ```
 
 
 
-```{r}
-train %>% ggplot(aes(x = log(GrLivArea), y = log(SalePrice), color = Neighborhood)) +
-  geom_point(alpha = 0.3) + 
-  labs(subtitle = 'Brook Side', 
-       y = 'Log of Sale Price', x = 'Log of Living Room Area')
-```
 
 ## Model
 
@@ -170,26 +156,29 @@ where Edwards neighborhood is used for reference.
 
 ### Interaction Terms
 
-We will use an extra sums of square test to verify that the interaction terms are useful for the model. The ESS test provides strong evidence that the interaction terms are useful (p-value = 0.0002); thus, we will continue with the full model.
+We will use an extra sums of square test to verify that the interaction terms are useful for the model. The ESS test provides convincing evidence that the interaction terms are useful (p-value < 0.0001); thus, we will continue with the full model.
 
 ```{r, ESS}
 # create dummy variables with Neighborhood == 'Edwards' as reference
 train <- get.dummies(train, "Neighborhood", reference = 'Edwards')
 
+# remove suspect points from training data
+train.mod <- train %>% filter(GrLivArea < 4000)
+
 # full model formula
-model.formula = log(SalePrice) ~ log(GrLivArea) + 
+model.formula = log(SalePrice) ~ (GrLivArea) + 
      Neighborhood_BrkSide + 
      Neighborhood_NAmes +
-     log(GrLivArea) * Neighborhood_BrkSide + 
-     log(GrLivArea) * Neighborhood_NAmes
+     (GrLivArea) * Neighborhood_BrkSide + 
+     (GrLivArea) * Neighborhood_NAmes
 # reduced model formula
-model.reduced.formula = log(SalePrice) ~ log(GrLivArea) + 
+model.reduced.formula = log(SalePrice) ~ (GrLivArea) + 
      Neighborhood_BrkSide + 
      Neighborhood_NAmes
 
 # fit models
-model <- lm(formula = model.formula, data = train)
-model.reduced <- lm(formula = model.reduced.formula, data = train)
+model <- lm(formula = model.formula, data = train.mod)
+model.reduced <- lm(formula = model.reduced.formula, data = train.mod)
 # ESS test on models
 anova(model.reduced, model)
 
@@ -202,14 +191,14 @@ Estimate parameters in the model by fitting to the entire dataset to the chosen 
 
 ```{r, modeling, message=FALSE}
 # formula for model
-model.formula = log(SalePrice) ~ log(GrLivArea) + 
+model.formula = log(SalePrice) ~ (GrLivArea) + 
      Neighborhood_BrkSide + 
      Neighborhood_NAmes +
-     log(GrLivArea) * Neighborhood_BrkSide + 
-     log(GrLivArea) * Neighborhood_NAmes
+     (GrLivArea) * Neighborhood_BrkSide + 
+     (GrLivArea) * Neighborhood_NAmes
 
 # model the mean response given equation above
-model <- lm(formula = model.formula, data = train)
+model <- lm(formula = model.formula, data = train.mod)
 summary(model)
 confint(model)
 ```
@@ -223,7 +212,7 @@ Use 10-fold cross validation to estimate the accuracy metrics of the model.
 train.control <- trainControl(method = "cv", number = 10)
 # Train the model
 model.cv <- train(model.formula, 
-                    data = train,
+                    data = train.mod,
                     method = 'lm',
                     trControl = train.control)
 # print model summary
@@ -250,7 +239,7 @@ kable(data.frame('RMSE'=res$RMSE,
 * **Independence**: It is not clear how the data was sampled. We will assume this is true and continue.
 
 ```{r, diag-plots}
-basic.fit.plots(train, model)
+basic.fit.plots(train.mod, model)
 ols_plot_resid_lev(model)
 ols_plot_cooksd_bar(model)
 ```
