@@ -11,6 +11,7 @@ library(knitr)
 library(tidyverse)
 library(naniar)
 library(Hmisc)
+library(GGally)
 
 # helper files
 source('../helper/data_munging.R')
@@ -23,6 +24,8 @@ source('../helper/data_munging.R')
 ``` r
 train <- read_csv('../data/train.csv')
 test <- read_csv('../data/test.csv')
+
+train <- train %>% mutate(logSalePrice = log(SalePrice))
 
 train$MSSubClass <- factor(train$MSSubClass)
 test$MSSubClass <- factor(test$MSSubClass)
@@ -51,7 +54,7 @@ print('dimensions of the numeric features (training)')
 dim(train.numeric)
 ```
 
-    ## [1] 1460   37
+    ## [1] 1460   38
 
 ``` r
 print('dimensions of the non-numeric features (training)')
@@ -222,27 +225,38 @@ kable(flattenedCor)
 | :----------- | :----------- | ----------------------: |
 | GarageCars   | GarageArea   |               0.8394149 |
 | TotalBsmtSF  | 1stFlrSF     |               0.8359994 |
+| OverallQual  | logSalePrice |               0.8276821 |
 | GrLivArea    | TotRmsAbvGrd |               0.8243121 |
 | YearBuilt    | GarageYrBlt  |               0.8235195 |
+| GrLivArea    | logSalePrice |               0.6958444 |
 | 2ndFlrSF     | GrLivArea    |               0.6882916 |
+| GarageCars   | logSalePrice |               0.6643378 |
 | BsmtFinSF1   | BsmtFullBath |               0.6517267 |
 | BedroomAbvGr | TotRmsAbvGrd |               0.6502846 |
 | YearRemodAdd | GarageYrBlt  |               0.6458085 |
+| GarageArea   | logSalePrice |               0.6263662 |
 | YearBuilt    | YearRemodAdd |               0.6231713 |
 | 2ndFlrSF     | TotRmsAbvGrd |               0.6177759 |
+| TotalBsmtSF  | logSalePrice |               0.6162565 |
 | GrLivArea    | FullBath     |               0.6148873 |
+| FullBath     | logSalePrice |               0.6099352 |
 | OverallQual  | GrLivArea    |               0.6074661 |
 | 2ndFlrSF     | HalfBath     |               0.6063367 |
+| 1stFlrSF     | logSalePrice |               0.6035725 |
 | GarageYrBlt  | GarageCars   |               0.6009034 |
+| YearBuilt    | logSalePrice |               0.5938805 |
 | OverallQual  | GarageCars   |               0.5938029 |
 | GarageYrBlt  | GarageArea   |               0.5926352 |
+| YearRemodAdd | logSalePrice |               0.5925974 |
 | OverallQual  | YearBuilt    |               0.5893845 |
 | OverallQual  | FullBath     |               0.5768747 |
 | OverallQual  | YearRemodAdd |               0.5707571 |
 | OverallQual  | TotalBsmtSF  |               0.5639597 |
+| GarageYrBlt  | logSalePrice |               0.5629896 |
 | 1stFlrSF     | GrLivArea    |               0.5613723 |
 | OverallQual  | GarageYrBlt  |               0.5604251 |
 | OverallQual  | GarageArea   |               0.5506589 |
+| TotRmsAbvGrd | logSalePrice |               0.5452451 |
 | FullBath     | TotRmsAbvGrd |               0.5404489 |
 | YearBuilt    | GarageCars   |               0.5325628 |
 | BsmtFinSF1   | TotalBsmtSF  |               0.5309165 |
@@ -309,6 +323,7 @@ kable(temp.table)
 | FullBath      |       5.509158e-01 |
 | BsmtFullBath  |       5.189106e-01 |
 | HalfBath      |       5.028854e-01 |
+| logSalePrice  |       3.994519e-01 |
 | BsmtHalfBath  |       2.387526e-01 |
 | KitchenAbvGr  |       2.203382e-01 |
 
@@ -329,7 +344,7 @@ print(cont.names)
     ## [25] "GarageYrBlt"   "GarageCars"    "GarageArea"    "WoodDeckSF"   
     ## [29] "OpenPorchSF"   "EnclosedPorch" "3SsnPorch"     "ScreenPorch"  
     ## [33] "PoolArea"      "MiscVal"       "MoSold"        "YrSold"       
-    ## [37] "SalePrice"
+    ## [37] "SalePrice"     "logSalePrice"
 
 ``` r
 # add factors for test and train
@@ -337,7 +352,7 @@ train.numeric$Set <- rep('train', (dim(train.numeric)[1]))
 test.numeric$Set <- rep('test', (dim(test.numeric)[1]))
 
 # combine the training and testing set for histogram plotting
-numeric.both <- rbind(train.numeric %>% select(-one_of(c('SalePrice','Id'))),
+numeric.both <- rbind(train.numeric %>% select(-one_of(c('SalePrice','Id','logSalePrice'))),
                       test.numeric %>% select(-one_of(c('Id'))))
 numeric.both$Set <- as.factor(numeric.both$Set)
 
@@ -1334,3 +1349,116 @@ ggplot(aes_string(x = "SaleCondition"), data = nonnumeric.both) +
 ```
 
 ![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-86-1.png)<!-- -->
+
+### Continuous and Categorical Variable Interactions
+
+#### Interactions for Garage Variables
+
+A number of varaibles are likely related and could provide useful
+interactions. The following variables are assocaited with garages.
+
+  - Categorical
+      - `GarageType`
+      - `GarageFinish`
+  - Continuous
+      - `GarageYrBlt`
+      - `GarageCars`
+      - `GarageArea`
+
+**Correlation between Continupus Garage Features**
+
+As expected, there is a strong correlation betwen area and number of
+cars (cor ~ 0.83). There is a moderate correlation between size (area
+and number of cars) and year built (cor ~ 0.57).
+
+``` r
+train %>%
+  select(c('GarageArea','GarageCars','GarageYrBlt')) %>%
+  drop_na() %>%
+  ggpairs()
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-87-1.png)<!-- -->
+
+**Interaction Plots for Garage Area**
+
+Plots of log of sale price vs garage area. The slope of log sale price
+vs garage area does appear to vary by garage finish and garage type
+(`GarageFinish` and `GarageType`, respectively). This indicates an
+interaction could be useful.
+
+``` r
+train %>%
+  ggplot(aes(x = GarageArea, y = logSalePrice)) +
+  geom_point() + facet_wrap(GarageType ~ .) +
+  geom_smooth(method = 'lm')
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-88-1.png)<!-- -->
+
+``` r
+train %>%
+  ggplot(aes(x = GarageArea, y = logSalePrice)) +
+  geom_point() + facet_wrap(GarageFinish ~ .) +
+  geom_smooth(method = 'lm')
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-88-2.png)<!-- -->
+
+**Interaction Plots for Garage Cars**
+
+Plots of log of sale price vs number of cars per garage (sizing). The
+slope of log sale price vs number of cars per garage does appear to vary
+by garage finish and garage type (`GarageFinish` and `GarageType`,
+respectively). This indicates an interaction could be useful.
+
+``` r
+train %>%
+  ggplot(aes(x = GarageCars, y = logSalePrice)) +
+  geom_point() + facet_wrap(GarageType ~ .) +
+  geom_smooth(method = 'lm')
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-89-1.png)<!-- -->
+
+``` r
+train %>%
+  ggplot(aes(x = GarageCars, y = logSalePrice)) +
+  geom_point() + facet_wrap(GarageFinish ~ .) +
+  geom_smooth(method = 'lm')
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-89-2.png)<!-- -->
+
+**Interaction Plots for Garage Year Built**
+
+Plots of log of sale price vs garage year built. The slope of log sale
+price vs garage year built does appear to vary by garage finish and
+garage type (`GarageFinish` and `GarageType`, respectively). This
+indicates an interaction could be useful.
+
+``` r
+train %>%
+  ggplot(aes(x = GarageYrBlt, y = logSalePrice)) +
+  geom_point() + facet_wrap(GarageType ~ .) +
+  geom_smooth(method = 'lm')
+```
+
+    ## Warning: Removed 81 rows containing non-finite values (stat_smooth).
+
+    ## Warning: Removed 81 rows containing missing values (geom_point).
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-90-1.png)<!-- -->
+
+``` r
+train %>%
+  ggplot(aes(x = GarageYrBlt, y = logSalePrice)) +
+  geom_point() + facet_wrap(GarageFinish ~ .) +
+  geom_smooth(method = 'lm')
+```
+
+    ## Warning: Removed 81 rows containing non-finite values (stat_smooth).
+    
+    ## Warning: Removed 81 rows containing missing values (geom_point).
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-90-2.png)<!-- -->

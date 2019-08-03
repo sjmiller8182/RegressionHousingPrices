@@ -19,6 +19,7 @@ library(knitr)
 library(tidyverse)
 library(naniar)
 library(Hmisc)
+library(GGally)
 
 # helper files
 source('../helper/data_munging.R')
@@ -31,6 +32,8 @@ source('../helper/data_munging.R')
 ```{r results='hide', message=FALSE}
 train <- read_csv('../data/train.csv')
 test <- read_csv('../data/test.csv')
+
+train <- train %>% mutate(logSalePrice = log(SalePrice))
 
 train$MSSubClass <- factor(train$MSSubClass)
 test$MSSubClass <- factor(test$MSSubClass)
@@ -196,7 +199,7 @@ train.numeric$Set <- rep('train', (dim(train.numeric)[1]))
 test.numeric$Set <- rep('test', (dim(test.numeric)[1]))
 
 # combine the training and testing set for histogram plotting
-numeric.both <- rbind(train.numeric %>% select(-one_of(c('SalePrice','Id'))),
+numeric.both <- rbind(train.numeric %>% select(-one_of(c('SalePrice','Id','logSalePrice'))),
                       test.numeric %>% select(-one_of(c('Id'))))
 numeric.both$Set <- as.factor(numeric.both$Set)
 
@@ -755,15 +758,79 @@ ggplot(aes_string(x = "SaleCondition"), data = nonnumeric.both) +
   geom_bar() + facet_wrap(~ Set)
 ```
 
+### Continuous and Categorical Variable Interactions
+
+#### Interactions for Garage Variables
+
+A number of varaibles are likely related and could provide useful interactions. The following variables are assocaited with garages.
+
+* Categorical
+  * `GarageType`
+  * `GarageFinish`
+* Continuous
+  * `GarageYrBlt`
+  * `GarageCars`
+  * `GarageArea`
+
+**Correlation between Continupus Garage Features**
+
+As expected, there is a strong correlation betwen area and number of cars (cor ~ 0.83). There is a moderate correlation between size (area and number of cars) and year built (cor ~ 0.57).
+
+```{r}
+train %>%
+  select(c('GarageArea','GarageCars','GarageYrBlt')) %>%
+  drop_na() %>%
+  ggpairs()
+```
 
 
+**Interaction Plots for Garage Area**
 
+Plots of log of sale price vs garage area. The slope of log sale price vs garage area does appear to vary by garage finish and garage type (`GarageFinish` and `GarageType`, respectively). This indicates an interaction could be useful.
 
+```{r}
+train %>%
+  ggplot(aes(x = GarageArea, y = logSalePrice)) +
+  geom_point() + facet_wrap(GarageType ~ .) +
+  geom_smooth(method = 'lm')
 
+train %>%
+  ggplot(aes(x = GarageArea, y = logSalePrice)) +
+  geom_point() + facet_wrap(GarageFinish ~ .) +
+  geom_smooth(method = 'lm')
+```
 
+**Interaction Plots for Garage Cars**
 
+Plots of log of sale price vs number of cars per garage (sizing). The slope of log sale price vs number of cars per garage does appear to vary by garage finish and garage type (`GarageFinish` and `GarageType`, respectively). This indicates an interaction could be useful.
 
+```{r}
+train %>%
+  ggplot(aes(x = GarageCars, y = logSalePrice)) +
+  geom_point() + facet_wrap(GarageType ~ .) +
+  geom_smooth(method = 'lm')
 
+train %>%
+  ggplot(aes(x = GarageCars, y = logSalePrice)) +
+  geom_point() + facet_wrap(GarageFinish ~ .) +
+  geom_smooth(method = 'lm')
+```
+
+**Interaction Plots for Garage Year Built**
+
+Plots of log of sale price vs garage year built. The slope of log sale price vs garage year built does appear to vary by garage finish and garage type (`GarageFinish` and `GarageType`, respectively). This indicates an interaction could be useful.
+
+```{r}
+train %>%
+  ggplot(aes(x = GarageYrBlt, y = logSalePrice)) +
+  geom_point() + facet_wrap(GarageType ~ .) +
+  geom_smooth(method = 'lm')
+
+train %>%
+  ggplot(aes(x = GarageYrBlt, y = logSalePrice)) +
+  geom_point() + facet_wrap(GarageFinish ~ .) +
+  geom_smooth(method = 'lm')
+```
 
 
 
