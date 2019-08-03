@@ -1462,3 +1462,230 @@ train %>%
     ## Warning: Removed 81 rows containing missing values (geom_point).
 
 ![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-90-2.png)<!-- -->
+
+#### Interactions for Garage Variables
+
+A number of varaibles are likely related and could provide useful
+interactions. The following variables are assocaited with garages.
+
+  - Categorical
+      - `BsmtQual`
+      - `BsmtExposure`
+      - `BsmtFinType1`
+      - `BsmtFinType2`
+  - Continuous
+      - `BsmtFinSF1` - with dummy variable to remove 0s
+      - `BsmtFinSF2` - with dummy variable to remove 0s
+      - `BsmtUnfSF` - maybe with a dummy variable
+      - `TotalBsmtSF` - with dummy variable to remove 0s
+
+**Correlation between Continupus Basement Features**
+
+The continuous basement features do not appear to be closely related.
+
+``` r
+train %>%
+  select(c('BsmtFinSF1','BsmtFinSF2','BsmtUnfSF', 'TotalBsmtSF')) %>%
+  drop_na() %>%
+  ggpairs()
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-91-1.png)<!-- -->
+
+**Interaction Plots for BsmtFinSF1**
+
+Plots of BsmtFinSF1 vs log of sale price split on the following factor
+variables:
+
+  - `BsmtQual`
+  - `BsmtExposure`
+  - `BsmtFinType1`
+  - `BsmtFinType2`
+
+Since this is finished basement variable, the unfinised type (`Unf`) is
+factored out. There does appear to be a relationship between
+`BsmtFinSF1` (basement finished square feet - first type) and log of
+sale price.
+
+``` r
+train %>%
+  ggplot(aes(x = BsmtFinSF1, y = logSalePrice)) +
+  geom_point() + facet_wrap(BsmtQual ~ .) +
+  geom_smooth(method = 'lm')
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-92-1.png)<!-- -->
+
+``` r
+train %>%
+  ggplot(aes(x = BsmtFinSF1, y = logSalePrice)) +
+  geom_point() + facet_wrap(BsmtExposure ~ .) +
+  geom_smooth(method = 'lm')
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-92-2.png)<!-- -->
+
+``` r
+train %>%
+  filter(!BsmtFinType1 %in% c('Unf')) %>%
+  ggplot(aes(x = BsmtFinSF1, y = logSalePrice)) +
+  geom_point() + facet_wrap(BsmtFinType1 ~ .) +
+  geom_smooth(method = 'lm')
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-92-3.png)<!-- -->
+
+``` r
+train %>% 
+  filter(!BsmtFinType2 %in% c('Unf')) %>%
+  ggplot(aes(x = BsmtFinSF1, y = logSalePrice)) +
+  geom_point() + facet_wrap(BsmtFinType2 ~ .) +
+  geom_smooth(method = 'lm')
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-92-4.png)<!-- -->
+
+**Interaction Plots for BsmtFinSF2**
+
+Plots of BsmtFinSF2 vs log of sale price split on the following factor
+variables:
+
+  - `BsmtQual`
+  - `BsmtExposure`
+  - `BsmtFinType1`
+  - `BsmtFinType2`
+
+Since this is finished basement variable, the unfinised type (`Unf`) is
+factored out. There does not appear to be a relationship between
+`BsmtFinSF2` (basement finished square feet - second type) and log of
+sale price.
+
+``` r
+train %>%
+  ggplot(aes(x = BsmtFinSF2, y = logSalePrice)) +
+  geom_point() + facet_wrap(BsmtQual ~ .) +
+  geom_smooth(method = 'lm')
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-93-1.png)<!-- -->
+
+``` r
+train %>%
+  ggplot(aes(x = BsmtFinSF2, y = logSalePrice)) +
+  geom_point() + facet_wrap(BsmtExposure ~ .) +
+  geom_smooth(method = 'lm')
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-93-2.png)<!-- -->
+
+``` r
+train %>%
+  filter(!BsmtFinType1 %in% c('Unf')) %>%
+  ggplot(aes(x = BsmtFinSF2, y = logSalePrice)) +
+  geom_point() + facet_wrap(BsmtFinType1 ~ .) +
+  geom_smooth(method = 'lm')
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-93-3.png)<!-- -->
+
+**Interaction Plots for BsmtUnfSF**
+
+Plots of BsmtUnfSF vs log of sale price split on the following factor
+variables:
+
+  - `BsmtQual`
+  - `BsmtExposure`
+  - `BsmtFinType1`
+  - `BsmtFinType2`
+
+Since this is an unfinshed basement variable, only the unfinished factor
+of `BsmtFinType1` and `BsmtFinType2` is considered. There does not
+appear to be a relationship between `BsmtUnfSF` and log of sale price
+for `BsmtExposure` and `BsmtFinType1`.
+
+``` r
+train %>%
+  ggplot(aes(x = BsmtUnfSF, y = logSalePrice)) +
+  geom_point() + facet_wrap(BsmtQual ~ .) +
+  geom_smooth(method = 'lm')
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-94-1.png)<!-- -->
+
+``` r
+train %>%
+  ggplot(aes(x = BsmtUnfSF, y = logSalePrice)) +
+  geom_point() + facet_wrap(BsmtExposure ~ .) +
+  geom_smooth(method = 'lm')
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-94-2.png)<!-- -->
+
+``` r
+train %>%
+  filter(BsmtFinType1 %in% c('Unf')) %>%
+  ggplot(aes(x = BsmtUnfSF, y = logSalePrice)) +
+  geom_point() + facet_wrap(BsmtFinType1 ~ .) +
+  geom_smooth(method = 'lm')
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-94-3.png)<!-- -->
+
+``` r
+train %>%
+  filter(BsmtFinType2 %in% c('Unf')) %>%
+  ggplot(aes(x = BsmtUnfSF, y = logSalePrice)) +
+  geom_point() + facet_wrap(BsmtFinType2 ~ .) +
+  geom_smooth(method = 'lm')
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-94-4.png)<!-- -->
+
+**Interaction Plots for TotalBsmtSF**
+
+Plots of TotalBsmtSF vs log of sale price split on the following factor
+variables:
+
+  - `BsmtQual`
+  - `BsmtExposure`
+  - `BsmtFinType1`
+  - `BsmtFinType2`
+
+There does appear to be a relationship between `TotalBsmtSF` (basement
+square feet) and log of sale price.
+
+``` r
+train %>%
+  ggplot(aes(x = TotalBsmtSF, y = logSalePrice)) +
+  geom_point() + facet_wrap(BsmtQual ~ .) +
+  geom_smooth(method = 'lm')
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-95-1.png)<!-- -->
+
+``` r
+train %>%
+  ggplot(aes(x = TotalBsmtSF, y = logSalePrice)) +
+  geom_point() + facet_wrap(BsmtExposure ~ .) +
+  geom_smooth(method = 'lm')
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-95-2.png)<!-- -->
+
+``` r
+train %>%
+  ggplot(aes(x = TotalBsmtSF, y = logSalePrice)) +
+  geom_point() + facet_wrap(BsmtFinType1 ~ .) +
+  geom_smooth(method = 'lm')
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-95-3.png)<!-- -->
+
+``` r
+train %>% 
+  ggplot(aes(x = TotalBsmtSF, y = logSalePrice)) +
+  geom_point() + facet_wrap(BsmtFinType2 ~ .) +
+  geom_smooth(method = 'lm')
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-95-4.png)<!-- -->
