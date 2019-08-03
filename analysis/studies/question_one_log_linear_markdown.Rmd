@@ -44,7 +44,9 @@ train.filtered <- train %>%
 
 ## Transformation Analysis
 
-We decided to produce a log of the SalePrice with regards to the other paraemters in the model.  (i.e...a log-linear relationship).  This had the desired effect of normalizing the data, but still left some extreme observations that we felt necessary to handle in order to meet the assumptions of constant variance.  We therefore elected to exclude all but the homes that were in a "normal condition" as it seemed inappropriate to build a model when attempting to predict incomplete observations.
+We decided to produce a log-linear model by log-transforming SalePrice and leaving explanatory variables as untransformed model parameters. This decision provided normalized data for analysis, but some extreme observations remained, fueled by SaleCondition values other than "Normal." Because these 48 extreme values caused an undesirable effect on the model - and we do not believe them to be representative of the overall population - we elected to eliminate all but "Normal" SaleCondition values, achieving constant variance in so doing. 
+
+Values removed include for "Abnormal Sale - trade, forceclosure, short sale", "Adjoining Land Purchase", "Allocation - two linked properties with separate deeds, typically condo with a garage unit", "Sale between family members", and "Home was not completed when last assessed (associated with New Homes)." Therefore, this study focuses on normal home sales not listed in the above omitted SaleCondition factor levels.
 
 
 ```{r}
