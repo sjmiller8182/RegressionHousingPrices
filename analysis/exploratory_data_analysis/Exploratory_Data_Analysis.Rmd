@@ -1,7 +1,7 @@
 ---
-title: "Exploratory_Data_Analysis"
+title: "Exploratory Data Analysis"
 author: "Stuart Miller"
-date: "July 23, 2019"
+date: "August 2, 2019"
 output: 
   github_document:
     toc: true
@@ -139,10 +139,9 @@ test.missing.summary %>%
 
 
 
-## Univariate Exploration
+## Univariate and Relation to Response Exploration
 
 ### Continuous Variables
-
 
 #### Distribution of Response Variable
 
@@ -177,12 +176,12 @@ temp.table <- train.numeric %>%
   gather(var, value, -rowname) %>%
   arrange(-value) %>%
   select(-one_of(c('rowname')))
-names(temp.table) <- c('Feature','Correlation Coefficient')
+names(temp.table) <- c('Feature','Standard Deviation')
 kable(temp.table)
 ```
 
 
-#### Distribution of Explanatory Variable
+#### Explanatory Variables
 
 ```{r}
 # get the names of the continuous variables
@@ -197,192 +196,284 @@ test.numeric$Set <- rep('test', (dim(test.numeric)[1]))
 numeric.both <- rbind(train.numeric %>% select(-one_of(c('SalePrice','Id'))),
                       test.numeric %>% select(-one_of(c('Id'))))
 numeric.both$Set <- as.factor(numeric.both$Set)
+
+train.numeric <- train.numeric %>% filter(GrLivArea < 4000)
+
+train.numeric <- train.numeric %>% mutate(logSalePrice = log(SalePrice))
 ```
 
+Based on the plots below, the following features appear to be linearly related to log of sale price:
+
+* `OverallQual`
+* `YearBuilt`
+* `YearRemodAdd`
+* `BsmtFinSF1` - with dummy variable to remove 0s
+* `BsmtFinSF2` - with dummy variable to remove 0s
+* `BsmtUnfSF` - maybe with a dummy variable
+* `TotalBsmtSF` - with dummy variable to remove 0s
+* `1stFlrSF`
+* `2ndFlrSF` - with dummy variable to remove 0s
+* `GrLivArea`
+* `FullBath`
+* `TotRmsAbvGrd` - somewhat of a curve in the response
+* `GarageYrBlt`
+* `GarageCars`
+* `GarageArea`
+
+The following features may be useful:
+
+`MasVnrArea` - maybe with a dummy variable
+`EnclosedPorch` - maybe with a dummy variable
 
 ```{r}
-ggplot(aes_string(x = 'MasVnrArea'), data = numeric.both) + 
+ggplot(aes_string(x = 'LotFrontage'), data = numeric.both) + 
   geom_histogram() + facet_wrap(~ Set)
+train.numeric %>% ggplot(aes(x = LotFrontage, y = logSalePrice)) +
+  geom_point(alpha = 0.3) + geom_smooth(method = 'lm')
 ```
 
 ```{r}
 ggplot(aes_string(x = 'LotArea'), data = numeric.both) + 
   geom_histogram() + facet_wrap(~ Set)
-```
-
-```{r}
-ggplot(aes_string(x = 'LotFrontage'), data = numeric.both) + 
-  geom_histogram() + facet_wrap(~ Set)
+train.numeric %>% ggplot(aes(x = LotArea, y = logSalePrice)) +
+  geom_point() + geom_smooth(method = 'lm')
 ```
 
 ```{r}
 ggplot(aes_string(x = 'OverallQual'), data = numeric.both) + 
   geom_histogram() + facet_wrap(~ Set)
+train.numeric %>% ggplot(aes(x = OverallQual, y = logSalePrice)) +
+  geom_point() + geom_smooth(method = 'lm')
+```
+
+```{r}
+ggplot(aes_string(x = 'OverallCond'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+train.numeric %>% ggplot(aes(x = OverallCond, y = logSalePrice)) +
+  geom_point() + geom_smooth(method = 'lm')
 ```
 
 ```{r}
 ggplot(aes_string(x = 'YearBuilt'), data = numeric.both) + 
   geom_histogram() + facet_wrap(~ Set)
+train.numeric %>% ggplot(aes(x = YearBuilt, y = logSalePrice)) +
+  geom_point() + geom_smooth(method = 'lm')
 ```
 
 ```{r}
 ggplot(aes_string(x = 'YearRemodAdd'), data = numeric.both) + 
   geom_histogram() + facet_wrap(~ Set)
-```
-
-```{r}
-ggplot(aes_string(x = 'BsmtFinSF1'), data = numeric.both) + 
-  geom_histogram() + facet_wrap(~ Set)
+train.numeric %>% ggplot(aes(x = YearRemodAdd, y = logSalePrice)) +
+  geom_point() + geom_smooth(method = 'lm')
 ```
 
 ```{r}
 ggplot(aes_string(x = 'MasVnrArea'), data = numeric.both) + 
   geom_histogram() + facet_wrap(~ Set)
+train.numeric %>% filter(MasVnrArea != 0) %>% ggplot(aes(x = MasVnrArea, y = logSalePrice)) +
+  geom_point() + geom_smooth(method = 'lm')
+```
+
+```{r}
+ggplot(aes_string(x = 'BsmtFinSF1'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+train.numeric %>% filter(BsmtFinSF1 != 0) %>% ggplot(aes(x = BsmtFinSF1, y = logSalePrice)) +
+  geom_point() + geom_smooth(method = 'lm')
 ```
 
 ```{r}
 ggplot(aes_string(x = 'BsmtFinSF2'), data = numeric.both) + 
   geom_histogram() + facet_wrap(~ Set)
+train.numeric %>% filter(BsmtFinSF2 != 0) %>% ggplot(aes(x = BsmtFinSF2, y = logSalePrice)) +
+  geom_point() + geom_smooth(method = 'lm')
 ```
+
 
 ```{r}
 ggplot(aes_string(x = 'BsmtUnfSF'), data = numeric.both) + 
   geom_histogram() + facet_wrap(~ Set)
+train.numeric %>% filter(BsmtUnfSF != 0) %>% ggplot(aes(x = BsmtUnfSF, y = logSalePrice)) +
+  geom_point() + geom_smooth(method = 'lm')
 ```
 
 ```{r}
 ggplot(aes_string(x = 'TotalBsmtSF'), data = numeric.both) + 
   geom_histogram() + facet_wrap(~ Set)
+train.numeric %>% filter(TotalBsmtSF != 0) %>% ggplot(aes(x = TotalBsmtSF, y = logSalePrice)) +
+  geom_point() + geom_smooth(method = 'lm')
 ```
 
 ```{r}
 ggplot(aes_string(x = '`1stFlrSF`'), data = numeric.both) + 
   geom_histogram() + facet_wrap(~ Set)
+train.numeric %>% filter(`1stFlrSF` != 0) %>% ggplot(aes(x = `1stFlrSF`, y = logSalePrice)) +
+  geom_point() + geom_smooth(method = 'lm')
 ```
 
 ```{r}
 ggplot(aes_string(x = '`2ndFlrSF`'), data = numeric.both) + 
   geom_histogram() + facet_wrap(~ Set)
+train.numeric %>% filter(`2ndFlrSF` != 0) %>% ggplot(aes(x = `2ndFlrSF`, y = logSalePrice)) +
+  geom_point() + geom_smooth(method = 'lm')
 ```
 
 ```{r}
 ggplot(aes_string(x = 'LowQualFinSF'), data = numeric.both) + 
   geom_histogram() + facet_wrap(~ Set)
+train.numeric %>% filter(LowQualFinSF != 0) %>% ggplot(aes(x = LowQualFinSF, y = logSalePrice)) +
+  geom_point() + geom_smooth(method = 'lm')
 ```
 
 ```{r}
 ggplot(aes_string(x = 'GrLivArea'), data = numeric.both) + 
   geom_histogram() + facet_wrap(~ Set)
+train.numeric %>% filter(GrLivArea != 0) %>% ggplot(aes(x = GrLivArea, y = logSalePrice)) +
+  geom_point() + geom_smooth(method = 'lm')
 ```
 
 ```{r}
 ggplot(aes_string(x = 'BsmtFullBath'), data = numeric.both) + 
   geom_histogram() + facet_wrap(~ Set)
+train.numeric %>% filter(BsmtFullBath != 0) %>% ggplot(aes(x = BsmtFullBath, y = logSalePrice)) +
+  geom_point() + geom_smooth(method = 'lm')
 ```
 
 ```{r}
 ggplot(aes_string(x = 'BsmtHalfBath'), data = numeric.both) + 
   geom_histogram() + facet_wrap(~ Set)
+train.numeric %>% filter(BsmtHalfBath != 0) %>% ggplot(aes(x = BsmtHalfBath, y = logSalePrice)) +
+  geom_point() + geom_smooth(method = 'lm')
+```
+
+```{r}
+ggplot(aes_string(x = 'FullBath'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+train.numeric %>% filter(FullBath != 0) %>% ggplot(aes(x = FullBath, y = logSalePrice)) +
+  geom_point() + geom_smooth(method = 'lm')
+```
+
+
+```{r}
+ggplot(aes_string(x = 'HalfBath'), data = numeric.both) + 
+  geom_histogram() + facet_wrap(~ Set)
+train.numeric %>% filter(HalfBath != 0) %>% ggplot(aes(x = HalfBath, y = logSalePrice)) +
+  geom_point() + geom_smooth(method = 'lm')
 ```
 
 ```{r}
 ggplot(aes_string(x = 'BedroomAbvGr'), data = numeric.both) + 
   geom_histogram() + facet_wrap(~ Set)
-```
-
-
-```{r}
-ggplot(aes_string(x = 'FullBath'), data = numeric.both) + 
-  geom_histogram() + facet_wrap(~ Set)
+train.numeric %>% filter(BedroomAbvGr != 0) %>% ggplot(aes(x = BedroomAbvGr, y = logSalePrice)) +
+  geom_point() + geom_smooth(method = 'lm')
 ```
 
 ```{r}
 ggplot(aes_string(x = 'KitchenAbvGr'), data = numeric.both) + 
   geom_histogram() + facet_wrap(~ Set)
+train.numeric %>% filter(KitchenAbvGr != 0) %>% ggplot(aes(x = KitchenAbvGr, y = logSalePrice)) +
+  geom_point() + geom_smooth(method = 'lm')
 ```
 
 ```{r}
 ggplot(aes_string(x = 'TotRmsAbvGrd'), data = numeric.both) + 
   geom_histogram() + facet_wrap(~ Set)
-```
-
-```{r}
-ggplot(aes_string(x = 'HalfBath'), data = numeric.both) + 
-  geom_histogram() + facet_wrap(~ Set)
+train.numeric %>% filter(TotRmsAbvGrd != 0) %>% ggplot(aes(x = TotRmsAbvGrd, y = logSalePrice)) +
+  geom_point() + geom_smooth(method = 'lm')
 ```
 
 ```{r}
 ggplot(aes_string(x = 'Fireplaces'), data = numeric.both) + 
   geom_histogram() + facet_wrap(~ Set)
+train.numeric %>% filter(Fireplaces != 0) %>% ggplot(aes(x = Fireplaces, y = logSalePrice)) +
+  geom_point() + geom_smooth(method = 'lm')
 ```
 
-```{r}
-ggplot(aes_string(x = 'HalfBath'), data = numeric.both) + 
-  geom_histogram() + facet_wrap(~ Set)
-```
+
 
 ```{r}
 ggplot(aes_string(x = 'GarageYrBlt'), data = numeric.both) + 
   geom_histogram() + facet_wrap(~ Set)
+train.numeric %>% filter(GarageYrBlt != 0) %>% ggplot(aes(x = GarageYrBlt, y = logSalePrice)) +
+  geom_point() + geom_smooth(method = 'lm')
 ```
 
 ```{r}
 ggplot(aes_string(x = 'GarageCars'), data = numeric.both) + 
   geom_histogram() + facet_wrap(~ Set)
+train.numeric %>% filter(GarageCars != 0) %>% ggplot(aes(x = GarageCars, y = logSalePrice)) +
+  geom_point() + geom_smooth(method = 'lm')
 ```
 
 ```{r}
 ggplot(aes_string(x = 'GarageArea'), data = numeric.both) + 
   geom_histogram() + facet_wrap(~ Set)
+train.numeric %>% filter(GarageArea != 0) %>% ggplot(aes(x = GarageArea, y = logSalePrice)) +
+  geom_point() + geom_smooth(method = 'lm')
 ```
 
 ```{r}
 ggplot(aes_string(x = 'WoodDeckSF'), data = numeric.both) + 
   geom_histogram() + facet_wrap(~ Set)
+train.numeric %>% filter(WoodDeckSF != 0) %>% ggplot(aes(x = WoodDeckSF, y = logSalePrice)) +
+  geom_point() + geom_smooth(method = 'lm')
 ```
 
 ```{r}
 ggplot(aes_string(x = 'OpenPorchSF'), data = numeric.both) + 
   geom_histogram() + facet_wrap(~ Set)
+train.numeric %>% filter(OpenPorchSF != 0) %>% ggplot(aes(x = OpenPorchSF, y = logSalePrice)) +
+  geom_point() + geom_smooth(method = 'lm')
 ```
 
 ```{r}
 ggplot(aes_string(x = 'EnclosedPorch'), data = numeric.both) + 
   geom_histogram() + facet_wrap(~ Set)
+train.numeric %>% filter(EnclosedPorch != 0) %>% ggplot(aes(x = EnclosedPorch, y = logSalePrice)) +
+  geom_point() + geom_smooth(method = 'lm')
 ```
 
 ```{r}
 ggplot(aes_string(x = '`3SsnPorch`'), data = numeric.both) + 
   geom_histogram() + facet_wrap(~ Set)
+train.numeric %>% filter(`3SsnPorch` != 0) %>% ggplot(aes(x = `3SsnPorch`, y = logSalePrice)) +
+  geom_point() + geom_smooth(method = 'lm')
 ```
 
 ```{r}
 ggplot(aes_string(x = 'ScreenPorch'), data = numeric.both) + 
   geom_histogram() + facet_wrap(~ Set)
+train.numeric %>% filter(ScreenPorch != 0) %>% ggplot(aes(x = ScreenPorch, y = logSalePrice)) +
+  geom_point() + geom_smooth(method = 'lm')
 ```
 
 ```{r}
 ggplot(aes_string(x = 'PoolArea'), data = numeric.both) + 
   geom_histogram() + facet_wrap(~ Set)
+train.numeric %>% filter(PoolArea != 0) %>% ggplot(aes(x = PoolArea, y = logSalePrice)) +
+  geom_point() + geom_smooth(method = 'lm')
 ```
 
 ```{r}
 ggplot(aes_string(x = 'MiscVal'), data = numeric.both) + 
   geom_histogram() + facet_wrap(~ Set)
+train.numeric %>% filter(MiscVal != 0) %>% ggplot(aes(x = MiscVal, y = logSalePrice)) +
+  geom_point() + geom_smooth(method = 'lm')
 ```
 
 ```{r}
 ggplot(aes_string(x = 'MoSold'), data = numeric.both) + 
   geom_histogram() + facet_wrap(~ Set)
+train.numeric %>% filter(MoSold != 0) %>% ggplot(aes(x = MoSold, y = logSalePrice)) +
+  geom_point() + geom_smooth(method = 'lm')
 ```
 
 ```{r}
 ggplot(aes_string(x = 'YrSold'), data = numeric.both) + 
   geom_histogram() + facet_wrap(~ Set)
+train.numeric %>% filter(YrSold != 0) %>% ggplot(aes(x = YrSold, y = logSalePrice)) +
+  geom_point() + geom_smooth(method = 'lm')
 ```
 
+### Categorical Variables
 
-```{r}
-
-```
 
