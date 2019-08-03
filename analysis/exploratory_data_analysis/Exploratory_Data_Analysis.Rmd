@@ -31,6 +31,9 @@ source('../helper/data_munging.R')
 ```{r results='hide', message=FALSE}
 train <- read_csv('../data/train.csv')
 test <- read_csv('../data/test.csv')
+
+train$MSSubClass <- factor(train$MSSubClass)
+test$MSSubClass <- factor(test$MSSubClass)
 ```
 
 ## Structure of the data
@@ -197,8 +200,10 @@ numeric.both <- rbind(train.numeric %>% select(-one_of(c('SalePrice','Id'))),
                       test.numeric %>% select(-one_of(c('Id'))))
 numeric.both$Set <- as.factor(numeric.both$Set)
 
+# remove points based on initial analysis
 train.numeric <- train.numeric %>% filter(GrLivArea < 4000)
 
+# add log of sale price
 train.numeric <- train.numeric %>% mutate(logSalePrice = log(SalePrice))
 ```
 
@@ -224,6 +229,27 @@ The following features may be useful:
 
 `MasVnrArea` - maybe with a dummy variable
 `EnclosedPorch` - maybe with a dummy variable
+
+The following features do not seem to have a relationship with log of sale price:
+
+* `LotFrontage`
+* `LotArea`
+* `OverallCond`
+* `LowQualFinSF`
+* `BsmtFullBath`
+* `BsmtHalfBath`
+* `HalfBath`
+* `BedroomAbvGr`
+* `KitchenAbvGr`
+* `Fireplaces`
+* `WoodDeckSF`
+* `OpenPorchSF`
+* `3SsnPorch`
+* `PoolArea`
+* `ScreenPorch`
+* `MiscVal`
+* `MoSold`
+* `YrSold`
 
 ```{r}
 ggplot(aes_string(x = 'LotFrontage'), data = numeric.both) + 
@@ -475,5 +501,273 @@ train.numeric %>% filter(YrSold != 0) %>% ggplot(aes(x = YrSold, y = logSalePric
 ```
 
 ### Categorical Variables
+
+```{r}
+# get the names of the continuous variables
+cont.names <- names(train.nonnumeric)
+print(cont.names)
+
+# add factors for test and train
+train.nonnumeric$Set <- rep('train', (dim(train.nonnumeric)[1]))
+test.nonnumeric$Set <- rep('test', (dim(test.nonnumeric)[1]))
+
+# combine the training and testing set for histogram plotting
+nonnumeric.both <- rbind(train.nonnumeric, test.nonnumeric)
+nonnumeric.both$Set <- as.factor(nonnumeric.both$Set)
+```
+
+Based on the bar charts below, the following categorical variables should be checked for use in the model:
+
+* MSZoning
+* LotShape
+* LotConfig
+* Neighborhood
+* BldgType
+* HouseStyle
+* RoofStyle
+* Exterior1st
+* Exterior2nd
+* MasVnrType
+* ExterQual
+* ExterCond
+* Foundation
+* BsmtQual
+* BsmtExposure
+* BsmtFinType1
+* BsmtFinType2
+* CentralAir
+* Electrical
+* KitchenQual
+* FireplaceQu
+* GarageType
+* GarageFinish
+* LandContour - lower interest
+* LandSlope - lower interest
+* Condition1 - lower interest
+* GarageQual - lower interest
+* PavedDrive - lower interest
+* Fence - with dummy
+* SaleType
+
+
+```{r}
+ggplot(aes_string(x = 'MSZoning'), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'Street'), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'Alley'), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'LotShape'), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'LandContour'), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'Utilities'), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'LotConfig'), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'LandSlope'), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'Neighborhood'), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'Condition1'), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = 'Condition2'), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = "HouseStyle"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = "RoofStyle"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = "RoofMatl"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = "Exterior1st"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = "Exterior2nd"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = "MasVnrType"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = "ExterQual"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = "ExterCond"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = "Foundation"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = "BsmtQual"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = "BsmtExposure"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = "BsmtFinType1"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = "BsmtFinType2"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = "Heating"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = "HeatingQC"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = "CentralAir"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = "Electrical"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = "KitchenQual"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = "Functional"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = "FireplaceQu"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = "GarageType"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = "GarageFinish"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = "GarageQual"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = "GarageCond"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = "PavedDrive"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = "PoolQC"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = "Fence"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = "MiscFeature"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = "SaleType"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+```{r}
+ggplot(aes_string(x = "SaleCondition"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

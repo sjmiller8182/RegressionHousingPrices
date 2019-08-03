@@ -23,6 +23,9 @@ source('../helper/data_munging.R')
 ``` r
 train <- read_csv('../data/train.csv')
 test <- read_csv('../data/test.csv')
+
+train$MSSubClass <- factor(train$MSSubClass)
+test$MSSubClass <- factor(test$MSSubClass)
 ```
 
 ## Structure of the data
@@ -48,7 +51,7 @@ print('dimensions of the numeric features (training)')
 dim(train.numeric)
 ```
 
-    ## [1] 1460   38
+    ## [1] 1460   37
 
 ``` r
 print('dimensions of the non-numeric features (training)')
@@ -76,7 +79,7 @@ print('dimensions of the numeric features (testing)')
 dim(test.numeric)
 ```
 
-    ## [1] 1459   37
+    ## [1] 1459   36
 
 ``` r
 print('dimensions of the non-numeric features (testing)')
@@ -289,7 +292,6 @@ kable(temp.table)
 | EnclosedPorch |       6.111915e+01 |
 | ScreenPorch   |       5.575742e+01 |
 | LowQualFinSF  |       4.862308e+01 |
-| MSSubClass    |       4.230057e+01 |
 | PoolArea      |       4.017731e+01 |
 | YearBuilt     |       3.020290e+01 |
 | 3SsnPorch     |       2.931733e+01 |
@@ -318,16 +320,16 @@ cont.names <- names(train.numeric)
 print(cont.names)
 ```
 
-    ##  [1] "Id"            "MSSubClass"    "LotFrontage"   "LotArea"      
-    ##  [5] "OverallQual"   "OverallCond"   "YearBuilt"     "YearRemodAdd" 
-    ##  [9] "MasVnrArea"    "BsmtFinSF1"    "BsmtFinSF2"    "BsmtUnfSF"    
-    ## [13] "TotalBsmtSF"   "1stFlrSF"      "2ndFlrSF"      "LowQualFinSF" 
-    ## [17] "GrLivArea"     "BsmtFullBath"  "BsmtHalfBath"  "FullBath"     
-    ## [21] "HalfBath"      "BedroomAbvGr"  "KitchenAbvGr"  "TotRmsAbvGrd" 
-    ## [25] "Fireplaces"    "GarageYrBlt"   "GarageCars"    "GarageArea"   
-    ## [29] "WoodDeckSF"    "OpenPorchSF"   "EnclosedPorch" "3SsnPorch"    
-    ## [33] "ScreenPorch"   "PoolArea"      "MiscVal"       "MoSold"       
-    ## [37] "YrSold"        "SalePrice"
+    ##  [1] "Id"            "LotFrontage"   "LotArea"       "OverallQual"  
+    ##  [5] "OverallCond"   "YearBuilt"     "YearRemodAdd"  "MasVnrArea"   
+    ##  [9] "BsmtFinSF1"    "BsmtFinSF2"    "BsmtUnfSF"     "TotalBsmtSF"  
+    ## [13] "1stFlrSF"      "2ndFlrSF"      "LowQualFinSF"  "GrLivArea"    
+    ## [17] "BsmtFullBath"  "BsmtHalfBath"  "FullBath"      "HalfBath"     
+    ## [21] "BedroomAbvGr"  "KitchenAbvGr"  "TotRmsAbvGrd"  "Fireplaces"   
+    ## [25] "GarageYrBlt"   "GarageCars"    "GarageArea"    "WoodDeckSF"   
+    ## [29] "OpenPorchSF"   "EnclosedPorch" "3SsnPorch"     "ScreenPorch"  
+    ## [33] "PoolArea"      "MiscVal"       "MoSold"        "YrSold"       
+    ## [37] "SalePrice"
 
 ``` r
 # add factors for test and train
@@ -339,8 +341,10 @@ numeric.both <- rbind(train.numeric %>% select(-one_of(c('SalePrice','Id'))),
                       test.numeric %>% select(-one_of(c('Id'))))
 numeric.both$Set <- as.factor(numeric.both$Set)
 
+# remove points based on initial analysis
 train.numeric <- train.numeric %>% filter(GrLivArea < 4000)
 
+# add log of sale price
 train.numeric <- train.numeric %>% mutate(logSalePrice = log(SalePrice))
 ```
 
@@ -367,6 +371,30 @@ The following features may be useful:
 
 `MasVnrArea` - maybe with a dummy variable `EnclosedPorch` - maybe with
 a dummy variable
+
+The following features do not seem to have a relationship with log of
+sale price:
+
+  - `LotFrontage`
+  - `LotArea`
+  - `OverallCond`
+  - `LowQualFinSF`
+  - `BsmtFullBath`
+  - `BsmtHalfBath`
+  - `HalfBath`
+  - `BedroomAbvGr`
+  - `KitchenAbvGr`
+  - `Fireplaces`
+  - `WoodDeckSF`
+  - `OpenPorchSF`
+  - `3SsnPorch`
+  - `PoolArea`
+  - `ScreenPorch`
+  - `MiscVal`
+  - `MoSold`
+  - `YrSold`
+
+<!-- end list -->
 
 ``` r
 ggplot(aes_string(x = 'LotFrontage'), data = numeric.both) + 
@@ -955,3 +983,354 @@ train.numeric %>% filter(YrSold != 0) %>% ggplot(aes(x = YrSold, y = logSalePric
 ![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-44-2.png)<!-- -->
 
 ### Categorical Variables
+
+``` r
+# get the names of the continuous variables
+cont.names <- names(train.nonnumeric)
+print(cont.names)
+```
+
+    ##  [1] "MSZoning"      "Street"        "Alley"         "LotShape"     
+    ##  [5] "LandContour"   "Utilities"     "LotConfig"     "LandSlope"    
+    ##  [9] "Neighborhood"  "Condition1"    "Condition2"    "BldgType"     
+    ## [13] "HouseStyle"    "RoofStyle"     "RoofMatl"      "Exterior1st"  
+    ## [17] "Exterior2nd"   "MasVnrType"    "ExterQual"     "ExterCond"    
+    ## [21] "Foundation"    "BsmtQual"      "BsmtCond"      "BsmtExposure" 
+    ## [25] "BsmtFinType1"  "BsmtFinType2"  "Heating"       "HeatingQC"    
+    ## [29] "CentralAir"    "Electrical"    "KitchenQual"   "Functional"   
+    ## [33] "FireplaceQu"   "GarageType"    "GarageFinish"  "GarageQual"   
+    ## [37] "GarageCond"    "PavedDrive"    "PoolQC"        "Fence"        
+    ## [41] "MiscFeature"   "SaleType"      "SaleCondition"
+
+``` r
+# add factors for test and train
+train.nonnumeric$Set <- rep('train', (dim(train.nonnumeric)[1]))
+test.nonnumeric$Set <- rep('test', (dim(test.nonnumeric)[1]))
+
+# combine the training and testing set for histogram plotting
+nonnumeric.both <- rbind(train.nonnumeric, test.nonnumeric)
+nonnumeric.both$Set <- as.factor(nonnumeric.both$Set)
+```
+
+Based on the bar charts below, the following categorical variables
+should be checked for use in the model:
+
+  - MSZoning
+  - LotShape
+  - LotConfig
+  - Neighborhood
+  - BldgType
+  - HouseStyle
+  - RoofStyle
+  - Exterior1st
+  - Exterior2nd
+  - MasVnrType
+  - ExterQual
+  - ExterCond
+  - Foundation
+  - BsmtQual
+  - BsmtExposure
+  - BsmtFinType1
+  - BsmtFinType2
+  - CentralAir
+  - Electrical
+  - KitchenQual
+  - FireplaceQu
+  - GarageType
+  - GarageFinish
+  - LandContour - lower interest
+  - LandSlope - lower interest
+  - Condition1 - lower interest
+  - GarageQual - lower interest
+  - PavedDrive - lower interest
+  - Fence - with dummy
+  - SaleType
+
+<!-- end list -->
+
+``` r
+ggplot(aes_string(x = 'MSZoning'), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-46-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = 'Street'), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-47-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = 'Alley'), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-48-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = 'LotShape'), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-49-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = 'LandContour'), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-50-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = 'Utilities'), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-51-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = 'LotConfig'), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-52-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = 'LandSlope'), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-53-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = 'Neighborhood'), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-54-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = 'Condition1'), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-55-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = 'Condition2'), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-56-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = "HouseStyle"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-57-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = "RoofStyle"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-58-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = "RoofMatl"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-59-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = "Exterior1st"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-60-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = "Exterior2nd"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-61-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = "MasVnrType"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-62-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = "ExterQual"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-63-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = "ExterCond"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-64-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = "Foundation"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-65-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = "BsmtQual"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-66-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = "BsmtExposure"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-67-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = "BsmtFinType1"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-68-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = "BsmtFinType2"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-69-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = "Heating"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-70-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = "HeatingQC"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-71-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = "CentralAir"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-72-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = "Electrical"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-73-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = "KitchenQual"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-74-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = "Functional"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-75-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = "FireplaceQu"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-76-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = "GarageType"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-77-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = "GarageFinish"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-78-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = "GarageQual"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-79-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = "GarageCond"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-80-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = "PavedDrive"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-81-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = "PoolQC"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-82-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = "Fence"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-83-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = "MiscFeature"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-84-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = "SaleType"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-85-1.png)<!-- -->
+
+``` r
+ggplot(aes_string(x = "SaleCondition"), data = nonnumeric.both) + 
+  geom_bar() + facet_wrap(~ Set)
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-86-1.png)<!-- -->
