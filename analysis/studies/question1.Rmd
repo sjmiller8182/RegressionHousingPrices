@@ -1,7 +1,7 @@
 ---
 title: "Question 1"
 author: "Stuart Miller"
-date: "July 31, 2019"
+date: "August 2, 2019"
 output: 
   github_document:
     toc: true
@@ -23,6 +23,7 @@ library(tidyverse)
 library(olsrr)
 library(gridExtra)
 library(caret)
+library(multcomp)
 
 # set a random seed for repodicibility
 set.seed(123)
@@ -98,19 +99,19 @@ train %>% ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
 
 Add labels of `SaleCondition` of the two points of interest and some neighboring points to the scatter plot the log transform of `SalePrice` vs the log transform of `GrLivArea`. This indicates the influential points are of type `Partial` `SaleCondition`, which means the houses were not completed at the time of assessment. This could mean the assess prices are not correct. These points will be excluded from the analysis becasue they may not be correct.
 
-```{r, log-log-plot-labeled}
-train %>% ggplot(aes(x = log(GrLivArea), y = log(SalePrice))) +
+```{r, linear-log-plot-labeled}
+train %>% ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
   geom_point(alpha = 0.3) +
-  labs(title = 'Log of Sale Price vs Log of Living Room Area', 
-       y = 'Log of Sale Price', x = 'Log of Living Room Area') +
+  labs(title = 'Log of Sale Price vs Living Room Area', 
+       y = 'Log of Sale Price', x = 'Living Room Area') +
   geom_text(aes(label = ifelse((log(GrLivArea) > 7.75 & log(SalePrice) > 11) |
                                  (log(SalePrice) > 12.45),
                                SaleCondition, '')), hjust=0, vjust=0)
 ```
 
-Scatter plot log of sale price vs log of living room area for each neighborhood with the suspect points excluded. In each case, there is not sigificant evidence against the assumption of linearity.
+Scatter plot log of sale price vs living room area for each neighborhood with the suspect points excluded. In each case, there is not sigificant evidence against the assumption of linearity.
 
-```{r, log-log-plot-by-N}
+```{r, linear-log-plot-by-N}
 regplot.names <- train %>% filter(Neighborhood == 'NAmes') %>%
   ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
   geom_point(alpha = 0.3) +
@@ -148,7 +149,7 @@ grid.arrange(regplot.names,regplot.ed,regplot.brk, nrow = 2,
 
 ## Model
 
-Based on the log-log plot above, the response will be modeled as
+Based on the linear-log plot above, the response will be modeled as
 
 ![model_equation](./question1_files/model_equation.png)
 
@@ -203,6 +204,15 @@ summary(model)
 confint(model)
 ```
 
+```{r, combination-CIs}
+# get CI for Northwest Ames
+confint(glht(model, linfct = "GrLivArea + GrLivArea:Neighborhood_NAmes = 1"))
+
+# get CI for Brookside
+confint(glht(model, linfct = "GrLivArea + GrLivArea:Neighborhood_BrkSide = 1"))
+```
+
+
 ### Model Accuracy Estimation
 
 Use 10-fold cross validation to estimate the accuracy metrics of the model.
@@ -247,16 +257,15 @@ ols_plot_cooksd_bar(model)
 
 ## Conclusion
 
-TODO
+### Interpretation
 
-* Provide model
-* Interpretation
-  * Statistally significant relationship between edwards neighborhood and sale price
-  * No statistical difference between Edwards and Northwest Ames
-  * Statistical difference between Edwards and Brook Side
-* Scope
-  * Unknown sampling method -> no extension
-  * Observational
+We estimate that for increase in 100 sq. ft., there is associated multiplicative increase in median price
+
+ * 1.055 for the Edwards neighborhood with a 95% confidence interval of [1.044 , 1.066]
+ * 1.033 for the Northwest Ames neighorhood with a 95% confidence interval of [1.026 , 1.040]
+ * 1.077 for the Brookside neighorhood with a 95% confidence interval of [1.063 , 1.090]
+ 
+Since the sampling procedure is not known and this is an observational study, the results only apply to this data.
   
 
 

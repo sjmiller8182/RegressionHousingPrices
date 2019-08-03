@@ -1,7 +1,7 @@
 Question 1
 ================
 Stuart Miller
-July 31, 2019
+August 2, 2019
 
 # Requested Analysis
 
@@ -96,20 +96,20 @@ prices are not correct. These points will be excluded from the analysis
 becasue they may not be correct.
 
 ``` r
-train %>% ggplot(aes(x = log(GrLivArea), y = log(SalePrice))) +
+train %>% ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
   geom_point(alpha = 0.3) +
-  labs(title = 'Log of Sale Price vs Log of Living Room Area', 
-       y = 'Log of Sale Price', x = 'Log of Living Room Area') +
+  labs(title = 'Log of Sale Price vs Living Room Area', 
+       y = 'Log of Sale Price', x = 'Living Room Area') +
   geom_text(aes(label = ifelse((log(GrLivArea) > 7.75 & log(SalePrice) > 11) |
                                  (log(SalePrice) > 12.45),
                                SaleCondition, '')), hjust=0, vjust=0)
 ```
 
-![](question1_files/figure-gfm/log-log-plot-labeled-1.png)<!-- -->
+![](question1_files/figure-gfm/linear-log-plot-labeled-1.png)<!-- -->
 
-Scatter plot log of sale price vs log of living room area for each
-neighborhood with the suspect points excluded. In each case, there is
-not sigificant evidence against the assumption of linearity.
+Scatter plot log of sale price vs living room area for each neighborhood
+with the suspect points excluded. In each case, there is not sigificant
+evidence against the assumption of linearity.
 
 ``` r
 regplot.names <- train %>% filter(Neighborhood == 'NAmes') %>%
@@ -144,11 +144,11 @@ grid.arrange(regplot.names,regplot.ed,regplot.brk, nrow = 2,
              top = 'Regression Plots for Neighborhoods')
 ```
 
-![](question1_files/figure-gfm/log-log-plot-by-N-1.png)<!-- -->
+![](question1_files/figure-gfm/linear-log-plot-by-N-1.png)<!-- -->
 
 ## Model
 
-Based on the log-log plot above, the response will be modeled as
+Based on the linear-log plot above, the response will be modeled as
 
 ![model\_equation](./question1_files/model_equation.png)
 
@@ -255,6 +255,46 @@ confint(model)
     ## GrLivArea:Neighborhood_BrkSide  3.355877e-05  3.655777e-04
     ## GrLivArea:Neighborhood_NAmes   -3.366455e-04 -9.241461e-05
 
+``` r
+# get CI for Northwest Ames
+confint(glht(model, linfct = "GrLivArea + GrLivArea:Neighborhood_NAmes = 1"))
+```
+
+    ## 
+    ##   Simultaneous Confidence Intervals
+    ## 
+    ## Fit: lm(formula = model.formula, data = train.mod)
+    ## 
+    ## Quantile = 1.9663
+    ## 95% family-wise confidence level
+    ##  
+    ## 
+    ## Linear Hypotheses:
+    ##                                               Estimate  lwr      
+    ## GrLivArea + GrLivArea:Neighborhood_NAmes == 1 0.0003241 0.0002640
+    ##                                               upr      
+    ## GrLivArea + GrLivArea:Neighborhood_NAmes == 1 0.0003843
+
+``` r
+# get CI for Brookside
+confint(glht(model, linfct = "GrLivArea + GrLivArea:Neighborhood_BrkSide = 1"))
+```
+
+    ## 
+    ##   Simultaneous Confidence Intervals
+    ## 
+    ## Fit: lm(formula = model.formula, data = train.mod)
+    ## 
+    ## Quantile = 1.9663
+    ## 95% family-wise confidence level
+    ##  
+    ## 
+    ## Linear Hypotheses:
+    ##                                                 Estimate  lwr      
+    ## GrLivArea + GrLivArea:Neighborhood_BrkSide == 1 0.0007382 0.0006107
+    ##                                                 upr      
+    ## GrLivArea + GrLivArea:Neighborhood_BrkSide == 1 0.0008658
+
 ### Model Accuracy Estimation
 
 Use 10-fold cross validation to estimate the accuracy metrics of the
@@ -339,14 +379,17 @@ ols_plot_cooksd_bar(model)
 
 ## Conclusion
 
-TODO
+### Interpretation
 
-  - Provide model
-  - Interpretation
-      - Statistally significant relationship between edwards
-        neighborhood and sale price
-      - No statistical difference between Edwards and Northwest Ames
-      - Statistical difference between Edwards and Brook Side
-  - Scope
-      - Unknown sampling method -\> no extension
-      - Observational
+We estimate that for increase in 100 sq. ft., there is associated
+multiplicative increase in median price
+
+  - 1.055 for the Edwards neighborhood with a 95% confidence interval of
+    \[1.044 , 1.066\]
+  - 1.033 for the Northwest Ames neighorhood with a 95% confidence
+    interval of \[1.026 , 1.040\]
+  - 1.077 for the Brookside neighorhood with a 95% confidence interval
+    of \[1.063 , 1.090\]
+
+Since the sampling procedure is not known and this is an observational
+study, the results only apply to this data.
