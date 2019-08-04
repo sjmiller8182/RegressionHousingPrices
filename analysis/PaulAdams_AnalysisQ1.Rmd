@@ -16,8 +16,6 @@ df <- read.csv("train.csv")
 ```
 
 
-count(*)
-
 ```{r, echo=F}
 
 df_ThreeNeighborhoods <- df %>% subset(select = c(SalePrice, Neighborhood, GrLivArea, SaleCondition)) %>%
@@ -27,10 +25,6 @@ df_ThreeNeighborhoods <- df %>% subset(select = c(SalePrice, Neighborhood, GrLiv
 
 colnames(df_ThreeNeighborhoods) <- cbind("SalePrice","Neighborhood","SquareFeet","SaleCondition","logSquareFeet", "logSalePrice")
 
-Partials <- subset(df_ThreeNeighborhoods[which(df_ThreeNeighborhoods$SaleCondition == "Partial"),])
-
-summary(lm(Partials$SalePrice ~ Partials$GrLivArea, data = Partials))
-plot(lm(Partials$SalePrice ~ Partials$GrLivArea, data = Partials))
 ```
 
 ```{r, echo=F}
@@ -38,7 +32,6 @@ plot(lm(Partials$SalePrice ~ Partials$GrLivArea, data = Partials))
 df_ThreeNeighborhoods$holder <- as.character(df_ThreeNeighborhoods$Neighborhood)
 df_ThreeNeighborhoods$Neighborhood2 <- as.factor(df_ThreeNeighborhoods$holder)
 str(df_ThreeNeighborhoods$Neighborhood2)
-head(df_Filtered)
 
 df_Filtered <- data.frame(df_ThreeNeighborhoods$SalePrice, df_ThreeNeighborhoods$Neighborhood2, df_ThreeNeighborhoods$SquareFeet, df_ThreeNeighborhoods$SaleCondition, df_ThreeNeighborhoods$logSquareFeet, df_ThreeNeighborhoods$logSalePrice)
 
@@ -175,10 +168,4 @@ summary(loglogModelInteract.lm)
 confint(loglogModelInteract.lm)
 par(mfrow=c(2,2))
 plot(loglogModelInteract.lm)
-```
-
-```{r, echo=T}
-my.pred <- predict(loglogModelInteract.lm, data.frame(NAmesborhood == "BrkSide", logFeet = log(1077)))
-my.pred.exp <- exp(my.pred)
-my.pred.exp
 ```

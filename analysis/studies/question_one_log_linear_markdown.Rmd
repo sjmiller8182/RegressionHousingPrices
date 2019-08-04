@@ -112,13 +112,13 @@ GrLivArea_eNeighborhoodNAmes
 
 •	β0 = the y-intercept is 11.05027136 for the reference neighborhood (Edwards) with a Living Area of 0.  (which does not provide any practical value as that would be an extrapolation of the data)
 
-•	**β1 = each additional 100 sq/ ft of the living area added the Edwards neighborhood, holding all other variables constant, would result in a 5.31% multiplicative increase in the median sales price.
+•	**β1 = each additional 100 sq. ft. of the living area added the Edwards neighborhood, holding all other variables constant, would result in a 5.31% multiplicative increase in the median sales price.
 
 •	β2 = the adjustment to the y-intercept for the BrkSide neighborhood is -0.6303.  
 
 •	β3 = the adjustment to the intercept for the NAmes neighborhood is 0.0214
 
-•	**β4 = each additional 100 sq/ ft of the living area added the BrkSide neighborhood, holding all other variables constant, would result in a 7.72% increase in the median sales price.
+•	**β4 = each additional 100 sq. ft. of the living area added the BrkSide neighborhood, holding all other variables constant, would result in a 7.72% increase in the median sales price.
 
 •	**β5 = each doubling of the living area for the NAmes neighborhood, holding all other variables constant, would result in a 3.58% increase in the median sales price.
 
@@ -139,7 +139,7 @@ confint(train.fit)
 ```
 
 
-## 95 Percent confidence intervals for the increase Sales Price for every additional 100 sq/ft
+## 95 Percent confidence intervals for the increase Sales Price for every additional 100 sq.ft.
 
 ### - 4.15 ~ 6.47% (Edwards)
 ### - 4.77 ~ 10.45% (BrkSide)
