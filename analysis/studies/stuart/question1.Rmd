@@ -29,13 +29,13 @@ library(multcomp)
 set.seed(123)
 
 # helper code
-source('../helper/visual.R')
-source('../helper/data_munging.R')
-source('../helper/performance.R')
+source('../../helper/visual.R')
+source('../../helper/data_munging.R')
+source('../../helper/performance.R')
 
 # load data
-train <- read_csv('../data/train.csv')
-test <- read_csv('../data/test.csv')
+train <- read_csv('../../data/train.csv')
+test <- read_csv('../../data/test.csv')
 ```
 
 # Analysis
