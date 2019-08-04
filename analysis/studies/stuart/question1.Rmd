@@ -1,0 +1,282 @@
+---
+title: "Question 1"
+author: "Stuart Miller"
+date: "August 2, 2019"
+output: 
+  github_document:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Requested Analysis
+
+Century 21 Ames wants to understand if there is a relationship between the square footage of the living areas of houses (`GrLivArea`) and sale price in the neighborhood where they operate Northwest Ames, Edwards, and Brookside (`NAmes`, `Edwards` and `BrkSide`).
+
+```{r, lib-read, results='hide', message=FALSE, include=FALSE}
+### Compuational Setup
+# libraries
+library(knitr)
+library(tidyverse)
+library(olsrr)
+library(gridExtra)
+library(caret)
+library(multcomp)
+
+# set a random seed for repodicibility
+set.seed(123)
+
+# helper code
+source('../../helper/visual.R')
+source('../../helper/data_munging.R')
+source('../../helper/performance.R')
+
+# load data
+train <- read_csv('../../data/train.csv')
+test <- read_csv('../../data/test.csv')
+```
+
+# Analysis
+
+## Extract Data of Interest
+
+```{r data-filtering, results='hide', message=FALSE}
+# select data of interest
+train <- train %>% 
+  filter(Neighborhood %in% c("Edwards", "BrkSide", "NAmes"))
+train$Neighborhood <- as.factor(train$Neighborhood)
+```
+
+## Plots of Data
+
+Barplot of count houses in `Neighborhood`s of interest.
+
+```{r, message=FALSE}
+train %>% ggplot(aes(x = Neighborhood)) + geom_bar() + 
+  labs(title = 'Count of Levels of Neighborhood', 
+       y = 'Count')
+```
+
+Histogram of `SalePrice`, which is the sale price of the houses in the dataset.
+
+```{r, SalePriceHist, message=FALSE}
+train %>% ggplot(aes(x = SalePrice)) +
+  geom_histogram() + 
+  facet_grid(. ~ Neighborhood) +
+  labs(title = 'Histogram of Sale Price', 
+       y = 'Frequency', x = 'Sale Price')
+```
+
+Histogram of `GrLivArea`, which is the square footage of the living areas of houses in the dataset.
+
+```{r, LivingRoomHist, message=FALSE}
+train %>% ggplot(aes(x = GrLivArea)) +
+  geom_histogram() + 
+  facet_grid(. ~ Neighborhood) +
+  labs(title = 'Histogram of Living Room Area', 
+       y = 'Frequency', x = 'Living Room Area')
+```
+
+Scatter plot of `SalePrice` vs `GrLivArea` shows that the large values in `GrLivArea` are pulling the regression line. A log transfrom on `SalePrice` may help correct this.
+
+```{r, regression-original-scale}
+train %>% ggplot(aes(x = GrLivArea, y = SalePrice)) +
+  geom_point(alpha = 0.3) +
+  labs(title = 'Sale Price vs Living Room Area', 
+       y = 'Sale Price', x = 'Living Room Area')
+```
+
+Scatter plot of the log transform of `SalePrice` vs `GrLivArea` shows taking the log transform of `GrLivArea` does improve the linear relationship. It seem reasible that the relationship could be linear, excluding the two anomalous points on the right of the graph. These points will need some investigation.
+
+```{r, linear-log-plot}
+train %>% ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
+  geom_point(alpha = 0.3) +
+  labs(title = 'Log of Sale Price vs Living Room Area', 
+       y = 'Log of Sale Price', x = 'Living Room Area')
+```
+
+Add labels of `SaleCondition` of the two points of interest and some neighboring points to the scatter plot the log transform of `SalePrice` vs the log transform of `GrLivArea`. This indicates the influential points are of type `Partial` `SaleCondition`, which means the houses were not completed at the time of assessment. This could mean the assess prices are not correct. These points will be excluded from the analysis becasue they may not be correct.
+
+```{r, linear-log-plot-labeled}
+train %>% ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
+  geom_point(alpha = 0.3) +
+  labs(title = 'Log of Sale Price vs Living Room Area', 
+       y = 'Log of Sale Price', x = 'Living Room Area') +
+  geom_text(aes(label = ifelse((log(GrLivArea) > 7.75 & log(SalePrice) > 11) |
+                                 (log(SalePrice) > 12.45),
+                               SaleCondition, '')), hjust=0, vjust=0)
+```
+
+Scatter plot log of sale price vs living room area for each neighborhood with the suspect points excluded. In each case, there is not sigificant evidence against the assumption of linearity.
+
+```{r, linear-log-plot-by-N}
+regplot.names <- train %>% filter(Neighborhood == 'NAmes') %>%
+  ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
+  geom_point(alpha = 0.3) +
+  ylim(10, 13) +
+  xlim(0, 3500) +
+  geom_smooth(method = 'lm') +
+  labs(subtitle = 'Northwest Ames', 
+       y = 'Log of Sale Price', x = 'Living Room Area')
+
+regplot.ed <- train %>%
+  filter(GrLivArea < 4000) %>%
+  filter(Neighborhood == 'Edwards') %>%
+  ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
+  geom_point(alpha = 0.3) +
+  ylim(10, 13) +
+  xlim(0, 3500) +
+  geom_smooth(method = 'lm') +
+  labs(subtitle = 'Edwards', 
+       y = 'Log of Sale Price', x = 'Living Room Area')
+
+regplot.brk <- train %>% filter(Neighborhood == 'BrkSide') %>%
+  ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
+  geom_point(alpha = 0.3) +
+  ylim(10, 13) +
+  xlim(0, 3500) +
+  geom_smooth(method = 'lm') +
+  labs(subtitle = 'Brook Side', 
+       y = 'Log of Sale Price', x = 'Living Room Area')
+grid.arrange(regplot.names,regplot.ed,regplot.brk, nrow = 2,
+             top = 'Regression Plots for Neighborhoods')
+```
+
+
+
+
+## Model
+
+Based on the linear-log plot above, the response will be modeled as
+
+![model_equation](./question1_files/model_equation.png)
+
+where Edwards neighborhood is used for reference.
+
+### Interaction Terms
+
+We will use an extra sums of square test to verify that the interaction terms are useful for the model. The ESS test provides convincing evidence that the interaction terms are useful (p-value < 0.0001); thus, we will continue with the full model.
+
+```{r, ESS}
+# create dummy variables with Neighborhood == 'Edwards' as reference
+train <- get.dummies(train, "Neighborhood", reference = 'Edwards')
+
+# remove suspect points from training data
+train.mod <- train %>% filter(GrLivArea < 4000)
+
+# full model formula
+model.formula = log(SalePrice) ~ (GrLivArea) + 
+     Neighborhood_BrkSide + 
+     Neighborhood_NAmes +
+     (GrLivArea) * Neighborhood_BrkSide + 
+     (GrLivArea) * Neighborhood_NAmes
+# reduced model formula
+model.reduced.formula = log(SalePrice) ~ (GrLivArea) + 
+     Neighborhood_BrkSide + 
+     Neighborhood_NAmes
+
+# fit models
+model <- lm(formula = model.formula, data = train.mod)
+model.reduced <- lm(formula = model.reduced.formula, data = train.mod)
+# ESS test on models
+anova(model.reduced, model)
+
+```
+
+
+### Parameter Estimation
+
+Estimate parameters in the model by fitting to the entire dataset to the chosen model.
+
+```{r, modeling, message=FALSE}
+# formula for model
+model.formula = log(SalePrice) ~ (GrLivArea) + 
+     Neighborhood_BrkSide + 
+     Neighborhood_NAmes +
+     (GrLivArea) * Neighborhood_BrkSide + 
+     (GrLivArea) * Neighborhood_NAmes
+
+# model the mean response given equation above
+model <- lm(formula = model.formula, data = train.mod)
+summary(model)
+confint(model)
+```
+
+```{r, combination-CIs}
+# get CI for Northwest Ames
+confint(glht(model, linfct = "GrLivArea + GrLivArea:Neighborhood_NAmes = 1"))
+
+# get CI for Brookside
+confint(glht(model, linfct = "GrLivArea + GrLivArea:Neighborhood_BrkSide = 1"))
+```
+
+
+### Model Accuracy Estimation
+
+Use 10-fold cross validation to estimate the accuracy metrics of the model.
+
+```{r, cross-validation}
+# Set up repeated k-fold cross-validation
+train.control <- trainControl(method = "cv", number = 10)
+# Train the model
+model.cv <- train(model.formula, 
+                    data = train.mod,
+                    method = 'lm',
+                    trControl = train.control)
+# print model summary
+model.cv
+
+# get the CV results
+res <- model.cv$results
+
+# get cross-validated PRESS statistic
+PCV <- PRESS.cv(model.cv)
+
+# print accuracy metrics to md table
+kable(data.frame('RMSE'=res$RMSE,
+           'CV Press'=PCV,
+           'Adjused R Squared'=res$Rsquared))
+```
+
+
+## Model Assumptions Assessment
+
+* **Linearity**: It appear reasonable that the log of sale price and the log of living room area could be linearly related based on a scatter plot.
+* **Normality**: The residuals from the model fit appear to be normally distributed based on a histogram and qq plot.
+* **Constant Variance**: There is no discernable pattern from a scatter plot of residuals and studentized residuals plotted vs predicted value.
+* **Independence**: It is not clear how the data was sampled. We will assume this is true and continue.
+
+```{r, diag-plots}
+basic.fit.plots(train.mod, model)
+ols_plot_resid_lev(model)
+ols_plot_cooksd_bar(model)
+```
+
+
+## Conclusion
+
+### Interpretation
+
+We estimate that for increase in 100 sq. ft., there is associated multiplicative increase in median price
+
+ * 1.055 for the Edwards neighborhood with a 95% confidence interval of [1.044 , 1.066]
+ * 1.033 for the Northwest Ames neighorhood with a 95% confidence interval of [1.026 , 1.040]
+ * 1.077 for the Brookside neighorhood with a 95% confidence interval of [1.063 , 1.090]
+ 
+Since the sampling procedure is not known and this is an observational study, the results only apply to this data.
+  
+
+
+
+
+
+
+
+
+
+
+
+
+

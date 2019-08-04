@@ -11,6 +11,16 @@ PRESS <- function(y_true, y_hat) {
   sum((y_true - y_hat)^2)
 }
 
+PRESS.cv <- function(model.cv) {
+  meanN <- 0
+  folds <- model.cv$control$index
+  for (i in seq(1:length(folds))){
+    meanN <- meanN + length(folds[[i]])
+  }
+  meanN <- meanN / length(folds)
+  meanN * ((model.cv$results$RMSE)^2)
+}
+
 #' Calculate MSE Score
 #' 
 #' @description
@@ -23,3 +33,6 @@ PRESS <- function(y_true, y_hat) {
 MSE <- function(y_true, y_hat) {
   sum((y_true - y_hat)^2)/length(y_hat)
 }
+
+
+
