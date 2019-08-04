@@ -1,0 +1,171 @@
+---
+title: "Kaggle Project"
+author: "Paul Adams"
+date: "July 26, 2019"
+output: html_document
+---
+
+```{r, echo=T, message=F}
+library(pacman)
+p_load(tidyr,dplyr,purrr,stringr,ggplot2, MASS,DAAG, sjPlot)
+```
+
+```{r, echo=F}
+setwd("C:/Users/Pablo/Desktop/DS 6371 - Statistical Foundations for Data Science/Kaggle Project")
+df <- read.csv("train.csv")
+```
+
+
+```{r, echo=F}
+
+df_ThreeNeighborhoods <- df %>% subset(select = c(SalePrice, Neighborhood, GrLivArea, SaleCondition)) %>%
+  filter(Neighborhood %in% c("Edwards", "BrkSide", "NAmes")) %>%
+  filter(SaleCondition %in% c("Normal")) %>%
+  mutate(logGrLivArea = log(GrLivArea), logSalePrice = log(SalePrice))
+
+colnames(df_ThreeNeighborhoods) <- cbind("SalePrice","Neighborhood","SquareFeet","SaleCondition","logSquareFeet", "logSalePrice")
+
+```
+
+```{r, echo=F}
+#refactor with only three levels for neighborhood
+df_ThreeNeighborhoods$holder <- as.character(df_ThreeNeighborhoods$Neighborhood)
+df_ThreeNeighborhoods$Neighborhood2 <- as.factor(df_ThreeNeighborhoods$holder)
+str(df_ThreeNeighborhoods$Neighborhood2)
+
+df_Filtered <- data.frame(df_ThreeNeighborhoods$SalePrice, df_ThreeNeighborhoods$Neighborhood2, df_ThreeNeighborhoods$SquareFeet, df_ThreeNeighborhoods$SaleCondition, df_ThreeNeighborhoods$logSquareFeet, df_ThreeNeighborhoods$logSalePrice)
+
+colnames(df_Filtered) <- cbind("SalePrice","Neighborhood","SquareFeet","SaleCondition","logGrLivArea", "logSalePrice")
+
+df_Edwards <- df_Filtered %>% filter(df_Filtered$Neighborhood == "Edwards") %>% data.frame()
+df_NAmes <- df_Filtered %>% filter(df_Filtered$Neighborhood == "NAmes") %>% data.frame()
+df_BrkSide <- df_Filtered %>% filter(df_Filtered$Neighborhood == "BrkSide") %>% data.frame()
+```
+
+```{r, echo=F}
+
+summary(lm(formula = logSalePrice ~ SquareFeet + Neighborhood + SquareFeet*Neighborhood, data = df_ThreeNeighborhoods))
+
+### start log-transformed data set from df_Filtered
+logFeet <- log(df_Filtered$SquareFeet)
+df_logFiltered <- data.frame(df_Filtered$SalePrice, df_Filtered$Neighborhood, logFeet)
+colnames(df_logFiltered) <- c("SalePrice","Neighborhood","logFeet")
+
+# Build log-log data frame
+logPrice <- log(df_Filtered$SalePrice)
+df_loglogFiltered <- data.frame(logPrice, df_Filtered$Neighborhood, logFeet)
+colnames(df_loglogFiltered) <- c("logPrice","Neighborhood","logFeet")
+```
+```{r, echo = T}
+# Check out residuals for log-linear
+ggplot(data = df_Filtered, aes(x = SquareFeet, y = log(SalePrice))) +
+  geom_point() +
+  geom_smooth(method=lm, se=FALSE) +
+  theme(
+        panel.background = element_rect(fill = 'ivory1')) +
+  ggtitle("Log-Linear Data") +
+  facet_grid(~Neighborhood)
+
+# Check out residuals for linear-linear
+ggplot(data = df_Filtered, aes(x = SquareFeet, y = SalePrice)) +
+  geom_point() +
+  geom_smooth(method=lm, se=FALSE) +
+  theme(
+        panel.background = element_rect(fill = 'ivory1')) +
+  ggtitle("Linear-Linear Data") +
+  facet_grid(~Neighborhood)
+```
+
+### Assumption Checking for Log-Linear
+####Based on the output, log-transforming SquareFeet seems necessary:
+```{r, echo=F}
+summary(lm(SalePrice~SquareFeet, data = df_ThreeNeighborhoods))
+par(mfrow=c(2,2))
+qqnorm(df_Filtered$SquareFeet, col = "red", main = "Q-Q Plot")
+qqline(df_Filtered$SquareFeet, col = "blue",lwd=2,lty=2)
+qqnorm(log(df_Filtered$SquareFeet), col = "red", main = "Q-Q Plot - Transformed")
+qqline(log(df_Filtered$SquareFeet), col = "blue",lwd=2,lty=2)
+hist(df_Filtered$SquareFeet, col = "red", main = "Histogram")
+hist(log(df_Filtered$SquareFeet), col = "red", main = "Histogram - Transformed")
+```
+
+### Assumption Checking for Log Sale Price
+#### Based on the output, log transforming SalePrice does not seem necessary, but could be helpful:
+```{r, echo=F}
+par(mfrow=c(2,2))
+qqnorm(df_Filtered$SalePrice, col = "red", main = "Q-Q Plot")
+qqline(df_Filtered$SalePrice, col = "blue",lwd=2,lty=2)
+qqnorm(log(df_Filtered$SalePrice), col = "red", main = "Q-Q Plot - Transformed")
+qqline(log(df_Filtered$SalePrice), col = "blue",lwd=2,lty=2)
+hist(df_Filtered$SalePrice, col = "red", main = "Histogram")
+hist(log(df_Filtered$SalePrice), col = "red", main = "Histogram - Transformed")
+```
+
+###Correlation Graphics
+```{r, echo=F}
+pairs(df_Filtered)
+```
+
+### Neighborhood-Level Analysis
+```{r, echo=F}
+par(mfrow=c(2,2))
+qqnorm(df_Edwards$SquareFeet, col = "red", main = "Edwards Q-Q Plot")
+qqline(df_Edwards$SquareFeet, col = "blue",lwd=2,lty=2)
+qqnorm(log(df_Edwards$SquareFeet), col = "red", main = "Edwards Q-Q Plot - Transformed")
+qqline(log(df_Edwards$SquareFeet), col = "blue",lwd=2,lty=2)
+hist(df_Edwards$SquareFeet, col = "red", main = "Edwards Histogram")
+hist(log(df_Edwards$SquareFeet), col = "red", main = "Edwards Histogram - Transformed")
+```
+
+### Edwards:
+```{r, echo=F}
+pairs(df_Edwards)
+```
+
+```{r,echo=F}
+par(mfrow=c(2,2))
+qqnorm(df_BrkSide$SquareFeet, col = "red", main = "BrkSide Q-Q Plot")
+qqline(df_BrkSide$SquareFeet, col = "blue",lwd=2,lty=2)
+qqnorm(log(df_BrkSide$SquareFeet), col = "red", main = "BrkSide Q-Q Plot - Transformed")
+qqline(log(df_BrkSide$SquareFeet), col = "blue",lwd=2,lty=2)
+hist(df_BrkSide$SquareFeet, col = "red", main = "BrkSide Histogram")
+hist(log(df_BrkSide$SquareFeet), col = "red", main = "BrkSide Histogram - Transformed")
+```
+
+### BrkSide:
+```{r,echo=F}
+pairs(df_BrkSide)
+```
+
+```{r,echo=F}
+par(mfrow=c(2,2))
+qqnorm(df_NAmes$SquareFeet, col = "red", main = "NAmes Q-Q Plot")
+qqline(df_NAmes$SquareFeet, col = "blue",lwd=2,lty=2)
+qqnorm(log(df_NAmes$SquareFeet), col = "red", main = "NAmes Q-Q Plot - Transformed")
+qqline(log(df_NAmes$SquareFeet), col = "blue",lwd=2,lty=2)
+hist(df_NAmes$SquareFeet, col = "red", main = "NAmes Histogram")
+hist(log(df_NAmes$SquareFeet), col = "red", main = "NAmes Histogram - Transformed")
+```
+
+### NAmes
+```{r,echo=F}
+pairs(df_NAmes)
+```
+
+### Linear Models:
+#### Based on the output below, there is interaction between Square Footage and the Neighborhood with respect to SalePrice. From the above assumption checking, using a Log-Log model (transform SqFt, but not SalePrice) is necessary. Consequently, I chose to use a log-log model with an interaction term for SqFt*Neighborhood.
+```{r, echo=F}
+# fit log-log model with interaction terms for SqFt
+loglogModelInteract.lm <- lm(logPrice~logFeet + Neighborhood + logFeet*Neighborhood, data = df_loglogFiltered)
+colnames(df_loglogFiltered) <- c("logPrice","Neighborhood","logFeet")
+
+plot_model(loglogModelInteract.lm, type = "pred", terms = c("logFeet", "Neighborhood"), title = "Log-Log Model with Interaction")
+```
+
+
+```{r, echo=T}
+summary(loglogModelInteract.lm)
+confint(loglogModelInteract.lm)
+par(mfrow=c(2,2))
+plot(loglogModelInteract.lm)
+```
