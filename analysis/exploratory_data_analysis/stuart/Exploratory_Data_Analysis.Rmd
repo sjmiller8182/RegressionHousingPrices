@@ -22,7 +22,7 @@ library(Hmisc)
 library(GGally)
 
 # helper files
-source('../helper/data_munging.R')
+source('../../helper/data_munging.R')
 ```
 
 # Exploratory Analysis
@@ -30,8 +30,8 @@ source('../helper/data_munging.R')
 ### Load the data into R
 
 ```{r results='hide', message=FALSE}
-train <- read_csv('../data/train.csv')
-test <- read_csv('../data/test.csv')
+train <- read_csv('../../data/train.csv')
+test <- read_csv('../../data/test.csv')
 
 train <- train %>% mutate(logSalePrice = log(SalePrice))
 
