@@ -2,7 +2,7 @@
 title: "Ames Iowa Housing Prices (Analysis Two)"
 author: "Paul Adams"
 date: "August 3, 2019"
-output: word_document
+output: html_document
 ---
 
 ```{r, echo=T, message=F}
@@ -11,18 +11,12 @@ p_load(tidyr,dplyr,purrr,stringr,ggplot2, MASS,DAAG, sjPlot, Hmisc)
 ```
 
 ```{r, echo=F}
-setwd("C:/Users/Pablo/Desktop/DS 6371 - Statistical Foundations for Data Science/Kaggle Project")
+setwd("C:/Users/Pablo/Desktop/KG6371/analysis")
 df <- read.csv("train.csv", stringsAsFactors = F)
 ```
 
 ### Handle NAs
 ```{r, echo=T,warning=F, message=F}
-# create dataframe for numeric data
-dfTest.numeric <- dplyr::select_if(df, is.numeric) %>% data.frame()
-
-# create dataframe for non-numeric data
-dfTest.nonnumeric <- dplyr::select_if(df, is.factor) %>% data.frame()
-
 #See structure for replacing NAs
 str(df)
 
@@ -53,18 +47,18 @@ na_count
 noElectric <- df[which(is.na(df$Electrical)),c("SalePrice","Neighborhood")]
 noElectric
 
-# Who services electricity in this neighborhoo?
+# Who services electricity in this neighborhood?
 timberElectric <- arrange(df[which(df$Neighborhood=="Timber"),c("SalePrice","Electrical")], SalePrice)
 head(timberElectric)
 tail(timberElectric)
-# Timber looks to mostly use SBrkr so this should not be an issue to assume for the NA value for Electrical
+# Timber looks to mostly use SBrkr so this should not be an issue to assume for the NA value for Electrical - it also fits the SalePrice range of SBrkr
 
 ##############################################################################
 #End Checking Electrical NAs##################################################
 ##############################################################################
 
 df$LotFrontage[is.na(df$LotFrontage)] <- 0
-df$Alley[is.na(df$Alley)] <- "None" #@###########
+df$Alley[is.na(df$Alley)] <- "None"
 df$MasVnrType[is.na(df$MasVnrType)] <- "None"
 df$MasVnrArea[is.na(df$MasVnrArea)] <- 0
 df$BsmtQual[is.na(df$BsmtQual)] <- 0
@@ -86,35 +80,114 @@ df$MiscFeature[is.na(df$MiscFeature)] <- "None"
 ########################################################################################################
 #End Area for handling NAs##############################################################################
 ########################################################################################################
+
+# create dataframe for numeric data
+dfTest.numeric <- dplyr::select_if(df, is.numeric) %>% data.frame()
+
+# create dataframe for non-numeric data
+dfTest.nonnumeric <- dplyr::select_if(df, is.factor) %>% data.frame()
 ```
 
-### Correlation matrix for quantitative values, forward, backward, both
+###Correlation matrix for quantitative data
 ```{r, echo=T,warning=F, message=F}
 #See what variables are correlated with eachother, p-values
 correlation.matrix <- rcorr(as.matrix(dfTest.numeric))
 corDF <- data.frame(flattenCorrMatrix(correlation.matrix$r, correlation.matrix$P))
+```
 
+### Testing Quantitative Data Model
+```{r, echo=T,warning=F, message=F}
+#################################################################################
+###########Start testing quantitative data model variable selection##############
+#################################################################################
 #Order the correlation matrix to show the highest correlated
 data.frame(corDF[order(-corDF$cor),])
 quantDataModel <- corDF[which(corDF$cor >= 0.5),]
 
-fitQuant <- lm(SalePrice ~ OverallQual + YearBuilt + YearRemodAdd + TotalBsmtSF + X1stFlrSF + GrLivArea + FullBath + TotRmsAbvGrd + GarageCars + GarageArea, data = df)
+fitQuant <- lm(log(SalePrice) ~ OverallQual + YearBuilt + YearRemodAdd + TotalBsmtSF + GrLivArea + X1stFlrSF + FullBath + TotRmsAbvGrd + GarageCars + GarageArea + Neighborhood, data = df)
+summary(fitQuant)
 
 # Model using all variables
-fitFull <- lm(SalePrice ~ Id + MSSubClass + MSZoning + LotFrontage + LotArea + Street + Alley + LotShape + LandContour + Utilities + LotConfig + LandSlope + Neighborhood + Condition1 + Condition2 + BldgType + HouseStyle + OverallQual + OverallCond + YearBuilt + YearRemodAdd + RoofStyle + RoofMatl + Exterior1st + Exterior2nd + MasVnrType + MasVnrArea + ExterQual + ExterCond + Foundation + BsmtQual + BsmtCond + BsmtExposure + BsmtFinType1 + BsmtFinSF1 + BsmtFinType2 + BsmtFinSF2 + BsmtUnfSF + TotalBsmtSF + Heating + HeatingQC + CentralAir + Electrical + X1stFlrSF + X2ndFlrSF + LowQualFinSF + GrLivArea + BsmtFullBath + BsmtHalfBath + FullBath + HalfBath + BedroomAbvGr + KitchenAbvGr + KitchenQual + TotRmsAbvGrd + Functional + Fireplaces + FireplaceQu + GarageType + GarageYrBlt + GarageFinish + GarageCars + GarageArea + GarageQual + GarageCond + PavedDrive + WoodDeckSF + OpenPorchSF + EnclosedPorch + X3SsnPorch + ScreenPorch + PoolArea + PoolQC + Fence + MiscFeature + MiscVal + MoSold + YrSold + SaleType + SaleCondition, data = df)
-?stepAIC
+fitFull <- lm(log(SalePrice) ~ Id + MSSubClass + MSZoning + LotFrontage + LotArea + Street + Alley + LotShape + LandContour + Utilities + LotConfig + LandSlope + Neighborhood + Condition1 + Condition2 + BldgType + HouseStyle + OverallQual + OverallCond + YearBuilt + YearRemodAdd + RoofStyle + RoofMatl + Exterior1st + Exterior2nd + MasVnrType + MasVnrArea + ExterQual + ExterCond + Foundation + BsmtQual + BsmtCond + BsmtExposure + BsmtFinType1 + BsmtFinSF1 + BsmtFinType2 + BsmtFinSF2 + BsmtUnfSF + TotalBsmtSF + Heating + HeatingQC + CentralAir + Electrical + X1stFlrSF + X2ndFlrSF + LowQualFinSF + GrLivArea + BsmtFullBath + BsmtHalfBath + FullBath + HalfBath + BedroomAbvGr + KitchenAbvGr + KitchenQual + TotRmsAbvGrd + Functional + Fireplaces + FireplaceQu + GarageType + GarageYrBlt + GarageFinish + GarageCars + GarageArea + GarageQual + GarageCond + PavedDrive + WoodDeckSF + OpenPorchSF + EnclosedPorch + X3SsnPorch + ScreenPorch + PoolArea + PoolQC + Fence + MiscFeature + MiscVal + MoSold + YrSold + SaleType + SaleCondition, data = df)
+
 # Forward Selection
-stepForward.model <- stepAIC(fitQuant, direction = "forward", trace = F)
+stepForward.Quant.model <- stepAIC(fitQuant, direction = "forward", trace = F)
+summary(stepForward.Quant.model)
+stepForward.Quant.model$anova
+
+# Backward Selection
+stepBackward.Quant.model <- stepAIC(fitQuant, direction = "backward", trace = F)
+summary(stepBackward.Quant.model)
+stepBackward.Quant.model$anova
+
+# Stepwise Selection
+stepwise.Quant.model <- stepAIC(fitQuant, direction = "both", trace = F)
+summary(stepwise.Quant.model)
+stepwise.Quant.model$anova
+# Forward and Stepwise selection both indicate to remove X1stFlrSF and FullBath
+
+#################################################################################
+###############End testing quantitative data model variable selection############
+#################################################################################
+```
+
+###Testing Qualitative Data Model
+```{r, echo=T,warning=F, message=F}
+#################################################################################
+#############Start testing qualitative data model variable selection#############
+#################################################################################
+fitQual <- lm(log(SalePrice) ~ MSZoning + Street + Alley + LotShape + LandContour + Utilities + LotConfig + LandSlope + Neighborhood + Condition1 + Condition2 + BldgType + HouseStyle + RoofStyle + RoofMatl + Exterior1st + Exterior2nd + MasVnrType + ExterQual + ExterCond + Foundation + BsmtQual + BsmtCond + BsmtExposure + BsmtFinType1 + BsmtFinType2 + Heating + HeatingQC + CentralAir + Electrical + KitchenQual + FireplaceQu + GarageType + GarageFinish + GarageQual + GarageCond + PavedDrive + PoolQC + Fence+ MiscFeature + SaleType + SaleCondition, data=df)
+summary(fitQual)
+
+fitQual_Filtered <- lm(log(SalePrice) ~ Neighborhood + LotConfig + Condition1 + BldgType + HouseStyle + RoofMatl + Heating + KitchenQual + GarageQual + GarageCond + PoolQC, data=df)
+
+fitQual_double.Filtered <- lm(log(SalePrice) ~ Neighborhood + LotConfig + BldgType + HouseStyle + RoofMatl + KitchenQual + PoolQC, data=df) ##LotConfig mostly only matters when it's a Culdesac
+
+# Forward Selection
+stepForward.Qual.model <- stepAIC(fitQual_double.Filtered, direction = "forward", trace = F)
+summary(stepForward.Qual.model)
+stepForward.Qual.model$anova
+
+# Backward Selection
+stepBackward.Qual.model <- stepAIC(fitQual_double.Filtered, direction = "backward", trace = F)
+summary(stepBackward.Qual.model)
+stepBackward.Qual.model$anova
+
+# Stepwise Selection
+stepwise.Qual.model <- stepAIC(fitQual_double.Filtered, direction = "both", trace = F)
+summary(stepwise.Qual.model)
+stepwise.Qual.model$anova
+
+#################################################################################
+##############End testing qualitative data model variable selection##############
+#################################################################################
+```
+
+###Start testing model with qual and quant data
+```{r, echo=T,warning=F, message=F}
+#################################################################################
+##############Start testing quant+qual data model variable selection#############
+#################################################################################
+fit_model.Filtered <- lm(log(SalePrice) ~ OverallQual + YearBuilt + YearRemodAdd + TotalBsmtSF + GrLivArea + TotRmsAbvGrd + GarageCars + GarageArea + Neighborhood + LotConfig + BldgType + HouseStyle + RoofMatl + KitchenQual + PoolQC, data = df)
+
+# Forward Selection
+stepForward.model <- stepAIC(fit_model.Filtered, direction = "forward", trace = F)
 summary(stepForward.model)
 stepForward.model$anova
 
-# Backwise Selection
-stepBackward.model <- stepAIC(fitQuant, direction = "backward", trace = F)
+# Backward Selection
+stepBackward.model <- stepAIC(fit_model.Filtered, direction = "backward", trace = F)
 summary(stepBackward.model)
 stepBackward.model$anova
 
 # Stepwise Selection
-stepBoth.model <- stepAIC(fitQuant, direction = "both", trace = F)
-summary(stepBoth.model)
-stepBoth.model$anova
+stepwise.model <- stepAIC(fit_model.Filtered, direction = "both", trace = F)
+summary(stepwise.model)
+stepwise.model$anova
+
+#Both backward and stepwise selection indicate to remove HouseStyle, TotRmsAbvGrd, X1stFlrSF, and FullBath
+
+#################################################################################
+################End testing quant+qual data model variable selection#############
+#################################################################################
 ```
