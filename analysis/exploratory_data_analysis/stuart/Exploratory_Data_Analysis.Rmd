@@ -102,6 +102,22 @@ names(flattenedCor) <- c('Feature1','Feature2','Correlation Coefficient')
 kable(flattenedCor)
 ```
 
+**Heatmap of Correlation Amoing Variables**
+
+```{r, fig.height=15, fig.width=15}
+heatmap.cor.lab <- function(df){
+  df %>%
+    keep(is.numeric) %>%
+    drop_na() %>%
+    cor %>%
+    corrplot(addCoef.col = 'white',
+             number.digits = 2,
+             number.cex = 0.5,
+             method = 'square')
+}
+
+train %>% heatmap.cor.lab
+```
 
 
 #### Varaince of Explanatory Variables

@@ -12,9 +12,11 @@ library(tidyverse)
 library(naniar)
 library(Hmisc)
 library(GGally)
+require(gplots)
+require(corrplot)
 
 # helper files
-source('../helper/data_munging.R')
+source('../../helper/data_munging.R')
 ```
 
 # Exploratory Analysis
@@ -22,9 +24,10 @@ source('../helper/data_munging.R')
 ### Load the data into R
 
 ``` r
-train <- read_csv('../data/train.csv')
-test <- read_csv('../data/test.csv')
+train <- read_csv('../../data/train.csv')
+test <- read_csv('../../data/test.csv')
 
+# add log of saleprice
 train <- train %>% mutate(logSalePrice = log(SalePrice))
 
 train$MSSubClass <- factor(train$MSSubClass)
@@ -101,94 +104,6 @@ dim(test.nonnumeric)
 #str(train)
 ```
 
-## Missing Data
-
-5 of the features, `PoolQC`, `MiscFeature`, `Alley`, `Fence`, and
-`FireplaceQu`, have very high missing rates in both sets of data. It
-seems unlikely that these features would provide value as imbuing values
-for the missing values would likely bias the training set towards the
-imbued value. The feature `LotFrontage` is missing at a rate of ~17% and
-~ 15% in the training and testing set respectively. This is also a
-fairly high missing rate, but the usefulness of the feature should be
-investigated. Fortunately, the rate of missingness for each feature is
-approximately the same between the training and testing datasets.
-
-``` r
-train.nabular <- train %>% bind_shadow()
-train.missing.summary <- train.nabular %>% miss_var_summary()
-#train.missing.summary
-
-train.missing.summary %>%
-  filter(n_miss > 0) %>%
-  ggplot(aes(x = reorder(variable, -n_miss), y = pct_miss)) + geom_bar(stat = 'identity') +
-  theme(axis.text.x = element_text(angle = 70, hjust = 1)) +
-  labs(title = 'Percent Missing Values of Features (Training Set)',
-       y = '% Observations Missing', x = 'Feature Name')
-```
-
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
-
-`PoolQC`, `MiscFeature`, `Alley`, `Fence`, `FireplaceQu`, and
-`LotFrontage` are the primary missing values in the training dataset.
-
-``` r
-test.nabular <- test %>% bind_shadow()
-test.missing.summary <- test.nabular %>% miss_var_summary()
-#test.missing.summary
-
-test.missing.summary %>%
-  filter(n_miss > 0) %>%
-  ggplot(aes(x = reorder(variable, -n_miss), y = pct_miss)) + geom_bar(stat = 'identity') +
-  theme(axis.text.x = element_text(angle = 70, hjust = 1)) +
-  labs(title = 'Percent Missing Values of Features (Test Set)',
-       y = '% Observations Missing', x = 'Feature Name')
-```
-
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
-
-`PoolQC`, `MiscFeature`, `Alley`, `Fence`,`FireplaceQu`, and
-`LotFrontage` are the primary missing values in the testing dataset.
-
-**Summary of the Data Missing per Feature from the
-Datasets**
-
-| Variable     | Number Missing (Train) | Percent Missing (Train) | Number Missing (Test) | Percent Missing (Test) |
-| ------------ | ---------------------- | ----------------------- | --------------------- | ---------------------- |
-| PoolQC       | 1453                   | 99.5%                   | 1456                  | 99.7%                  |
-| MiscFeature  | 1406                   | 96.3%                   | 1408                  | 96.5%                  |
-| Alley        | 1369                   | 93.7%                   | 1352                  | 92.6%                  |
-| Fence        | 1179                   | 80.7%                   | 1169                  | 80.1%                  |
-| FireplaceQu  | 690                    | 47.2%                   | 730                   | 50.0%                  |
-| LotFrontage  | 259                    | 17.8%                   | 227                   | 15.5%                  |
-| GarageType   | 81                     | 5.55%                   | 76                    | 5.21%                  |
-| GarageYrBlt  | 81                     | 5.55%                   | 78                    | 5.34%                  |
-| GarageFinish | 81                     | 5.55%                   | 78                    | 5.34%                  |
-| GarageQual   | 81                     | 5.55%                   | 78                    | 5.34%                  |
-| GarageCond   | 81                     | 5.55%                   | 78                    | 5.34%                  |
-| BsmtExposure | 38                     | 2.60%                   | 44                    | 3.01%                  |
-| BsmtFinType2 | 38                     | 2.60%                   | 42                    | 2.87%                  |
-| BsmtQual     | 37                     | 2.53%                   | 44                    | 3.01%                  |
-| BsmtCond     | 37                     | 2.53%                   | 45                    | 3.08%                  |
-| BsmtFinType1 | 37                     | 2.53%                   | 42                    | 2.87%                  |
-| MasVnrType   | 8                      | 0.55%                   | 16                    | 0.27%                  |
-| MasVnrArea   | 8                      | 0.55%                   | 15                    | 0.13%                  |
-| Electrical   | 1                      | 0.07%                   | N/A                   | N/A                    |
-| MSZoning     | N/A                    | N/A                     | 4                     | 0.27%                  |
-| Utilities    | N/A                    | N/A                     | 2                     | 0.14%                  |
-| BsmtFullBath | N/A                    | N/A                     | 2                     | 0.14%                  |
-| BsmtHalfBath | N/A                    | N/A                     | 2                     | 0.14%                  |
-| Functional   | N/A                    | N/A                     | 2                     | 0.14%                  |
-| Exterior1st  | N/A                    | N/A                     | 1                     | 0.07%                  |
-| Exterior2nd  | N/A                    | N/A                     | 1                     | 0.07%                  |
-| BsmtFinSF1   | N/A                    | N/A                     | 1                     | 0.07%                  |
-| BsmtFinSF2   | N/A                    | N/A                     | 1                     | 0.07%                  |
-| BsmtUnfSF    | N/A                    | N/A                     | 1                     | 0.07%                  |
-| TotalBsmtSF  | N/A                    | N/A                     | 1                     | 0.07%                  |
-| KitchenQual  | N/A                    | N/A                     | 1                     | 0.07%                  |
-| GarageCars   | N/A                    | N/A                     | 1                     | 0.07%                  |
-| GarageArea   | N/A                    | N/A                     | 1                     | 0.07%                  |
-| SaleType     | N/A                    | N/A                     | 1                     | 0.07%                  |
-
 ## Univariate and Relation to Response Exploration
 
 ### Continuous Variables
@@ -205,7 +120,7 @@ ggplot(aes_string(x = 'SalePrice'), data = train) +
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
 #### Correlation of Numeric Features (Training Set)
 
@@ -267,6 +182,25 @@ kable(flattenedCor)
 | GrLivArea    | BedroomAbvGr |               0.5119397 |
 | 2ndFlrSF     | BedroomAbvGr |               0.5107030 |
 | YearBuilt    | FullBath     |               0.5004947 |
+
+**Heatmap of Correlation Amoing Variables**
+
+``` r
+heatmap.cor.lab <- function(df){
+  df %>%
+    keep(is.numeric) %>%
+    drop_na() %>%
+    cor %>%
+    corrplot(addCoef.col = 'white',
+             number.digits = 2,
+             number.cex = 0.5,
+             method = 'square')
+}
+
+train %>% heatmap.cor.lab
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
 #### Varaince of Explanatory Variables
 
@@ -420,7 +354,7 @@ ggplot(aes_string(x = 'LotFrontage'), data = numeric.both) +
 
     ## Warning: Removed 486 rows containing non-finite values (stat_bin).
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 ``` r
 train.numeric %>% ggplot(aes(x = LotFrontage, y = logSalePrice)) +
@@ -431,7 +365,7 @@ train.numeric %>% ggplot(aes(x = LotFrontage, y = logSalePrice)) +
 
     ## Warning: Removed 259 rows containing missing values (geom_point).
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-10-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-9-2.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'LotArea'), data = numeric.both) + 
@@ -440,14 +374,14 @@ ggplot(aes_string(x = 'LotArea'), data = numeric.both) +
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
 ``` r
 train.numeric %>% ggplot(aes(x = LotArea, y = logSalePrice)) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-11-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-10-2.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'OverallQual'), data = numeric.both) + 
@@ -456,14 +390,14 @@ ggplot(aes_string(x = 'OverallQual'), data = numeric.both) +
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
 
 ``` r
 train.numeric %>% ggplot(aes(x = OverallQual, y = logSalePrice)) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-12-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-11-2.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'OverallCond'), data = numeric.both) + 
@@ -472,14 +406,14 @@ ggplot(aes_string(x = 'OverallCond'), data = numeric.both) +
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
 ``` r
 train.numeric %>% ggplot(aes(x = OverallCond, y = logSalePrice)) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-13-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-12-2.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'YearBuilt'), data = numeric.both) + 
@@ -488,14 +422,14 @@ ggplot(aes_string(x = 'YearBuilt'), data = numeric.both) +
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
 
 ``` r
 train.numeric %>% ggplot(aes(x = YearBuilt, y = logSalePrice)) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-14-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-13-2.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'YearRemodAdd'), data = numeric.both) + 
@@ -504,14 +438,14 @@ ggplot(aes_string(x = 'YearRemodAdd'), data = numeric.both) +
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
 ``` r
 train.numeric %>% ggplot(aes(x = YearRemodAdd, y = logSalePrice)) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-15-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-14-2.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'MasVnrArea'), data = numeric.both) + 
@@ -522,14 +456,14 @@ ggplot(aes_string(x = 'MasVnrArea'), data = numeric.both) +
 
     ## Warning: Removed 23 rows containing non-finite values (stat_bin).
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
 
 ``` r
 train.numeric %>% filter(MasVnrArea != 0) %>% ggplot(aes(x = MasVnrArea, y = logSalePrice)) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-16-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-15-2.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'BsmtFinSF1'), data = numeric.both) + 
@@ -540,14 +474,14 @@ ggplot(aes_string(x = 'BsmtFinSF1'), data = numeric.both) +
 
     ## Warning: Removed 1 rows containing non-finite values (stat_bin).
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
 ``` r
 train.numeric %>% filter(BsmtFinSF1 != 0) %>% ggplot(aes(x = BsmtFinSF1, y = logSalePrice)) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-17-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-16-2.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'BsmtFinSF2'), data = numeric.both) + 
@@ -558,14 +492,14 @@ ggplot(aes_string(x = 'BsmtFinSF2'), data = numeric.both) +
 
     ## Warning: Removed 1 rows containing non-finite values (stat_bin).
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
 ``` r
 train.numeric %>% filter(BsmtFinSF2 != 0) %>% ggplot(aes(x = BsmtFinSF2, y = logSalePrice)) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-18-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-17-2.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'BsmtUnfSF'), data = numeric.both) + 
@@ -576,14 +510,14 @@ ggplot(aes_string(x = 'BsmtUnfSF'), data = numeric.both) +
 
     ## Warning: Removed 1 rows containing non-finite values (stat_bin).
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
 
 ``` r
 train.numeric %>% filter(BsmtUnfSF != 0) %>% ggplot(aes(x = BsmtUnfSF, y = logSalePrice)) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-19-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-18-2.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'TotalBsmtSF'), data = numeric.both) + 
@@ -594,14 +528,14 @@ ggplot(aes_string(x = 'TotalBsmtSF'), data = numeric.both) +
 
     ## Warning: Removed 1 rows containing non-finite values (stat_bin).
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
 
 ``` r
 train.numeric %>% filter(TotalBsmtSF != 0) %>% ggplot(aes(x = TotalBsmtSF, y = logSalePrice)) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-20-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-19-2.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = '`1stFlrSF`'), data = numeric.both) + 
@@ -610,14 +544,14 @@ ggplot(aes_string(x = '`1stFlrSF`'), data = numeric.both) +
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
 
 ``` r
 train.numeric %>% filter(`1stFlrSF` != 0) %>% ggplot(aes(x = `1stFlrSF`, y = logSalePrice)) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-21-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-20-2.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = '`2ndFlrSF`'), data = numeric.both) + 
@@ -626,14 +560,14 @@ ggplot(aes_string(x = '`2ndFlrSF`'), data = numeric.both) +
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
 
 ``` r
 train.numeric %>% filter(`2ndFlrSF` != 0) %>% ggplot(aes(x = `2ndFlrSF`, y = logSalePrice)) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-22-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-21-2.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'LowQualFinSF'), data = numeric.both) + 
@@ -642,14 +576,14 @@ ggplot(aes_string(x = 'LowQualFinSF'), data = numeric.both) +
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
 
 ``` r
 train.numeric %>% filter(LowQualFinSF != 0) %>% ggplot(aes(x = LowQualFinSF, y = logSalePrice)) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-23-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-22-2.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'GrLivArea'), data = numeric.both) + 
@@ -658,14 +592,14 @@ ggplot(aes_string(x = 'GrLivArea'), data = numeric.both) +
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
 
 ``` r
 train.numeric %>% filter(GrLivArea != 0) %>% ggplot(aes(x = GrLivArea, y = logSalePrice)) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-24-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-23-2.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'BsmtFullBath'), data = numeric.both) + 
@@ -676,14 +610,14 @@ ggplot(aes_string(x = 'BsmtFullBath'), data = numeric.both) +
 
     ## Warning: Removed 2 rows containing non-finite values (stat_bin).
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
 
 ``` r
 train.numeric %>% filter(BsmtFullBath != 0) %>% ggplot(aes(x = BsmtFullBath, y = logSalePrice)) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-25-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-24-2.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'BsmtHalfBath'), data = numeric.both) + 
@@ -694,14 +628,14 @@ ggplot(aes_string(x = 'BsmtHalfBath'), data = numeric.both) +
 
     ## Warning: Removed 2 rows containing non-finite values (stat_bin).
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-26-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
 
 ``` r
 train.numeric %>% filter(BsmtHalfBath != 0) %>% ggplot(aes(x = BsmtHalfBath, y = logSalePrice)) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-26-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-25-2.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'FullBath'), data = numeric.both) + 
@@ -710,14 +644,14 @@ ggplot(aes_string(x = 'FullBath'), data = numeric.both) +
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-27-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-26-1.png)<!-- -->
 
 ``` r
 train.numeric %>% filter(FullBath != 0) %>% ggplot(aes(x = FullBath, y = logSalePrice)) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-27-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-26-2.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'HalfBath'), data = numeric.both) + 
@@ -726,14 +660,14 @@ ggplot(aes_string(x = 'HalfBath'), data = numeric.both) +
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-28-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-27-1.png)<!-- -->
 
 ``` r
 train.numeric %>% filter(HalfBath != 0) %>% ggplot(aes(x = HalfBath, y = logSalePrice)) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-28-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-27-2.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'BedroomAbvGr'), data = numeric.both) + 
@@ -742,14 +676,14 @@ ggplot(aes_string(x = 'BedroomAbvGr'), data = numeric.both) +
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-29-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-28-1.png)<!-- -->
 
 ``` r
 train.numeric %>% filter(BedroomAbvGr != 0) %>% ggplot(aes(x = BedroomAbvGr, y = logSalePrice)) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-29-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-28-2.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'KitchenAbvGr'), data = numeric.both) + 
@@ -758,14 +692,14 @@ ggplot(aes_string(x = 'KitchenAbvGr'), data = numeric.both) +
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-30-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-29-1.png)<!-- -->
 
 ``` r
 train.numeric %>% filter(KitchenAbvGr != 0) %>% ggplot(aes(x = KitchenAbvGr, y = logSalePrice)) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-30-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-29-2.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'TotRmsAbvGrd'), data = numeric.both) + 
@@ -774,14 +708,14 @@ ggplot(aes_string(x = 'TotRmsAbvGrd'), data = numeric.both) +
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-30-1.png)<!-- -->
 
 ``` r
 train.numeric %>% filter(TotRmsAbvGrd != 0) %>% ggplot(aes(x = TotRmsAbvGrd, y = logSalePrice)) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-31-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-30-2.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'Fireplaces'), data = numeric.both) + 
@@ -790,14 +724,14 @@ ggplot(aes_string(x = 'Fireplaces'), data = numeric.both) +
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-32-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
 
 ``` r
 train.numeric %>% filter(Fireplaces != 0) %>% ggplot(aes(x = Fireplaces, y = logSalePrice)) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-32-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-31-2.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'GarageYrBlt'), data = numeric.both) + 
@@ -808,14 +742,14 @@ ggplot(aes_string(x = 'GarageYrBlt'), data = numeric.both) +
 
     ## Warning: Removed 159 rows containing non-finite values (stat_bin).
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-32-1.png)<!-- -->
 
 ``` r
 train.numeric %>% filter(GarageYrBlt != 0) %>% ggplot(aes(x = GarageYrBlt, y = logSalePrice)) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-33-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-32-2.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'GarageCars'), data = numeric.both) + 
@@ -826,14 +760,14 @@ ggplot(aes_string(x = 'GarageCars'), data = numeric.both) +
 
     ## Warning: Removed 1 rows containing non-finite values (stat_bin).
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-34-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
 
 ``` r
 train.numeric %>% filter(GarageCars != 0) %>% ggplot(aes(x = GarageCars, y = logSalePrice)) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-34-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-33-2.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'GarageArea'), data = numeric.both) + 
@@ -844,14 +778,14 @@ ggplot(aes_string(x = 'GarageArea'), data = numeric.both) +
 
     ## Warning: Removed 1 rows containing non-finite values (stat_bin).
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-35-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-34-1.png)<!-- -->
 
 ``` r
 train.numeric %>% filter(GarageArea != 0) %>% ggplot(aes(x = GarageArea, y = logSalePrice)) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-35-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-34-2.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'WoodDeckSF'), data = numeric.both) + 
@@ -860,14 +794,14 @@ ggplot(aes_string(x = 'WoodDeckSF'), data = numeric.both) +
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-36-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-35-1.png)<!-- -->
 
 ``` r
 train.numeric %>% filter(WoodDeckSF != 0) %>% ggplot(aes(x = WoodDeckSF, y = logSalePrice)) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-36-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-35-2.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'OpenPorchSF'), data = numeric.both) + 
@@ -876,14 +810,14 @@ ggplot(aes_string(x = 'OpenPorchSF'), data = numeric.both) +
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-37-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-36-1.png)<!-- -->
 
 ``` r
 train.numeric %>% filter(OpenPorchSF != 0) %>% ggplot(aes(x = OpenPorchSF, y = logSalePrice)) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-37-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-36-2.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'EnclosedPorch'), data = numeric.both) + 
@@ -892,14 +826,14 @@ ggplot(aes_string(x = 'EnclosedPorch'), data = numeric.both) +
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-38-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-37-1.png)<!-- -->
 
 ``` r
 train.numeric %>% filter(EnclosedPorch != 0) %>% ggplot(aes(x = EnclosedPorch, y = logSalePrice)) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-38-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-37-2.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = '`3SsnPorch`'), data = numeric.both) + 
@@ -908,14 +842,14 @@ ggplot(aes_string(x = '`3SsnPorch`'), data = numeric.both) +
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-39-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-38-1.png)<!-- -->
 
 ``` r
 train.numeric %>% filter(`3SsnPorch` != 0) %>% ggplot(aes(x = `3SsnPorch`, y = logSalePrice)) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-39-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-38-2.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'ScreenPorch'), data = numeric.both) + 
@@ -924,14 +858,14 @@ ggplot(aes_string(x = 'ScreenPorch'), data = numeric.both) +
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-40-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-39-1.png)<!-- -->
 
 ``` r
 train.numeric %>% filter(ScreenPorch != 0) %>% ggplot(aes(x = ScreenPorch, y = logSalePrice)) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-40-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-39-2.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'PoolArea'), data = numeric.both) + 
@@ -940,14 +874,14 @@ ggplot(aes_string(x = 'PoolArea'), data = numeric.both) +
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-41-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-40-1.png)<!-- -->
 
 ``` r
 train.numeric %>% filter(PoolArea != 0) %>% ggplot(aes(x = PoolArea, y = logSalePrice)) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-41-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-40-2.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'MiscVal'), data = numeric.both) + 
@@ -956,14 +890,14 @@ ggplot(aes_string(x = 'MiscVal'), data = numeric.both) +
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-42-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-41-1.png)<!-- -->
 
 ``` r
 train.numeric %>% filter(MiscVal != 0) %>% ggplot(aes(x = MiscVal, y = logSalePrice)) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-42-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-41-2.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'MoSold'), data = numeric.both) + 
@@ -972,14 +906,14 @@ ggplot(aes_string(x = 'MoSold'), data = numeric.both) +
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-43-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-42-1.png)<!-- -->
 
 ``` r
 train.numeric %>% filter(MoSold != 0) %>% ggplot(aes(x = MoSold, y = logSalePrice)) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-43-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-42-2.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'YrSold'), data = numeric.both) + 
@@ -988,14 +922,14 @@ ggplot(aes_string(x = 'YrSold'), data = numeric.both) +
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-44-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-43-1.png)<!-- -->
 
 ``` r
 train.numeric %>% filter(YrSold != 0) %>% ggplot(aes(x = YrSold, y = logSalePrice)) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-44-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-43-2.png)<!-- -->
 
 ### Categorical Variables
 
@@ -1068,287 +1002,287 @@ ggplot(aes_string(x = 'MSZoning'), data = nonnumeric.both) +
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-46-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-45-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'Street'), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-47-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-46-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'Alley'), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-48-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-47-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'LotShape'), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-49-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-48-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'LandContour'), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-50-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-49-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'Utilities'), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-51-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-50-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'LotConfig'), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-52-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-51-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'LandSlope'), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-53-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-52-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'Neighborhood'), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-54-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-53-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'Condition1'), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-55-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-54-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = 'Condition2'), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-56-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-55-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = "HouseStyle"), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-57-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-56-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = "RoofStyle"), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-58-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-57-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = "RoofMatl"), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-59-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-58-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = "Exterior1st"), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-60-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-59-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = "Exterior2nd"), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-61-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-60-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = "MasVnrType"), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-62-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-61-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = "ExterQual"), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-63-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-62-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = "ExterCond"), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-64-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-63-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = "Foundation"), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-65-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-64-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = "BsmtQual"), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-66-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-65-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = "BsmtExposure"), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-67-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-66-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = "BsmtFinType1"), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-68-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-67-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = "BsmtFinType2"), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-69-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-68-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = "Heating"), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-70-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-69-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = "HeatingQC"), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-71-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-70-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = "CentralAir"), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-72-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-71-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = "Electrical"), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-73-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-72-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = "KitchenQual"), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-74-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-73-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = "Functional"), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-75-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-74-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = "FireplaceQu"), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-76-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-75-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = "GarageType"), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-77-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-76-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = "GarageFinish"), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-78-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-77-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = "GarageQual"), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-79-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-78-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = "GarageCond"), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-80-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-79-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = "PavedDrive"), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-81-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-80-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = "PoolQC"), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-82-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-81-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = "Fence"), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-83-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-82-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = "MiscFeature"), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-84-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-83-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = "SaleType"), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-85-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-84-1.png)<!-- -->
 
 ``` r
 ggplot(aes_string(x = "SaleCondition"), data = nonnumeric.both) + 
   geom_bar() + facet_wrap(~ Set)
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-86-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-85-1.png)<!-- -->
 
 ### Continuous and Categorical Variable Interactions
 
@@ -1378,7 +1312,7 @@ train %>%
   ggpairs()
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-87-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-86-1.png)<!-- -->
 
 **Interaction Plots for Garage Area**
 
@@ -1394,7 +1328,7 @@ train %>%
   geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-88-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-87-1.png)<!-- -->
 
 ``` r
 train %>%
@@ -1403,7 +1337,7 @@ train %>%
   geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-88-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-87-2.png)<!-- -->
 
 **Interaction Plots for Garage Cars**
 
@@ -1419,7 +1353,7 @@ train %>%
   geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-89-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-88-1.png)<!-- -->
 
 ``` r
 train %>%
@@ -1428,7 +1362,7 @@ train %>%
   geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-89-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-88-2.png)<!-- -->
 
 **Interaction Plots for Garage Year Built**
 
@@ -1448,7 +1382,7 @@ train %>%
 
     ## Warning: Removed 81 rows containing missing values (geom_point).
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-90-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-89-1.png)<!-- -->
 
 ``` r
 train %>%
@@ -1461,7 +1395,7 @@ train %>%
     
     ## Warning: Removed 81 rows containing missing values (geom_point).
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-90-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-89-2.png)<!-- -->
 
 #### Interactions for Garage Variables
 
@@ -1490,7 +1424,7 @@ train %>%
   ggpairs()
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-91-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-90-1.png)<!-- -->
 
 **Interaction Plots for BsmtFinSF1**
 
@@ -1514,7 +1448,7 @@ train %>%
   geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-92-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-91-1.png)<!-- -->
 
 ``` r
 train %>%
@@ -1523,7 +1457,7 @@ train %>%
   geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-92-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-91-2.png)<!-- -->
 
 ``` r
 train %>%
@@ -1533,7 +1467,7 @@ train %>%
   geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-92-3.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-91-3.png)<!-- -->
 
 ``` r
 train %>% 
@@ -1543,7 +1477,7 @@ train %>%
   geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-92-4.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-91-4.png)<!-- -->
 
 **Interaction Plots for BsmtFinSF2**
 
@@ -1567,7 +1501,7 @@ train %>%
   geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-93-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-92-1.png)<!-- -->
 
 ``` r
 train %>%
@@ -1576,7 +1510,7 @@ train %>%
   geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-93-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-92-2.png)<!-- -->
 
 ``` r
 train %>%
@@ -1586,7 +1520,7 @@ train %>%
   geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-93-3.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-92-3.png)<!-- -->
 
 **Interaction Plots for BsmtUnfSF**
 
@@ -1610,7 +1544,7 @@ train %>%
   geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-94-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-93-1.png)<!-- -->
 
 ``` r
 train %>%
@@ -1619,7 +1553,7 @@ train %>%
   geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-94-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-93-2.png)<!-- -->
 
 ``` r
 train %>%
@@ -1629,7 +1563,7 @@ train %>%
   geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-94-3.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-93-3.png)<!-- -->
 
 ``` r
 train %>%
@@ -1639,7 +1573,7 @@ train %>%
   geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-94-4.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-93-4.png)<!-- -->
 
 **Interaction Plots for TotalBsmtSF**
 
@@ -1661,7 +1595,7 @@ train %>%
   geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-95-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-94-1.png)<!-- -->
 
 ``` r
 train %>%
@@ -1670,7 +1604,7 @@ train %>%
   geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-95-2.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-94-2.png)<!-- -->
 
 ``` r
 train %>%
@@ -1679,7 +1613,7 @@ train %>%
   geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-95-3.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-94-3.png)<!-- -->
 
 ``` r
 train %>% 
@@ -1688,4 +1622,4 @@ train %>%
   geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-95-4.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-94-4.png)<!-- -->
