@@ -1,0 +1,253 @@
+---
+title: "Exploratory Data Analysis"
+author: "Chance Robinson"
+date: "August 4, 2019"
+output: 
+  github_document:
+    toc: true
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Setup
+
+```{r message=FALSE}
+# libraries
+library(knitr)
+library(tidyverse)
+library(naniar)
+library(Hmisc)
+library(GGally)
+# Correlations
+library(corrr)
+# Stepwise Regression
+library(MASS)
+
+# helper files
+source('../../helper/data_munging.R')
+```
+
+# Exploratory Analysis
+
+### Load the data into R
+
+```{r results='hide', message=FALSE}
+train <- read_csv('../../data/train.csv')
+test <- read_csv('../../data/test.csv')
+
+train <- train %>% mutate(logSalePrice = log(SalePrice))
+
+```
+
+
+
+
+## Data Cleaning
+
+###  Handle null values for continuous variables
+- The `GarageYrBlt (Garage Year Built)` was found to be null when tied rows with an empty Garage Type for all cases of the training data.  It is likely that a Garage Type of NA would represent a property with no garage, and therefore we are setting the `GarageYrBlt` to 0.
+- The `LotFrontage` used an impute strategry with the mean value from each data set, as we assumed all houses should have some value for this data point.
+- For `MasVnrArea`, we assumed that these properties had no masonry veneer and replaced the NAs with 0.
+
+```{r numeric_data_cleaning}
+# Garage Year Built {"train": 81, "test": 78}
+
+train$GarageYrBlt[is.na(train$GarageYrBlt)] <- 0
+test$GarageYrBlt[is.na(test$GarageYrBlt)] <- 0
+
+# Lot Frontage {"train": 259, "test": 227}
+
+train$LotFrontage[is.na(train$LotFrontage)] <- mean(train$LotFrontage, na.rm=TRUE)
+test$LotFrontage[is.na(test$LotFrontage)] <- mean(test$LotFrontage, na.rm=TRUE)
+
+
+# MasVnrArea {"train": 8, "test": 15}
+train$MasVnrArea[is.na(train$MasVnrArea)] <- 0
+test$MasVnrArea[is.na(test$MasVnrArea)] <- 0
+
+```
+
+
+###  Handle null values for categorical variables
+- Alley 
+- MasVnrType
+- BsmtQual 
+- BsmtCond
+- BsmtExposure
+- BsmtFinType1
+- BsmtFinType2
+- FireplaceQu 
+- GarageType
+- GarageFinish
+- GarageQual
+- GarageCond
+- PoolQC 
+- Fence
+- MiscFeature
+- Electrical (SBrkr	Standard Circuit Breakers & Romex)
+
+```{r non_numeric_clean_data}
+
+train$Alley[is.na(train$Alley)] <- 'None'
+test$Alley[is.na(test$Alley)] <- 'None'
+
+train$MasVnrType[is.na(train$MasVnrType)] <- 'None'
+test$MasVnrType[is.na(test$MasVnrType)] <- 'None'
+
+train$BsmtQual[is.na(train$BsmtQual)] <- 'None'
+test$BsmtQual[is.na(test$BsmtQual)] <- 'None'
+
+train$BsmtCond[is.na(train$BsmtCond)] <- 'None'
+test$BsmtCond[is.na(test$BsmtCond)] <- 'None'
+
+train$BsmtExposure[is.na(train$BsmtExposure)] <- 'None'
+test$BsmtExposure[is.na(test$BsmtExposure)] <- 'None'
+
+train$BsmtFinType1[is.na(train$BsmtFinType1)] <- 'None'
+test$BsmtFinType1[is.na(test$BsmtFinType1)] <- 'None'
+
+train$BsmtFinType2[is.na(train$BsmtFinType2)] <- 'None'
+test$BsmtFinType2[is.na(test$BsmtFinType2)] <- 'None'
+
+train$FireplaceQu[is.na(train$FireplaceQu)] <- 'None'
+test$FireplaceQu[is.na(test$FireplaceQu)] <- 'None'
+
+train$GarageType[is.na(train$GarageType)] <- 'None'
+test$GarageType[is.na(test$GarageType)] <- 'None'
+
+train$GarageFinish[is.na(train$GarageFinish)] <- 'None'
+test$GarageFinish[is.na(test$GarageFinish)] <- 'None'
+
+train$GarageQual[is.na(train$GarageQual)] <- 'None'
+test$GarageQual[is.na(test$GarageQual)] <- 'None'
+
+train$GarageCond[is.na(train$GarageCond)] <- 'None'
+test$GarageCond[is.na(test$GarageCond)] <- 'None'
+
+train$PoolQC[is.na(train$PoolQC)] <- 'None'
+test$PoolQC[is.na(test$PoolQC)] <- 'None'
+
+train$Fence[is.na(train$Fence)] <- 'None'
+test$Fence[is.na(test$Fence)] <- 'None'
+
+train$MiscFeature[is.na(train$MiscFeature)] <- 'None'
+test$MiscFeature[is.na(test$MiscFeature)] <- 'None'
+
+train$Electrical[is.na(train$Electrical)] <- 'SBrkr'
+test$Electrical[is.na(test$Electrical)] <- 'SBrkr'
+
+```
+
+
+```{r non_numeric_factors}
+
+train$Alley <- ordered(train$Alley, levels = c("None", "Grvl", "Pave"))
+test$Alley <- ordered(test$Alley, levels = c("None", "Grvl", "Pave"))
+
+train$MasVnrType <- ordered(train$MasVnrType, levels = c("None", "CBlock", "BrkFace", "BrkCmn", "Stone"))
+test$MasVnrType <- ordered(test$MasVnrType, levels = c("None", "CBlock", "BrkFace", "BrkCmn", "Stone"))
+
+train$BsmtQual <- ordered(train$BsmtQual, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
+test$BsmtQual <- ordered(test$BsmtQual, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
+
+train$BsmtCond <- ordered(train$BsmtCond, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
+test$BsmtCond <- ordered(test$BsmtCond, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
+
+train$BsmtExposure <- ordered(train$BsmtExposure, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
+test$BsmtExposure <- ordered(test$BsmtExposure, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
+
+train$BsmtFinType1 <- ordered(train$BsmtFinType1, levels = c("None", "Unf", "LwQ", "Rec", "BLQ", "ALQ", "GLQ"))
+test$BsmtFinType1 <- ordered(test$BsmtFinType1, levels = c("None", "Unf", "LwQ", "Rec", "BLQ", "ALQ", "GLQ"))
+
+train$BsmtFinType2 <- ordered(train$BsmtFinType2, levels = c("None", "Unf", "LwQ", "Rec", "BLQ", "ALQ", "GLQ"))
+test$BsmtFinType2 <- ordered(test$BsmtFinType2, levels = c("None", "Unf", "LwQ", "Rec", "BLQ", "ALQ", "GLQ"))
+
+train$FireplaceQu <- ordered(train$FireplaceQu, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
+test$FireplaceQu <- ordered(test$FireplaceQu, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
+
+train$GarageType <- ordered(train$GarageType, levels = c("None", "CarPort", "2Types", "Basment", "Detchd", "Attchd", "BuiltIn"))
+test$GarageType <- ordered(test$GarageType, levels = c("None", "CarPort", "2Types", "Basment", "Detchd", "Attchd", "BuiltIn"))
+
+train$GarageFinish <- ordered(train$GarageFinish, levels = c("None", "Unf", "RFn", "Fin"))
+test$GarageFinish <- ordered(test$GarageFinish, levels = c("None", "Unf", "RFn", "Fin"))
+
+train$GarageQual <- ordered(train$GarageQual, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
+test$GarageQual <- ordered(test$GarageQual, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
+
+train$GarageCond <- ordered(train$GarageCond, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
+test$GarageCond <- ordered(test$GarageCond, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
+
+train$PoolQC <- ordered(train$PoolQC, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
+test$PoolQC <- ordered(test$PoolQC, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
+
+train$Fence <- ordered(train$Fence, levels = c("None", "MnWw", "GdWo", "MnPrv", "GdPrv"))
+test$Fence <- ordered(test$Fence, levels = c("None", "MnWw", "GdWo", "MnPrv", "GdPrv"))
+
+train$Electrical <- ordered(train$Electrical, levels = c("Mix", "FuseP", "FuseF", "FuseA", "SBrkr"))
+test$Electrical <- ordered(test$Electrical, levels = c("Mix", "FuseP", "FuseF", "FuseA", "SBrkr"))
+
+train$MiscFeature <- ordered(train$MiscFeature, levels = c("None", "Othr", "Shed", "Gar2", "TenC"))
+test$MiscFeature <- ordered(test$MiscFeature, levels = c("None", "Othr", "Shed", "Gar2", "TenC"))
+
+```
+
+
+```{r describe_factors}
+
+train.nonnumeric <- train %>% 
+  select_if(is.character)
+
+describe(train.nonnumeric)
+
+```
+
+
+
+Based on the plots below, the following features appear to be linearly related to log of sale price:
+
+* `OverallQual`
+* `YearBuilt`
+* `YearRemodAdd`
+
+
+```{r}
+sales.price.cor <- train %>%
+  select_if(is.numeric) %>%
+  correlate() %>%
+  focus(SalePrice)
+
+sales.price.cor %>%
+  arrange(desc(SalePrice))
+```
+
+
+
+```{r}
+base.model <- lm(log(SalePrice) ~
+                 OverallQual +
+                 GrLivArea +
+                 GarageArea +
+                 TotalBsmtSF +
+                 YearBuilt +
+                 Neighborhood,
+               data = train)
+summary(base.model)
+
+```
+
+
+```{r submit}
+test$predicted.log.price <- predict.lm(base.model, test)
+
+test$predicted.log.price[is.na(test$predicted.log.price)] <- mean(test$predicted.log.price, na.rm=TRUE)
+  
+submit <- test %>%
+  mutate(SalePrice = exp(predicted.log.price)) %>%
+  subset(select = c(Id, SalePrice))
+head(submit)
+
+# write.csv(submit, file = "./kaggle_submission.csv")
+```
