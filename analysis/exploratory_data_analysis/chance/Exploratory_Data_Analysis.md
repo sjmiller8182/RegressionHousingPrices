@@ -11,6 +11,7 @@ August 4, 2019
             variables](#handle-null-values-for-continuous-variables)
           - [Handle null values for categorical
             variables](#handle-null-values-for-categorical-variables)
+          - [Set ordered factor values](#set-ordered-factor-values)
 
 # Setup
 
@@ -145,6 +146,8 @@ train$Electrical[is.na(train$Electrical)] <- 'SBrkr'
 test$Electrical[is.na(test$Electrical)] <- 'SBrkr'
 ```
 
+### Set ordered factor values
+
 ``` r
 train$Alley <- ordered(train$Alley, levels = c("None", "Grvl", "Pave"))
 test$Alley <- ordered(test$Alley, levels = c("None", "Grvl", "Pave"))
@@ -194,6 +197,8 @@ test$Electrical <- ordered(test$Electrical, levels = c("Mix", "FuseP", "FuseF", 
 train$MiscFeature <- ordered(train$MiscFeature, levels = c("None", "Othr", "Shed", "Gar2", "TenC"))
 test$MiscFeature <- ordered(test$MiscFeature, levels = c("None", "Othr", "Shed", "Gar2", "TenC"))
 ```
+
+#### Describe all categorical variables after handling nulls
 
 ``` r
 train.nonnumeric <- train %>% 
@@ -430,14 +435,7 @@ describe(train.nonnumeric)
     ## Proportion   0.069   0.003   0.008   0.014   0.821   0.086
     ## ---------------------------------------------------------------------------
 
-Based on the plots below, the following features appear to be linearly
-related to log of sale price:
-
-  - `OverallQual`
-  - `YearBuilt`
-  - `YearRemodAdd`
-
-<!-- end list -->
+#### Correlation Table
 
 ``` r
 sales.price.cor <- train %>%
@@ -470,12 +468,14 @@ sales.price.cor %>%
     ## 10 YearBuilt        0.523
     ## # ... with 28 more rows
 
+#### base model
+
 ``` r
 base.model <- lm(log(SalePrice) ~
                  OverallQual +
                  GrLivArea +
-                 GarageArea +
                  TotalBsmtSF +
+                 `1stFlrSF` + 
                  YearBuilt +
                  Neighborhood,
                data = train)
@@ -484,51 +484,51 @@ summary(base.model)
 
     ## 
     ## Call:
-    ## lm(formula = log(SalePrice) ~ OverallQual + GrLivArea + GarageArea + 
-    ##     TotalBsmtSF + YearBuilt + Neighborhood, data = train)
+    ## lm(formula = log(SalePrice) ~ OverallQual + GrLivArea + TotalBsmtSF + 
+    ##     `1stFlrSF` + YearBuilt + Neighborhood, data = train)
     ## 
     ## Residuals:
     ##      Min       1Q   Median       3Q      Max 
-    ## -1.96494 -0.06923  0.01072  0.08342  0.50679 
+    ## -1.92412 -0.07239  0.00827  0.09058  0.51996 
     ## 
     ## Coefficients:
     ##                       Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)          7.314e+00  6.211e-01  11.777  < 2e-16 ***
-    ## OverallQual          9.424e-02  5.316e-03  17.728  < 2e-16 ***
-    ## GrLivArea            2.248e-04  1.151e-05  19.523  < 2e-16 ***
-    ## GarageArea           2.336e-04  2.663e-05   8.770  < 2e-16 ***
-    ## TotalBsmtSF          8.749e-05  1.261e-05   6.937 6.05e-12 ***
-    ## YearBuilt            1.808e-03  3.132e-04   5.771 9.65e-09 ***
-    ## NeighborhoodBlueste -1.077e-01  1.196e-01  -0.901 0.367793    
-    ## NeighborhoodBrDale  -2.402e-01  5.681e-02  -4.229 2.50e-05 ***
-    ## NeighborhoodBrkSide -9.973e-03  4.924e-02  -0.203 0.839510    
-    ## NeighborhoodClearCr  1.970e-01  5.074e-02   3.882 0.000108 ***
-    ## NeighborhoodCollgCr  4.921e-02  4.098e-02   1.201 0.230004    
-    ## NeighborhoodCrawfor  2.028e-01  4.858e-02   4.174 3.18e-05 ***
-    ## NeighborhoodEdwards -7.232e-02  4.473e-02  -1.617 0.106146    
-    ## NeighborhoodGilbert  6.099e-02  4.319e-02   1.412 0.158159    
-    ## NeighborhoodIDOTRR  -1.964e-01  5.225e-02  -3.759 0.000178 ***
-    ## NeighborhoodMeadowV -1.824e-01  5.647e-02  -3.230 0.001268 ** 
-    ## NeighborhoodMitchel  1.132e-02  4.578e-02   0.247 0.804695    
-    ## NeighborhoodNAmes    2.181e-02  4.260e-02   0.512 0.608713    
-    ## NeighborhoodNoRidge  1.484e-01  4.723e-02   3.141 0.001719 ** 
-    ## NeighborhoodNPkVill -5.180e-02  6.634e-02  -0.781 0.435051    
-    ## NeighborhoodNridgHt  1.563e-01  4.324e-02   3.615 0.000311 ***
-    ## NeighborhoodNWAmes   3.495e-02  4.409e-02   0.793 0.428104    
-    ## NeighborhoodOldTown -8.674e-02  4.819e-02  -1.800 0.072104 .  
-    ## NeighborhoodSawyer   2.390e-02  4.512e-02   0.530 0.596478    
-    ## NeighborhoodSawyerW  2.125e-02  4.443e-02   0.478 0.632548    
-    ## NeighborhoodSomerst  6.133e-02  4.255e-02   1.441 0.149684    
-    ## NeighborhoodStoneBr  1.867e-01  5.044e-02   3.702 0.000222 ***
-    ## NeighborhoodSWISU   -1.320e-02  5.573e-02  -0.237 0.812755    
-    ## NeighborhoodTimber   1.156e-01  4.683e-02   2.468 0.013713 *  
-    ## NeighborhoodVeenker  2.233e-01  6.209e-02   3.596 0.000334 ***
+    ## (Intercept)          6.546e+00  6.309e-01  10.377  < 2e-16 ***
+    ## OverallQual          9.863e-02  5.443e-03  18.121  < 2e-16 ***
+    ## GrLivArea            2.410e-04  1.245e-05  19.365  < 2e-16 ***
+    ## TotalBsmtSF          8.113e-05  1.851e-05   4.382 1.26e-05 ***
+    ## `1stFlrSF`           3.767e-05  2.225e-05   1.693 0.090697 .  
+    ## YearBuilt            2.199e-03  3.179e-04   6.917 6.93e-12 ***
+    ## NeighborhoodBlueste -7.742e-02  1.229e-01  -0.630 0.528846    
+    ## NeighborhoodBrDale  -2.399e-01  5.878e-02  -4.081 4.73e-05 ***
+    ## NeighborhoodBrkSide  1.058e-03  5.061e-02   0.021 0.983321    
+    ## NeighborhoodClearCr  2.078e-01  5.215e-02   3.985 7.10e-05 ***
+    ## NeighborhoodCollgCr  7.409e-02  4.217e-02   1.757 0.079171 .  
+    ## NeighborhoodCrawfor  2.084e-01  4.985e-02   4.180 3.09e-05 ***
+    ## NeighborhoodEdwards -7.374e-02  4.591e-02  -1.606 0.108452    
+    ## NeighborhoodGilbert  6.665e-02  4.469e-02   1.492 0.136037    
+    ## NeighborhoodIDOTRR  -1.759e-01  5.378e-02  -3.270 0.001101 ** 
+    ## NeighborhoodMeadowV -1.863e-01  5.817e-02  -3.203 0.001390 ** 
+    ## NeighborhoodMitchel  3.241e-02  4.696e-02   0.690 0.490191    
+    ## NeighborhoodNAmes    3.944e-02  4.369e-02   0.903 0.366859    
+    ## NeighborhoodNoRidge  1.762e-01  4.866e-02   3.622 0.000303 ***
+    ## NeighborhoodNPkVill -3.054e-02  6.825e-02  -0.447 0.654630    
+    ## NeighborhoodNridgHt  1.963e-01  4.421e-02   4.440 9.71e-06 ***
+    ## NeighborhoodNWAmes   5.568e-02  4.521e-02   1.232 0.218252    
+    ## NeighborhoodOldTown -6.174e-02  4.955e-02  -1.246 0.212931    
+    ## NeighborhoodSawyer   3.754e-02  4.629e-02   0.811 0.417504    
+    ## NeighborhoodSawyerW  3.476e-02  4.560e-02   0.762 0.446000    
+    ## NeighborhoodSomerst  9.771e-02  4.377e-02   2.232 0.025745 *  
+    ## NeighborhoodStoneBr  2.046e-01  5.173e-02   3.954 8.05e-05 ***
+    ## NeighborhoodSWISU   -2.058e-02  5.731e-02  -0.359 0.719608    
+    ## NeighborhoodTimber   1.419e-01  4.795e-02   2.959 0.003140 ** 
+    ## NeighborhoodVeenker  2.433e-01  6.365e-02   3.823 0.000138 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 0.1593 on 1430 degrees of freedom
-    ## Multiple R-squared:  0.8441, Adjusted R-squared:  0.8409 
-    ## F-statistic: 266.9 on 29 and 1430 DF,  p-value: < 2.2e-16
+    ## Residual standard error: 0.1634 on 1430 degrees of freedom
+    ## Multiple R-squared:  0.836,  Adjusted R-squared:  0.8327 
+    ## F-statistic: 251.4 on 29 and 1430 DF,  p-value: < 2.2e-16
 
 ``` r
 test$predicted.log.price <- predict.lm(base.model, test)
@@ -544,13 +544,13 @@ head(submit)
     ## # A tibble: 6 x 2
     ##      Id SalePrice
     ##   <dbl>     <dbl>
-    ## 1  1461   133380.
-    ## 2  1462   151535.
-    ## 3  1463   165388.
-    ## 4  1464   180504.
-    ## 5  1465   236442.
-    ## 6  1466   177134.
+    ## 1  1461   122123.
+    ## 2  1462   156646.
+    ## 3  1463   162878.
+    ## 4  1464   179032.
+    ## 5  1465   238292.
+    ## 6  1466   175826.
 
 ``` r
-# write.csv(submit, file = "./kaggle_submission.csv")
+# write.csv(submit, file = "./kaggle_submission.csv", row.names = FALSE)
 ```

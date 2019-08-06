@@ -141,7 +141,7 @@ test$Electrical[is.na(test$Electrical)] <- 'SBrkr'
 
 ```
 
-
+### Set ordered factor values
 ```{r non_numeric_factors}
 
 train$Alley <- ordered(train$Alley, levels = c("None", "Grvl", "Pave"))
@@ -194,7 +194,7 @@ test$MiscFeature <- ordered(test$MiscFeature, levels = c("None", "Othr", "Shed",
 
 ```
 
-
+#### Describe all categorical variables after handling nulls
 ```{r describe_factors}
 
 train.nonnumeric <- train %>% 
@@ -204,15 +204,7 @@ describe(train.nonnumeric)
 
 ```
 
-
-
-Based on the plots below, the following features appear to be linearly related to log of sale price:
-
-* `OverallQual`
-* `YearBuilt`
-* `YearRemodAdd`
-
-
+#### Correlation Table
 ```{r}
 sales.price.cor <- train %>%
   select_if(is.numeric) %>%
@@ -224,13 +216,13 @@ sales.price.cor %>%
 ```
 
 
-
+#### base model
 ```{r}
 base.model <- lm(log(SalePrice) ~
                  OverallQual +
                  GrLivArea +
-                 GarageArea +
                  TotalBsmtSF +
+                 `1stFlrSF` + 
                  YearBuilt +
                  Neighborhood,
                data = train)
@@ -249,5 +241,5 @@ submit <- test %>%
   subset(select = c(Id, SalePrice))
 head(submit)
 
-# write.csv(submit, file = "./kaggle_submission.csv")
+# write.csv(submit, file = "./kaggle_submission.csv", row.names = FALSE)
 ```
