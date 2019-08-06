@@ -32,7 +32,7 @@ source('../../helper/data_munging.R')
 ### Load the data into R
 
 ```{r results='hide', message=FALSE}
-train <- read_csv('../../data/train.csv')
+load('../../data/data.RData')
 test <- read_csv('../../data/test.csv')
 
 # add log of saleprice
