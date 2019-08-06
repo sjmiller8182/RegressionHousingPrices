@@ -26,6 +26,8 @@ library(corrr)
 # Stepwise Regression
 library(MASS)
 
+library(caret)
+
 # helper files
 source('../../helper/data_munging.R')
 ```
@@ -218,16 +220,28 @@ sales.price.cor %>%
 
 #### base model
 ```{r}
-base.model <- lm(log(SalePrice) ~
-                 OverallQual +
-                 GrLivArea +
-                 TotalBsmtSF +
-                 `1stFlrSF` + 
-                 YearBuilt +
-                 Neighborhood,
+
+model.formula <- log(SalePrice) ~ OverallQual + GrLivArea + GarageArea + TotalBsmtSF + YearBuilt + Neighborhood
+
+base.model <- lm(model.formula,
                data = train)
 summary(base.model)
 
+```
+
+
+```{r cv}
+
+
+# Set up repeated k-fold cross-validation
+train.control <- trainControl(method = "cv", number = 10)
+# Train the model
+model.cv <- train(model.formula, 
+                    data = train,
+                    method = 'lm',
+                    trControl = train.control)
+
+model.cv
 ```
 
 
@@ -243,3 +257,5 @@ head(submit)
 
 # write.csv(submit, file = "./kaggle_submission.csv", row.names = FALSE)
 ```
+
+
