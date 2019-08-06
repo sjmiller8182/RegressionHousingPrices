@@ -1,0 +1,90 @@
+df <- read.csv('../data/train.csv', stringsAsFactors = F)
+df <- df[which(df$GrLivArea < 4000),]
+
+############################ First running this to replace NA values################################
+
+df$LotFrontage[is.na(df$LotFrontage)] <- 0
+df$Alley[is.na(df$Alley)] <- "None"
+df$MasVnrType[is.na(df$MasVnrType)] <- "None"
+df$MasVnrArea[is.na(df$MasVnrArea)] <- 0
+df$BsmtQual[is.na(df$BsmtQual)] <- 0
+df$BsmtCond[is.na(df$BsmtCond)] <- 0
+df$BsmtExposure[is.na(df$BsmtExposure)] <- 0
+df$BsmtFinType1[is.na(df$BsmtFinType1)] <- 0
+df$BsmtFinType2[is.na(df$BsmtFinType2)] <- 0
+df$Electrical[is.na(df$Electrical)] <- "SBrkr"
+df$FireplaceQu[is.na(df$FireplaceQu)] <- "None"
+df$GarageType[is.na(df$GarageType)] <- "None"
+df$GarageYrBlt[is.na(df$GarageYrBlt)] <- mean(df$YearBuilt)
+df$GarageFinish[is.na(df$GarageFinish)] <- "None"
+df$GarageQual[is.na(df$GarageQual)] <- "None"
+df$GarageCond[is.na(df$GarageCond)] <- "None"
+df$PoolQC[is.na(df$PoolQC)] <- "None"
+df$Fence[is.na(df$Fence)] <- "None"
+df$MiscFeature[is.na(df$MiscFeature)] <- "None"
+
+####################################################################################################
+
+
+######################################## This for transformation considerations ####################
+
+hist(df$MSSubClass)
+hist(log(df$MSSubClass))
+df$MSSubClass <- log(df$MSSubClass)
+
+hist(df$LotFrontage)
+hist(log(df$LotFrontage))
+df$LotFrontage <- log(df$LotFrontage)
+
+hist(df$LotArea)
+hist(log(df$LotArea))
+df$LotArea <- log(df$LotArea)
+
+hist(df$MasVnrArea)
+hist(log(df$MasVnrArea))
+df$MasVnrArea <- log(df$MasVnrArea)
+
+hist(df$BsmtFinSF2)
+hist(log(df$BsmtFinSF2))
+df$BsmtFinSF2 <- log(df$BsmtFinSF2)
+
+hist(df$BsmtUnfSF)
+hist(log(df$BsmtUnfSF))
+df$BsmtUnfSF <- log(df$BsmtUnfSF)
+
+hist(df$X1stFlrSF)
+hist(log(df$X1stFlrSF))
+df$X1stFlrSF <- log(df$X1stFlrSF)
+
+hist(df$X2ndFlrSF)
+hist(log(df$X2ndFlrSF))
+df$X2ndFlrSF <- log(df$X2ndFlrSF)
+
+hist(df$GrLivArea)
+hist(log(df$GrLivArea))
+df$GrLivArea <- log(df$GrLivArea)
+
+hist(df$WoodDeckSF)
+hist(log(df$WoodDeckSF))
+df$WoodDeckSF <- log(df$WoodDeckSF)
+
+hist(df$OpenPorchSF)
+hist(log(df$OpenPorchSF))
+df$OpenPorchSF <- log(df$OpenPorchSF)
+
+hist(df$EnclosedPorch)
+hist(log(df$EnclosedPorch))
+df$EnclosedPorch <- log(df$EnclosedPorch)
+
+hist(df$X3SsnPorch)
+hist(log(df$X3SsnPorch))
+df$X3SsnPorch <- log(df$X3SsnPorch)
+
+hist(df$ScreenPorch)
+hist(log(df$ScreenPorch))
+df$ScreenPorch <- log(df$ScreenPorch)
+
+hist(df$MiscVal)
+hist(log(df$MiscVal))
+df$MiscVal <- log(df$MiscVal)
+####################################################################################################
