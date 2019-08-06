@@ -1,7 +1,7 @@
-Ames Iowa Housing Prices (Analysis Two)
+Question 2
 ================
-Paul Adams
-August 3, 2019
+Stuart Miller
+August 5, 2019
 
 ``` r
 library(tidyverse)
@@ -144,10 +144,10 @@ model.cv
     ## 
     ## No pre-processing
     ## Resampling: Cross-Validated (10 fold) 
-    ## Summary of sample sizes: 1315, 1313, 1313, 1314, 1313, 1315, ... 
+    ## Summary of sample sizes: 1314, 1313, 1315, 1315, 1315, 1314, ... 
     ## Resampling results:
     ## 
     ##   RMSE       Rsquared   MAE      
-    ##   0.1474066  0.8613325  0.1030492
+    ##   0.1471573  0.8637126  0.1035096
     ## 
     ## Tuning parameter 'intercept' was held constant at a value of TRUE

@@ -1,7 +1,7 @@
 ---
-title: "Ames Iowa Housing Prices (Analysis Two)"
-author: "Paul Adams"
-date: "August 3, 2019"
+title: "Question 2"
+author: "Stuart Miller"
+date: "August 5, 2019"
 output: github_document
 ---
 
