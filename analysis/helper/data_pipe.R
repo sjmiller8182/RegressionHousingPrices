@@ -1,4 +1,4 @@
-suppressWarnings(library(tidyverse))
+suppressMessages(library(tidyverse))
 
 train <- read_csv('../data/train.csv')
 
