@@ -31,7 +31,7 @@ Based on the correlation heatmap the following parameters have a reasonible corr
 * `Fireplaces` 
 * `YearBuilt`
 
-Based on EDA, `TotalBsmtSF` varies by `BsmtQual`, so it will be included as an interaction. Living room areas and year built tend to vary by neighborhood, so neighborhood will be included as an interation on these variable.
+Based on EDA, `TotalBsmtSF` varies by `BsmtQual`, so it will be included as an interaction. Year built tend to vary by neighborhood, so neighborhood will be included as an interation on this variable.
 
 This model produces an adjusted R-squared of 0.882, which is an estimate of the variability in logSalePrice that is explained by the model.
 
