@@ -33,7 +33,6 @@ source('../../helper/data_munging.R')
 
 ```{r results='hide', message=FALSE}
 load('../../data/data.RData')
-test <- read_csv('../../data/test.csv')
 
 # add log of saleprice
 train <- train %>% mutate(logSalePrice = log(SalePrice))
@@ -94,10 +93,10 @@ ggplot(aes_string(x = 'SalePrice'), data = train) +
 **Table of Correlated Features from Training Set (r > 0.5)**
 
 ```{r}
-train.dropna <- train.numeric %>% drop_na() %>% select(-one_of(c('SalePrice')))
+train.dropna <- train.numeric %>% drop_na() %>% dplyr::select(-one_of(c('SalePrice')))
 res2<-rcorr(as.matrix(train.dropna))
 flattenedCor <- flattenCorrMatrix(res2$r, res2$P) %>% arrange(desc(cor))
-flattenedCor <- flattenedCor %>% filter(cor > 0.5) %>% select(-one_of(c('p')))
+flattenedCor <- flattenedCor %>% filter(cor > 0.5) %>% dplyr::select(-one_of(c('p')))
 names(flattenedCor) <- c('Feature1','Feature2','Correlation Coefficient')
 kable(flattenedCor)
 ```
@@ -125,12 +124,12 @@ train %>% heatmap.cor.lab
 
 ```{r}
 temp.table <- train.numeric %>%
-  select(-one_of(c('Id', 'Set'))) %>%
+  dplyr::select(-one_of(c('Id', 'Set'))) %>%
   summarise_all(funs(sd(., na.rm=TRUE))) %>%
   rownames_to_column %>%
   gather(var, value, -rowname) %>%
   arrange(-value) %>%
-  select(-one_of(c('rowname')))
+  dplyr::select(-one_of(c('rowname')))
 names(temp.table) <- c('Feature','Standard Deviation')
 kable(temp.table)
 ```
@@ -148,8 +147,8 @@ train.numeric$Set <- rep('train', (dim(train.numeric)[1]))
 test.numeric$Set <- rep('test', (dim(test.numeric)[1]))
 
 # combine the training and testing set for histogram plotting
-numeric.both <- rbind(train.numeric %>% select(-one_of(c('SalePrice','Id','logSalePrice'))),
-                      test.numeric %>% select(-one_of(c('Id'))))
+numeric.both <- rbind(train.numeric %>% dplyr::select(-SalePrice,-Id,-logSalePrice),
+                      test.numeric %>% dplyr::select(-Id))
 numeric.both$Set <- as.factor(numeric.both$Set)
 
 # remove points based on initial analysis
@@ -213,7 +212,7 @@ train.numeric %>% ggplot(aes(x = LotFrontage, y = logSalePrice)) +
 ```{r}
 ggplot(aes_string(x = 'LotArea'), data = numeric.both) + 
   geom_histogram() + facet_wrap(~ Set)
-train.numeric %>% ggplot(aes(x = LotArea, y = logSalePrice)) +
+train.numeric %>% ggplot(aes(x = log(LotArea), y = logSalePrice)) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 

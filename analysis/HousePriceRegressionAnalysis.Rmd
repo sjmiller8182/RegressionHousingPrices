@@ -29,17 +29,120 @@ editor_options:
   chunk_output_type: console
 ---
 
+```{r, lib-read, results='hide', message=FALSE, include=FALSE, echo=FALSE}
+### Compuational Setup
+# libraries
+library(knitr)
+library(tidyverse)
+library(olsrr)
+library(gridExtra)
+library(caret)
+library(multcomp)
+
+# set a random seed for repodicibility
+set.seed(123)
+getwd()
+# helper code
+source('./helper/visual.R')
+source('./helper/data_munging.R')
+source('./helper/performance.R')
+
+# load data
+read.csv('./data/test.csv')
+train <- read_csv('./data/train.csv')
+test <- read_csv('./data/test.csv')
+
+train <- train %>% 
+  filter(Neighborhood %in% c("Edwards", "BrkSide", "NAmes"))
+train$Neighborhood <- as.factor(train$Neighborhood)
+
+# create dummy variables with Neighborhood == 'Edwards' as reference
+train <- get.dummies(train, "Neighborhood", reference = 'Edwards')
+
+# remove suspect points from training data
+train.mod <- train %>% filter(GrLivArea < 4000)
+
+```
+
 # Introduction
 
 @Sleuth
 
 # Ames, Iowa Data
 
+
 @Kaggle2016
 
 # Analysis Question I
 
+## Question of Interest
 
+Restatement of the problem
+
+## Modeling
+
+TODO: Build and fit the model
+
+We will consider two models: (1) the logarithm of sale price as the response of living room area and (2) the logarithm of sale price as the response of living room area accounting for differences in the three neighborhood of interest (Brookside, Northwest Ames, and Edwards) where Edwards will be used as the reference.
+
+**Reduced Model**
+
+\begin{equation}
+\mu \lbrace log(SalePrice) \rbrace = \beta_0 + \beta_1(LivingRoomArea) (\#eq:reduced)
+\end{equation}
+
+**Full Model**
+
+\begin{align}
+\mu \lbrace log(SalePrice) \rbrace = \beta_0 + \beta_1(LivingRoomArea) +  \beta_2(Brookside) +\beta_3(NorthwestAmes) + \nonumber\\
+\beta_3(Brookside)(LivingRoomArea) + \beta_4(NorthwestAmes)(LivingRoomArea) (\#eq:full)
+\end{align}
+
+We will use an extra sums of square test to verify that the interaction terms are useful for the model. The ESS test provides convincing evidence that the interaction terms are useful for the model (p-value < 0.0001); thus, we will continue with the full model.
+
+```{r, ESS, echo=FALSE}
+# full model formula
+model.formula = log(SalePrice) ~ (GrLivArea) + 
+     Neighborhood_BrkSide + 
+     Neighborhood_NAmes +
+     (GrLivArea) * Neighborhood_BrkSide + 
+     (GrLivArea) * Neighborhood_NAmes
+# reduced model formula
+model.reduced.formula = log(SalePrice) ~ (GrLivArea) + 
+     Neighborhood_BrkSide + 
+     Neighborhood_NAmes
+
+# fit models
+model <- lm(formula = model.formula, data = train.mod)
+model.reduced <- lm(formula = model.reduced.formula, data = train.mod)
+# ESS test on models
+anova(model.reduced, model)
+
+```
+
+## Model Assumption Assessment
+
+Address each assumption
+
+```{r, diag-plots, echo=FALSE, fig.width=5, fig.height=5, fig.align='center'}
+basic.fit.plots(train.mod, model)
+#ols_plot_resid_lev(model)
+#ols_plot_cooksd_bar(model)
+```
+
+## Comparing Competing Model
+
+Adj R^2
+
+## Parameters
+
+* Estimates
+* Influential points
+* Residual plots
+
+## Conclusion
+
+A short summary of teh analysis
 
 # Analysis Question II
 

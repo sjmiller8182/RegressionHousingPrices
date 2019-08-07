@@ -38,6 +38,8 @@ This model produces an adjusted R-squared of 0.882, which is an estimate of the 
 ```{r, echo=T}
 model.formula = log(SalePrice) ~ GarageArea + OverallQual + GrLivArea + TotalBsmtSF:BsmtQual + YearRemodAdd + Fireplaces + YearBuilt:Neighborhood
 
+#model.formula = log(SalePrice) ~ GarageArea + OverallQual + GrLivArea + TotalBsmtSF:BsmtQual + TotalBsmtSF:BsmtExposure + YearRemodAdd + Fireplaces + YearBuilt:Neighborhood + log(LotArea) + TotRmsAbvGrd
+
 m <- lm(model.formula, data = train)
 summary(m)
 ```

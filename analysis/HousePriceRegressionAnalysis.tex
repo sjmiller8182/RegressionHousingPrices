@@ -120,6 +120,84 @@ Abstract
 \hypertarget{analysis-question-i}{%
 \section{Analysis Question I}\label{analysis-question-i}}
 
+\hypertarget{question-of-interest}{%
+\subsection{Question of Interest}\label{question-of-interest}}
+
+Restatement of the problem
+
+\hypertarget{modeling}{%
+\subsection{Modeling}\label{modeling}}
+
+TODO: Build and fit the model
+
+We will consider two models: (1) the logarithm of sale price as the
+response of living room area and (2) the logarithm of sale price as the
+response of living room area accounting for differences in the three
+neighborhood of interest (Brookside, Northwest Ames, and Edwards) where
+Edwards will be used as the reference.
+
+\textbf{Reduced Model}
+
+\begin{equation}
+\mu \lbrace log(SalePrice) \rbrace = \beta_0 + \beta_1(LivingRoomArea) \label{eq:reduced}
+\end{equation}
+
+\textbf{Full Model}
+
+\begin{align}
+\mu \lbrace log(SalePrice) \rbrace = \beta_0 + \beta_1(LivingRoomArea) +  \beta_2(Brookside) +\beta_3(NorthwestAmes) + \nonumber\\
+\beta_3(Brookside)(LivingRoomArea) + \beta_4(NorthwestAmes)(LivingRoomArea) \label{eq:full}
+\end{align}
+
+We will use an extra sums of square test to verify that the interaction
+terms are useful for the model. The ESS test provides convincing
+evidence that the interaction terms are useful for the model (p-value
+\textless{} 0.0001); thus, we will continue with the full model.
+
+\begin{verbatim}
+## Analysis of Variance Table
+## 
+## Model 1: log(SalePrice) ~ (GrLivArea) + Neighborhood_BrkSide + Neighborhood_NAmes
+## Model 2: log(SalePrice) ~ (GrLivArea) + Neighborhood_BrkSide + Neighborhood_NAmes + 
+##     (GrLivArea) * Neighborhood_BrkSide + (GrLivArea) * Neighborhood_NAmes
+##   Res.Df    RSS Df Sum of Sq      F    Pr(>F)    
+## 1    377 14.824                                  
+## 2    375 13.441  2    1.3834 19.299 1.053e-08 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+\end{verbatim}
+
+\hypertarget{model-assumption-assessment}{%
+\subsection{Model Assumption
+Assessment}\label{model-assumption-assessment}}
+
+Address each assumption
+
+\begin{center}\includegraphics{HousePriceRegressionAnalysis_files/figure-latex/diag-plots-1} \end{center}
+
+\hypertarget{comparing-competing-model}{%
+\subsection{Comparing Competing Model}\label{comparing-competing-model}}
+
+Adj R\^{}2
+
+\hypertarget{parameters}{%
+\subsection{Parameters}\label{parameters}}
+
+\begin{itemize}
+\tightlist
+\item
+  Estimates
+\item
+  Influential points
+\item
+  Residual plots
+\end{itemize}
+
+\hypertarget{conclusion}{%
+\subsection{Conclusion}\label{conclusion}}
+
+A short summary of teh analysis
+
 \hypertarget{analysis-question-ii}{%
 \section{Analysis Question II}\label{analysis-question-ii}}
 
