@@ -71,7 +71,7 @@ of the variability in logSalePrice that is explained by the
 model.
 
 ``` r
-model.formula = log(SalePrice) ~ GarageArea + OverallQual + GrLivArea:Neighborhood + TotalBsmtSF:BsmtQual + BsmtQual + YearRemodAdd + Fireplaces + YearBuilt:Neighborhood
+model.formula = log(SalePrice) ~ GarageArea + OverallQual + GrLivArea + TotalBsmtSF:BsmtQual + YearRemodAdd + Fireplaces + YearBuilt:Neighborhood
 
 m <- lm(model.formula, data = train)
 summary(m)
@@ -83,87 +83,63 @@ summary(m)
     ## 
     ## Residuals:
     ##      Min       1Q   Median       3Q      Max 
-    ## -0.82439 -0.06507  0.00779  0.07637  0.72432 
+    ## -1.91560 -0.07009  0.00824  0.08265  0.53112 
     ## 
     ## Coefficients: (1 not defined because of singularities)
-    ##                                 Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)                    2.899e+00  7.109e-01   4.078 4.81e-05 ***
-    ## GarageArea                     2.281e-04  2.357e-05   9.677  < 2e-16 ***
-    ## OverallQual                    7.060e-02  5.004e-03  14.108  < 2e-16 ***
-    ## BsmtQualEx                     2.973e-01  5.158e-02   5.765 1.00e-08 ***
-    ## BsmtQualFa                     2.949e-01  8.824e-02   3.342 0.000852 ***
-    ## BsmtQualGd                     3.970e-02  3.162e-02   1.256 0.209395    
-    ## BsmtQualTA                     3.102e-02  3.230e-02   0.960 0.337088    
-    ## YearRemodAdd                   2.341e-03  2.443e-04   9.580  < 2e-16 ***
-    ## Fireplaces                     6.248e-02  7.036e-03   8.880  < 2e-16 ***
-    ## GrLivArea:NeighborhoodBlmngtn  5.299e-04  2.488e-04   2.130 0.033322 *  
-    ## GrLivArea:NeighborhoodBlueste  5.470e-04  5.933e-04   0.922 0.356723    
-    ## GrLivArea:NeighborhoodBrDale   7.048e-04  2.278e-04   3.094 0.002017 ** 
-    ## GrLivArea:NeighborhoodBrkSide  4.708e-04  4.836e-05   9.735  < 2e-16 ***
-    ## GrLivArea:NeighborhoodClearCr  2.002e-04  5.616e-05   3.565 0.000377 ***
-    ## GrLivArea:NeighborhoodCollgCr  2.230e-04  2.800e-05   7.963 3.45e-15 ***
-    ## GrLivArea:NeighborhoodCrawfor  2.392e-04  3.644e-05   6.563 7.39e-11 ***
-    ## GrLivArea:NeighborhoodEdwards -3.474e-05  2.736e-05  -1.270 0.204403    
-    ## GrLivArea:NeighborhoodGilbert  2.149e-04  5.273e-05   4.076 4.84e-05 ***
-    ## GrLivArea:NeighborhoodIDOTRR   6.315e-04  8.059e-05   7.836 9.17e-15 ***
-    ## GrLivArea:NeighborhoodMeadowV  1.530e-04  7.323e-05   2.089 0.036867 *  
-    ## GrLivArea:NeighborhoodMitchel  1.338e-04  5.352e-05   2.500 0.012541 *  
-    ## GrLivArea:NeighborhoodNAmes    1.210e-04  2.382e-05   5.079 4.31e-07 ***
-    ## GrLivArea:NeighborhoodNoRidge  2.698e-04  3.809e-05   7.083 2.22e-12 ***
-    ## GrLivArea:NeighborhoodNPkVill  2.148e-04  2.046e-04   1.050 0.294117    
-    ## GrLivArea:NeighborhoodNridgHt  3.261e-04  3.876e-05   8.412  < 2e-16 ***
-    ## GrLivArea:NeighborhoodNWAmes   2.418e-04  3.911e-05   6.182 8.30e-10 ***
-    ## GrLivArea:NeighborhoodOldTown  2.513e-04  2.487e-05  10.103  < 2e-16 ***
-    ## GrLivArea:NeighborhoodSawyer   1.301e-04  4.737e-05   2.746 0.006112 ** 
-    ## GrLivArea:NeighborhoodSawyerW  2.939e-04  3.635e-05   8.083 1.35e-15 ***
-    ## GrLivArea:NeighborhoodSomerst  3.163e-04  5.154e-05   6.138 1.09e-09 ***
-    ## GrLivArea:NeighborhoodStoneBr  3.372e-04  4.987e-05   6.762 2.00e-11 ***
-    ## GrLivArea:NeighborhoodSWISU    2.199e-04  4.443e-05   4.950 8.33e-07 ***
-    ## GrLivArea:NeighborhoodTimber   2.899e-04  5.800e-05   4.998 6.51e-07 ***
-    ## GrLivArea:NeighborhoodVeenker  3.857e-04  1.386e-04   2.783 0.005455 ** 
-    ## TotalBsmtSF:BsmtQual0                 NA         NA      NA       NA    
-    ## TotalBsmtSF:BsmtQualEx        -4.715e-06  2.727e-05  -0.173 0.862735    
-    ## TotalBsmtSF:BsmtQualFa        -2.458e-04  1.097e-04  -2.241 0.025203 *  
-    ## TotalBsmtSF:BsmtQualGd         1.317e-04  1.688e-05   7.801 1.19e-14 ***
-    ## TotalBsmtSF:BsmtQualTA         1.326e-04  2.196e-05   6.040 1.97e-09 ***
-    ## NeighborhoodBlmngtn:YearBuilt  1.453e-03  3.622e-04   4.012 6.33e-05 ***
-    ## NeighborhoodBlueste:YearBuilt  1.423e-03  5.271e-04   2.699 0.007030 ** 
-    ## NeighborhoodBrDale:YearBuilt   1.342e-03  3.429e-04   3.913 9.57e-05 ***
-    ## NeighborhoodBrkSide:YearBuilt  1.564e-03  3.205e-04   4.878 1.19e-06 ***
-    ## NeighborhoodClearCr:YearBuilt  1.802e-03  3.204e-04   5.624 2.26e-08 ***
-    ## NeighborhoodCollgCr:YearBuilt  1.723e-03  3.170e-04   5.433 6.52e-08 ***
-    ## NeighborhoodCrawfor:YearBuilt  1.782e-03  3.223e-04   5.528 3.86e-08 ***
-    ## NeighborhoodEdwards:YearBuilt  1.862e-03  3.209e-04   5.801 8.16e-09 ***
-    ## NeighborhoodGilbert:YearBuilt  1.725e-03  3.190e-04   5.407 7.54e-08 ***
-    ## NeighborhoodIDOTRR:YearBuilt   1.390e-03  3.236e-04   4.297 1.85e-05 ***
-    ## NeighborhoodMeadowV:YearBuilt  1.656e-03  3.209e-04   5.160 2.82e-07 ***
-    ## NeighborhoodMitchel:YearBuilt  1.762e-03  3.175e-04   5.549 3.43e-08 ***
-    ## NeighborhoodNAmes:YearBuilt    1.796e-03  3.179e-04   5.650 1.94e-08 ***
-    ## NeighborhoodNoRidge:YearBuilt  1.706e-03  3.194e-04   5.342 1.07e-07 ***
-    ## NeighborhoodNPkVill:YearBuilt  1.689e-03  3.466e-04   4.874 1.22e-06 ***
-    ## NeighborhoodNridgHt:YearBuilt  1.654e-03  3.168e-04   5.223 2.03e-07 ***
-    ## NeighborhoodNWAmes:YearBuilt   1.701e-03  3.205e-04   5.306 1.30e-07 ***
-    ## NeighborhoodOldTown:YearBuilt  1.654e-03  3.181e-04   5.201 2.28e-07 ***
-    ## NeighborhoodSawyer:YearBuilt   1.778e-03  3.194e-04   5.566 3.13e-08 ***
-    ## NeighborhoodSawyerW:YearBuilt  1.657e-03  3.185e-04   5.201 2.27e-07 ***
-    ## NeighborhoodSomerst:YearBuilt  1.652e-03  3.171e-04   5.208 2.20e-07 ***
-    ## NeighborhoodStoneBr:YearBuilt  1.679e-03  3.217e-04   5.218 2.08e-07 ***
-    ## NeighborhoodSWISU:YearBuilt    1.715e-03  3.256e-04   5.269 1.59e-07 ***
-    ## NeighborhoodTimber:YearBuilt   1.678e-03  3.203e-04   5.239 1.86e-07 ***
-    ## NeighborhoodVeenker:YearBuilt  1.669e-03  3.368e-04   4.954 8.15e-07 ***
+    ##                                Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)                   3.463e+00  7.376e-01   4.695 2.93e-06 ***
+    ## GarageArea                    2.366e-04  2.559e-05   9.244  < 2e-16 ***
+    ## OverallQual                   8.056e-02  5.327e-03  15.121  < 2e-16 ***
+    ## GrLivArea                     2.020e-04  1.137e-05  17.774  < 2e-16 ***
+    ## YearRemodAdd                  2.500e-03  2.677e-04   9.338  < 2e-16 ***
+    ## Fireplaces                    5.656e-02  7.685e-03   7.359 3.11e-13 ***
+    ## TotalBsmtSF:BsmtQual0                NA         NA      NA       NA    
+    ## TotalBsmtSF:BsmtQualEx        7.205e-05  1.460e-05   4.936 8.92e-07 ***
+    ## TotalBsmtSF:BsmtQualFa        3.501e-05  3.869e-05   0.905 0.365584    
+    ## TotalBsmtSF:BsmtQualGd        8.110e-05  1.355e-05   5.986 2.72e-09 ***
+    ## TotalBsmtSF:BsmtQualTA        9.375e-05  1.455e-05   6.441 1.62e-10 ***
+    ## YearBuilt:NeighborhoodBlmngtn 1.270e-03  3.178e-04   3.997 6.74e-05 ***
+    ## YearBuilt:NeighborhoodBlueste 1.229e-03  3.239e-04   3.793 0.000155 ***
+    ## YearBuilt:NeighborhoodBrDale  1.185e-03  3.200e-04   3.704 0.000220 ***
+    ## YearBuilt:NeighborhoodBrkSide 1.284e-03  3.257e-04   3.941 8.49e-05 ***
+    ## YearBuilt:NeighborhoodClearCr 1.372e-03  3.213e-04   4.270 2.08e-05 ***
+    ## YearBuilt:NeighborhoodCollgCr 1.312e-03  3.179e-04   4.129 3.86e-05 ***
+    ## YearBuilt:NeighborhoodCrawfor 1.377e-03  3.247e-04   4.242 2.36e-05 ***
+    ## YearBuilt:NeighborhoodEdwards 1.257e-03  3.220e-04   3.905 9.87e-05 ***
+    ## YearBuilt:NeighborhoodGilbert 1.305e-03  3.171e-04   4.116 4.07e-05 ***
+    ## YearBuilt:NeighborhoodIDOTRR  1.195e-03  3.263e-04   3.662 0.000259 ***
+    ## YearBuilt:NeighborhoodMeadowV 1.196e-03  3.203e-04   3.734 0.000196 ***
+    ## YearBuilt:NeighborhoodMitchel 1.294e-03  3.191e-04   4.055 5.29e-05 ***
+    ## YearBuilt:NeighborhoodNAmes   1.303e-03  3.212e-04   4.055 5.28e-05 ***
+    ## YearBuilt:NeighborhoodNoRidge 1.367e-03  3.185e-04   4.294 1.87e-05 ***
+    ## YearBuilt:NeighborhoodNPkVill 1.265e-03  3.210e-04   3.940 8.53e-05 ***
+    ## YearBuilt:NeighborhoodNridgHt 1.363e-03  3.181e-04   4.285 1.95e-05 ***
+    ## YearBuilt:NeighborhoodNWAmes  1.304e-03  3.199e-04   4.076 4.84e-05 ***
+    ## YearBuilt:NeighborhoodOldTown 1.244e-03  3.270e-04   3.803 0.000149 ***
+    ## YearBuilt:NeighborhoodSawyer  1.296e-03  3.209e-04   4.038 5.69e-05 ***
+    ## YearBuilt:NeighborhoodSawyerW 1.300e-03  3.186e-04   4.081 4.74e-05 ***
+    ## YearBuilt:NeighborhoodSomerst 1.318e-03  3.173e-04   4.153 3.48e-05 ***
+    ## YearBuilt:NeighborhoodStoneBr 1.388e-03  3.189e-04   4.353 1.44e-05 ***
+    ## YearBuilt:NeighborhoodSWISU   1.283e-03  3.266e-04   3.930 8.91e-05 ***
+    ## YearBuilt:NeighborhoodTimber  1.342e-03  3.188e-04   4.209 2.73e-05 ***
+    ## YearBuilt:NeighborhoodVeenker 1.387e-03  3.209e-04   4.323 1.64e-05 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 0.1372 on 1397 degrees of freedom
-    ## Multiple R-squared:  0.8871, Adjusted R-squared:  0.8821 
-    ## F-statistic:   177 on 62 and 1397 DF,  p-value: < 2.2e-16
+    ## Residual standard error: 0.1524 on 1425 degrees of freedom
+    ## Multiple R-squared:  0.8578, Adjusted R-squared:  0.8544 
+    ## F-statistic: 252.8 on 34 and 1425 DF,  p-value: < 2.2e-16
 
 ## Model Cross Validation
 
 The RMSE and adjusted R-squared are estimated with 10 fold cross
 validation.
 
-RMSE: 0.15 Adj R-squared: 0.86
+  - RMSE: 0.15
+  - Adj R-squared: 0.86
+
+Since this data is from Kaggle, it was also tested with Kaggle,
+resulting in a score of 0.15575.
 
 ``` r
 # Set up repeated k-fold cross-validation
@@ -184,11 +160,11 @@ model.cv
     ## 
     ## No pre-processing
     ## Resampling: Cross-Validated (10 fold) 
-    ## Summary of sample sizes: 1314, 1315, 1314, 1313, 1314, 1315, ... 
+    ## Summary of sample sizes: 1314, 1315, 1314, 1314, 1314, 1313, ... 
     ## Resampling results:
     ## 
     ##   RMSE       Rsquared   MAE      
-    ##   0.1465227  0.8666267  0.1028299
+    ##   0.1570118  0.8471138  0.1061185
     ## 
     ## Tuning parameter 'intercept' was held constant at a value of TRUE
 
