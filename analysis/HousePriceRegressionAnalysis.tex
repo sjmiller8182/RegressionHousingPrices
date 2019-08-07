@@ -103,9 +103,6 @@
 
 \begin{document}
 \maketitle
-\begin{abstract}
-Abstract
-\end{abstract}
 
 \hypertarget{introduction}{%
 \section{Introduction}\label{introduction}}
@@ -175,10 +172,35 @@ Address each assumption
 
 \begin{center}\includegraphics{HousePriceRegressionAnalysis_files/figure-latex/diag-plots-1} \end{center}
 
-\hypertarget{comparing-competing-model}{%
-\subsection{Comparing Competing Model}\label{comparing-competing-model}}
+\hypertarget{comparing-competing-models}{%
+\subsection{Comparing Competing
+Models}\label{comparing-competing-models}}
 
-Adj R\^{}2
+\begin{itemize}
+\tightlist
+\item
+  Adj \(R^2\)
+\item
+  CV Press
+\end{itemize}
+
+\begin{table}
+\centering
+\begin{tabular}{|c|c|c|}
+\hline
+Model         & Adj $R^2$ & CV PRESS \\ \hline
+Reduced Model & 0.5       & 2000     \\ \hline
+Full Model    & 0.7       & 1500     \\ \hline
+\end{tabular}
+\end{table}
+
+\begin{tabular}{r|r|r}
+\hline
+RMSE & CV.Press & Adjused.R.Squared\\
+\hline
+0.1910566 & 12.51675 & 0.5084024\\
+\hline
+\end{tabular}
 
 \hypertarget{parameters}{%
 \subsection{Parameters}\label{parameters}}
@@ -196,13 +218,50 @@ Adj R\^{}2
 \hypertarget{conclusion}{%
 \subsection{Conclusion}\label{conclusion}}
 
-A short summary of teh analysis
+A short summary of the analysis
 
 \hypertarget{analysis-question-ii}{%
 \section{Analysis Question II}\label{analysis-question-ii}}
 
+\hypertarget{question-of-interest-1}{%
+\subsection{Question of Interest}\label{question-of-interest-1}}
+
+Restatement of the problem
+
+\hypertarget{modeling-1}{%
+\subsection{Modeling}\label{modeling-1}}
+
+Type of selection
+
+\hypertarget{model-assumption-assessment-1}{%
+\subsection{Model Assumption
+Assessment}\label{model-assumption-assessment-1}}
+
+Address each assumption
+
+\hypertarget{comparing-competing-models-1}{%
+\subsection{Comparing Competing
+Models}\label{comparing-competing-models-1}}
+
+\begin{itemize}
+\tightlist
+\item
+  Adj \(R^2\)
+\item
+  CV Press
+\item
+  Kaggle score
+\end{itemize}
+
+\hypertarget{conclusion-1}{%
+\subsection{Conclusion}\label{conclusion-1}}
+
+A short summary of the analysis
+
 \hypertarget{appendix}{%
 \section{Appendix}\label{appendix}}
+
+Include ``well commented'' \texttt{code} in the appendex!
 
 \renewcommand\refname{References}
 \bibliography{references.bib}

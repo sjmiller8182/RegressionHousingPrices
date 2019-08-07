@@ -3,8 +3,6 @@ title: "Title"
 author: "Stuart Miller, Paul Adams, and Chance Robinson"
 date: |
   Master of Science in Data Science, Southern Methodist University, USA
-abstract: |
-  Abstract
 lang: en-US
 class: man
 # figsintext: true
@@ -130,9 +128,48 @@ basic.fit.plots(train.mod, model)
 #ols_plot_cooksd_bar(model)
 ```
 
-## Comparing Competing Model
+## Comparing Competing Models
 
-Adj R^2
+* Adj $R^2$
+* CV Press
+
+\begin{table}
+\centering
+\begin{tabular}{|c|c|c|}
+\hline
+Model         & Adj $R^2$ & CV PRESS \\ \hline
+Reduced Model & 0.5       & 2000     \\ \hline
+Full Model    & 0.7       & 1500     \\ \hline
+\end{tabular}
+\end{table}
+
+```{r, cross-validation, results='hide', message=FALSE, include=FALSE, echo=FALSE}
+# Set up repeated k-fold cross-validation
+train.control <- trainControl(method = "cv", number = 10)
+# Train the model
+model.cv <- train(model.formula, 
+                    data = train.mod,
+                    method = 'lm',
+                    trControl = train.control)
+# print model summary
+model.cv
+
+# get the CV results
+res <- model.cv$results
+
+# get cross-validated PRESS statistic
+PCV <- PRESS.cv(model.cv)
+
+
+```
+
+```{r, echo=FALSE}
+# print accuracy metrics to md table
+kable(data.frame('RMSE'=res$RMSE,
+           'CV Press'=PCV,
+           'Adjused R Squared'=res$Rsquared))
+```
+
 
 ## Parameters
 
@@ -142,11 +179,34 @@ Adj R^2
 
 ## Conclusion
 
-A short summary of teh analysis
+A short summary of the analysis
 
 # Analysis Question II
 
+## Question of Interest
+
+Restatement of the problem
+
+## Modeling
+
+Type of selection
+
+## Model Assumption Assessment
+
+Address each assumption
+
+## Comparing Competing Models
+
+* Adj $R^2$
+* CV Press
+* Kaggle score
+
+## Conclusion
+
+A short summary of the analysis
 
 # Appendix
+
+Include "well commented" `code` in the appendex!
 
 # References
