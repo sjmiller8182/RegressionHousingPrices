@@ -133,7 +133,7 @@ basic.fit.plots(train.mod, model)
 * Adj $R^2$
 * CV Press
 
-\begin{table}
+\begin{table}[h]
 \centering
 \begin{tabular}{|c|c|c|}
 \hline
