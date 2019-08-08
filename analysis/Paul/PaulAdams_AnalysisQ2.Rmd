@@ -7,7 +7,7 @@ output: html_document
 
 ```{r, echo=T, message=F}
 library(pacman)
-p_load(tidyr,dplyr,purrr,stringr,ggplot2, MASS,DAAG, sjPlot, Hmisc, fmsb, caret)
+p_load(tidyr,dplyr,purrr,stringr,ggplot2, MASS,DAAG, sjPlot, Hmisc, fmsb, caret, stats)
 ```
 
 ```{r, echo=F}
@@ -25,11 +25,20 @@ dfTrain <- dfTrain[which(dfTrain$GrLivArea < 4000),]
 
 # Check the new maximum living area square footage, ensure less than 4k:
 max(dfTrain[order(-dfTrain$GrLivArea),47])
+# Check out the minimum to give picture of range:
+min(dfTrain[order(-dfTrain$GrLivArea),47])
 
-
+# Check out residuals for log-linear
+ggplot(data = dfTrain, aes(x = GrLivArea, y = log(SalePrice))) +
+  geom_point() +
+  geom_smooth(method=lm, se=FALSE) +
+  theme(
+        panel.background = element_rect(fill = 'ivory1')) +
+  ggtitle("Log-Linear Data") +
+  facet_grid(~Neighborhood)
 ```
 
-### The original data has 1460 rows. After removing four outliers, the new daata now has 1456 rows.
+### The original data has 1460 rows. After removing four outliers, the new data now has 1456 rows.
 ### Handle NAs
 ```{r, echo=T,warning=F, message=F}
 #See structure for replacing NAs
@@ -113,9 +122,19 @@ dfTrainTest.numeric <- dplyr::select_if(dfTrain, is.numeric) %>% data.frame()
 # hist(log(dfTrain$LotFrontage))
 # dfTrain$LotFrontage <- log(dfTrain$LotFrontage)
 # 
-# hist(dfTrain$LotArea)
-# hist(log(dfTrain$LotArea))
-# dfTrain$LotArea <- log(dfTrain$LotArea)
+hist(dfTrain$LotArea)
+hist(log(dfTrain$LotArea))
+dfTrain$LotArea <- log(dfTrain$LotArea)
+summary(lm(log(SalePrice) ~ log(LotArea), data = dfTrain))
+
+ ggplot(data = dfTrain, aes(x = log(dfTrain$LotArea), y = log(SalePrice))) +
+  geom_point() +
+  geom_smooth(method=lm, se=FALSE) +
+  theme(
+        panel.background = element_rect(fill = 'ivory1')) +
+  ggtitle("Log-Linear Data") +
+  facet_grid(~Neighborhood)
+ 
 # 
 # hist(dfTrain$OverallQual)
 # hist(dfTrain$OverallCond)
@@ -137,7 +156,10 @@ dfTrainTest.numeric <- dplyr::select_if(dfTrain, is.numeric) %>% data.frame()
 # 
 # hist(dfTrain$BsmtUnfSF)
 # hist(log(dfTrain$BsmtUnfSF))
-# dfTrain$BsmtUnfSF <- log(dfTrain$BsmtUnfSF)
+
+
+dfTrain$BsmtUnfSF[dfTrain$BsmtUnfSF == 0] <- 1.5
+dfTrain$BsmtUnfSF <- log(dfTrain$BsmtUnfSF)
 # 
 # hist(dfTrain$TotalBsmtSF)
 # 
@@ -223,6 +245,17 @@ summary(fitQuant)
 # Model using all variables
 fitFull.all1 <- lm(log(SalePrice) ~ Id + MSSubClass + MSZoning + LotFrontage + LotArea + Street + Alley + LotShape + LandContour + Utilities + LotConfig + LandSlope + Neighborhood + Condition1 + Condition2 + BldgType + HouseStyle + OverallQual + OverallCond + YearBuilt + YearRemodAdd + RoofStyle + RoofMatl + Exterior1st + Exterior2nd + MasVnrType + MasVnrArea + ExterQual + ExterCond + Foundation + BsmtQual + BsmtCond + BsmtExposure + BsmtFinType1 + BsmtFinSF1 + BsmtFinType2 + BsmtFinSF2 + BsmtUnfSF + TotalBsmtSF + Heating + HeatingQC + CentralAir + Electrical + X1stFlrSF + X2ndFlrSF + LowQualFinSF + GrLivArea + BsmtFullBath + BsmtHalfBath + FullBath + HalfBath + BedroomAbvGr + KitchenAbvGr + KitchenQual + TotRmsAbvGrd + Functional + Fireplaces + FireplaceQu + GarageType + GarageYrBlt + GarageFinish + GarageCars + GarageArea + GarageQual + GarageCond + PavedDrive + WoodDeckSF + OpenPorchSF + EnclosedPorch + X3SsnPorch + ScreenPorch + PoolArea + PoolQC + Fence + MiscFeature + MiscVal + MoSold + YrSold + SaleType + SaleCondition, data = dfTrain)
 
+fitFull.all.backward <- lm(log(SalePrice) ~ MSZoning + LotArea + Street + LotConfig + LandSlope + 
+    Neighborhood + Condition1 + OverallQual + OverallCond + YearBuilt + 
+    YearRemodAdd + Exterior1st + MasVnrType + ExterCond + Foundation + 
+    BsmtQual + BsmtExposure + BsmtFinSF1 + BsmtFinSF2 + TotalBsmtSF + 
+    Heating + HeatingQC + CentralAir + X1stFlrSF + X2ndFlrSF + 
+    LowQualFinSF + BsmtFullBath + FullBath + HalfBath + KitchenAbvGr + 
+    KitchenQual + Functional + Fireplaces + GarageCars + GarageArea + 
+    GarageQual + GarageCond + PavedDrive + WoodDeckSF + OpenPorchSF + 
+    EnclosedPorch + X3SsnPorch + ScreenPorch + PoolArea + PoolQC + 
+    SaleType + SaleCondition, data=dfTrain)
+
 fitFull.all2 <- lm(log(SalePrice) ~ + BsmtFinSF2 + BsmtUnfSF + CentralAir + Condition1 +HalfBath + Heating + KitchenQual + LandSlope + MSZoning +Neighborhood + OverallCond + OverallQual + RoofMatl + X1stFlrSF + X2ndFlrSF +YearBuilt + YearRemodAdd, data = dfTrain)
           
 fitFull.all3 <- lm(log(SalePrice) ~ + BsmtFinSF2 + BsmtUnfSF + CentralAir + HalfBath + KitchenQual + MSZoning +Neighborhood + OverallCond + OverallQual + RoofMatl + X1stFlrSF + X2ndFlrSF +YearBuilt + YearRemodAdd, data = dfTrain)
@@ -231,7 +264,19 @@ fitFull.all3 <- lm(log(SalePrice) ~ + BsmtFinSF2 + BsmtUnfSF + CentralAir + Half
 fitFull.all3 <- lm(log(SalePrice) ~ + BsmtFinSF2 + BsmtUnfSF + CentralAir + HalfBath + KitchenQual + MSZoning +Neighborhood + OverallCond + OverallQual + RoofMatl + X1stFlrSF + X2ndFlrSF +YearBuilt + YearRemodAdd, data = dfTrain)
 
 # Again, people want basements, but since they don't contribute much to SalePrice (and thus re-sale price), they're willing to pay extra to have a basement, but not willing to pay much extra to have a particularly nice basement. 
-fitFull.all4 <- lm(log(SalePrice) ~ BsmtUnfSF + CentralAir + HalfBath + KitchenQual + Neighborhood + OverallCond + OverallQual + RoofMatl + X1stFlrSF + X2ndFlrSF + YearBuilt + MSZoning:Neighborhood + OverallQual:Neighborhood + OverallQual:Neighborhood + YearBuilt:Neighborhood, data = dfTrain)
+fitFull.all4.old <- lm(log(SalePrice) ~ BsmtUnfSF + CentralAir + HalfBath + KitchenQual + Neighborhood + OverallCond + OverallQual + RoofMatl + X1stFlrSF + X2ndFlrSF + YearBuilt + MSZoning:Neighborhood + OverallQual:Neighborhood + YearBuilt:Neighborhood, data = dfTrain)
+summary(fitFull.all4.old)
+
+
+PRESS <- function(linear.model){
+  pr <- residuals(linear.model)/(1-lm.influence(linear.model)$hat)
+  sum(pr^2)
+}
+
+PRESS(fitFull.all4.old)
+
+
+fitFull.all4 <- lm(log(SalePrice) ~ BsmtUnfSF + CentralAir + HalfBath + KitchenQual + Neighborhood + OverallCond + LotArea + OverallQual + RoofMatl + X1stFlrSF + X2ndFlrSF + YearBuilt + OverallQual:Neighborhood + YearBuilt:Neighborhood + LotArea:Neighborhood, data = dfTrain)
 summary(fitFull.all4)
 
 # dfTested.pred <- predict(fitFull.all4, dfTest)
@@ -245,108 +290,45 @@ summary(fitFull.all4)
 # The model used here's variables went through process of selection/elimination#
 
 # Forward Selection
-stepForward.full.model4 <- stepAIC(fitFull.all4, direction = "forward", trace = F)
+stepForward.full.model4 <- stepAIC(fitFull.all1, direction = "forward", trace = F)
 summary(stepForward.full.model4)
 stepForward.full.model4$anova
 
 # Backward Selection
-stepBackward.full.model4 <- stepAIC(fitFull.all4, direction = "backward", trace = F)
+stepBackward.full.model4 <- stepAIC(fitFull.all1, direction = "backward", trace = F)
 summary(stepBackward.full.model4)
 stepBackward.full.model4$anova
 
 # Stepwise Selection
-stepwise.full.model4 <- stepAIC(fitFull.all4, direction = "both", trace = F)
+stepwise.full.model4 <- stepAIC(fitFull.all1, direction = "both", trace = F)
 summary(stepwise.full.model4)
 stepwise.full.model4$anova
-############################################### End of Model with both Quant and Qual Data#########
-
-
-# Forward Selection
-stepForward.Quant.model <- stepAIC(fitQuant, direction = "forward", trace = F)
-summary(stepForward.Quant.model)
-stepForward.Quant.model$anova
-
-# Backward Selection
-stepBackward.Quant.model <- stepAIC(fitQuant, direction = "backward", trace = F)
-summary(stepBackward.Quant.model)
-stepBackward.Quant.model$anova
-
-# Stepwise Selection
-stepwise.Quant.model <- stepAIC(fitQuant, direction = "both", trace = F)
-summary(stepwise.Quant.model)
-stepwise.Quant.model$anova
-# Forward and Stepwise selection both indicate to remove X1stFlrSF and FullBath
 
 #################################################################################
-###############End testing quantitative data model variable selection############
-#################################################################################
-```
-
-###Testing Qualitative Data Model
-```{r, echo=T,warning=F, message=F}
-#################################################################################
-#############Start testing qualitative data model variable selection#############
-#################################################################################
-fitQual <- lm(log(SalePrice) ~ MSZoning + Street + Alley + LotShape + LandContour + Utilities + LotConfig + LandSlope + Neighborhood + Condition1 + Condition2 + BldgType + HouseStyle + RoofStyle + RoofMatl + Exterior1st + Exterior2nd + MasVnrType + ExterQual + ExterCond + Foundation + BsmtQual + BsmtCond + BsmtExposure + BsmtFinType1 + BsmtFinType2 + Heating + HeatingQC + CentralAir + Electrical + KitchenQual + FireplaceQu + GarageType + GarageFinish + GarageQual + GarageCond + PavedDrive + PoolQC + Fence+ MiscFeature + SaleType + SaleCondition, data=dfTrain)
-summary(fitQual)
-
-fitQual_Filtered <- lm(log(SalePrice) ~ Neighborhood + LotConfig + Condition1 + BldgType + HouseStyle + RoofMatl + Heating + KitchenQual + GarageQual + GarageCond + PoolQC, data=dfTrain)
-
-fitQual_double.Filtered <- lm(log(SalePrice) ~ Neighborhood + LotConfig + BldgType + HouseStyle + RoofMatl + KitchenQual + PoolQC, data=dfTrain) ##LotConfig mostly only matters when it's a Culdesac
-
-# Forward Selection
-stepForward.Qual.model <- stepAIC(fitQual_double.Filtered, direction = "forward", trace = F)
-summary(stepForward.Qual.model)
-stepForward.Qual.model$anova
-
-# Backward Selection
-stepBackward.Qual.model <- stepAIC(fitQual_double.Filtered, direction = "backward", trace = F)
-summary(stepBackward.Qual.model)
-stepBackward.Qual.model$anova
-
-# Stepwise Selection
-stepwise.Qual.model <- stepAIC(fitQual_double.Filtered, direction = "both", trace = F)
-summary(stepwise.Qual.model)
-stepwise.Qual.model$anova
-
-#################################################################################
-##############End testing qualitative data model variable selection##############
-#################################################################################
-```
-
-###Start testing model with qual and quant data
-```{r, echo=T,warning=F, message=F}
-#################################################################################
-##############Start testing quant+qual data model variable selection#############
-#################################################################################
-fit_model.Filtered <- lm(log(SalePrice) ~ OverallQual + YearBuilt + YearRemodAdd + TotalBsmtSF + GrLivArea + TotRmsAbvGrd + GarageCars + GarageArea + Neighborhood + LotConfig + BldgType + HouseStyle + RoofMatl + KitchenQual + PoolQC, data = dfTrain)
-
-# Forward Selection
-stepForward.model <- stepAIC(fit_model.Filtered, direction = "forward", trace = F)
-summary(stepForward.model)
-stepForward.model$anova
-
-# Backward Selection
-stepBackward.model <- stepAIC(fit_model.Filtered, direction = "backward", trace = F)
-summary(stepBackward.model)
-stepBackward.model$anova
-
-# Stepwise Selection
-stepwise.model <- stepAIC(fit_model.Filtered, direction = "both", trace = F)
-summary(stepwise.model)
-stepwise.model$anova
-
-# Analyze partial regression of variables applied in model to determine if they're still needed.
-library(car)
-crPlots(fit_model.Filtered) 
-#Both backward and stepwise selection indicate to remove HouseStyle, TotRmsAbvGrd, X1stFlrSF, and FullBath
-
-#################################################################################
-################End testing quant+qual data model variable selection#############
+###############End testing data model variable selection############
 #################################################################################
 ```
 
 
+###Cross-validation and testing
+```{r,echo=T}
+#Set up repeated k-fold cross-validation
+train.control <- trainControl(method="cv", number = 10)
+#Train the model
+model.cv <- train(fitFull.all4,
+                  data = dfTrain,
+                  method = 'lm',
+                  trControl = train.control)
+
+
+dfTest$predicted.log.price <- predict.lm(fitFull.all4.old, dfTest)
+dfTest$predicted.log.price[is.na(dfTest$predicted.log.price)] <- mean(dfTest$predicted.log.price, na.rm = T)
+
+submit <- dfTest %>% mutate(SalePrice = exp(predicted.log.price)) %>% subset(select=c(Id, SalePrice))
+
+summary(base.model)
+write.csv(submit, file = "./kaggle_submission.csv", row.names = F)
+```
 
 
 # Appendix

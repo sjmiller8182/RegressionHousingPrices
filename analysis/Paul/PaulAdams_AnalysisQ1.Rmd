@@ -7,35 +7,67 @@ output: html_document
 
 ```{r, echo=T, message=F}
 library(pacman)
-p_load(tidyr,dplyr,purrr,stringr,ggplot2, MASS,DAAG, sjPlot)
+p_load(tidyr,dplyr,purrr,stringr,ggplot2, MASS,DAAG, sjPlot, stats)
 ```
 
-```{r, echo=F}
-setwd("C:/Users/Pablo/Desktop/DS 6371 - Statistical Foundations for Data Science/Kaggle Project")
-df <- read.csv("train.csv")
+```{r, echo=T}
+df <- read.csv('../data/train.csv', stringsAsFactors = F)
+dfTest <- read.csv('../data/test.csv', stringsAsFactors = F)
 ```
 
+### After importing the data, we begain the data cleaning process. First, we isolated the data frame for Edwards, Brookside, and Northwest Ames. With this, we included only "Normal" SaleCondition values since the other types produced outliers.
+```{r, echo=T}
+df_ThreeNeighborhoods <- df %>%
+  mutate(logSalePrice = log(SalePrice)) %>%
+  filter(SaleCondition == "Normal") %>%
+  subset(select = c(SalePrice, logSalePrice, Neighborhood, GrLivArea)) %>%
+  filter(Neighborhood %in% c("Edwards", "BrkSide", "NAmes"))
 
-```{r, echo=F}
-
-df_ThreeNeighborhoods <- df %>% subset(select = c(SalePrice, Neighborhood, GrLivArea, SaleCondition)) %>%
-  filter(Neighborhood %in% c("Edwards", "BrkSide", "NAmes")) %>%
-  filter(SaleCondition %in% c("Normal")) %>%
-  mutate(logGrLivArea = log(GrLivArea), logSalePrice = log(SalePrice))
-
-colnames(df_ThreeNeighborhoods) <- cbind("SalePrice","Neighborhood","SquareFeet","SaleCondition","logSquareFeet", "logSalePrice")
+colnames(df_ThreeNeighborhoods) <- cbind("SalePrice","logSalePrice","Neighborhood","GrLivArea")
 
 ```
 
-```{r, echo=F}
+### Next, we needed to refactor the neighborhoods so that they only contain three levels. Failing to do this could provide issues in downstream analysis. We did this by inserting the Neighborhoods into a holder variable, factoring that, then re-assigning it to a variable that would later be named Neighborhoods, overwriting the previous Neighborhood with more than three levels.
+```{r, echo=T}
 #refactor with only three levels for neighborhood
 df_ThreeNeighborhoods$holder <- as.character(df_ThreeNeighborhoods$Neighborhood)
 df_ThreeNeighborhoods$Neighborhood2 <- as.factor(df_ThreeNeighborhoods$holder)
-str(df_ThreeNeighborhoods$Neighborhood2)
+#str(df_ThreeNeighborhoods$Neighborhood2)
 
-df_Filtered <- data.frame(df_ThreeNeighborhoods$SalePrice, df_ThreeNeighborhoods$Neighborhood2, df_ThreeNeighborhoods$SquareFeet, df_ThreeNeighborhoods$SaleCondition, df_ThreeNeighborhoods$logSquareFeet, df_ThreeNeighborhoods$logSalePrice)
+df_Filtered <- data.frame(df_ThreeNeighborhoods$SalePrice, df_ThreeNeighborhoods$logSalePrice, df_ThreeNeighborhoods$Neighborhood2, df_ThreeNeighborhoods$GrLivArea)
+colnames(df_Filtered) <- cbind("SalePrice","logSalePrice","Neighborhood","GrLivArea")
+```
 
-colnames(df_Filtered) <- cbind("SalePrice","Neighborhood","SquareFeet","SaleCondition","logGrLivArea", "logSalePrice")
+
+### After this, we re-assigned the three Neighborhood values to indicator (dummy) variables.
+```{r, echo=T}
+#This turns neighborhoods into indicator (dummy) variables
+modelMatrix <- model.matrix(~Neighborhood - 1, data = df_Filtered)
+
+modelData <- data.frame(df_Filtered, modelMatrix)
+colnames(modelMatrix)
+
+```
+
+
+### We knew there is a risk of hurting our model's accuracy by adding more parameters, so we compared the model with and without dummy variables. Because we obtained the same results with both models, we chose to use the model with less parameters as our Full ("Error") model.
+```{r, echo=T}
+# Neighborhoods as indicator variables
+Equal.means.lm.indicators <- lm(logSalePrice~GrLivArea + NeighborhoodNAmes + NeighborhoodBrkSide + NeighborhoodEdwards + NeighborhoodNAmes:GrLivArea + NeighborhoodBrkSide:GrLivArea + NeighborhoodEdwards:GrLivArea, data = modelData)
+
+summary(Equal.means.lm.indicators)
+anova(Equal.means.lm.indicators)
+
+# Neighborhoods as levels of factor
+Equal.means.lm <- lm(logSalePrice~GrLivArea + Neighborhood + Neighborhood:GrLivArea, data = modelData)
+
+summary(Equal.means.lm)
+anova(Equal.means.lm)
+```
+
+
+```{r, echo=T}
+
 
 df_Edwards <- df_Filtered %>% filter(df_Filtered$Neighborhood == "Edwards") %>% data.frame()
 df_NAmes <- df_Filtered %>% filter(df_Filtered$Neighborhood == "NAmes") %>% data.frame()
@@ -43,8 +75,10 @@ df_BrkSide <- df_Filtered %>% filter(df_Filtered$Neighborhood == "BrkSide") %>% 
 ```
 
 ```{r, echo=F}
+#This turns neighborhoods into factors
+model.matrix(~Neighborhood, data = df)
 
-summary(lm(formula = logSalePrice ~ SquareFeet + Neighborhood + SquareFeet*Neighborhood, data = df_ThreeNeighborhoods))
+summary(lm(logSalePrice ~ SquareFeet + Neighborhood + SquareFeet*Neighborhood, data = df_ThreeNeighborhoods))
 
 ### start log-transformed data set from df_Filtered
 logFeet <- log(df_Filtered$SquareFeet)
@@ -157,9 +191,43 @@ pairs(df_NAmes)
 ```{r, echo=F}
 # fit log-log model with interaction terms for SqFt
 loglogModelInteract.lm <- lm(logPrice~logFeet + Neighborhood + logFeet*Neighborhood, data = df_loglogFiltered)
+
+# fit log-linear model with interaction terms for SqFt
+ModelInteract.lm <- lm(logSalePrice~SquareFeet + Neighborhood + SquareFeet*Neighborhood, data = df_Filtered)
+
+PRESS <- function(linear.model){
+  pr <- residuals(linear.model)/(1-lm.infulence(linear.model)$hat)
+  sum(pr^2)
+}
+
+PRESS <- function(linear.model){
+  pr <- residuals(linear.model)/(1-lm.influence(linear.model)$hat)
+  sum(pr^2)
+}
+
+?lm.influence
+
+PRESS(ModelInteract.lm)
+
+
 colnames(df_loglogFiltered) <- c("logPrice","Neighborhood","logFeet")
 
 plot_model(loglogModelInteract.lm, type = "pred", terms = c("logFeet", "Neighborhood"), title = "Log-Log Model with Interaction")
+```
+
+### Begin calculating the extra sum of squares ("Model" aka "Regression")
+```{r, echo = T}
+
+
+# Equal means ("reduced" aka "corrected total") model
+Equal.means.lm <- lm(SalePrice~SquareFeet, data = df_Filtered)
+anova(Equal.means.lm)
+
+# Full ("separate") model
+Separate.means.lm <- lm(SalePrice~GrLivArea + Neighborhood + GrLivArea:Neighborhood, data = df_Filtered)
+summary(Separate.means.lm)
+anova(Separate.means.lm)
+
 ```
 
 
