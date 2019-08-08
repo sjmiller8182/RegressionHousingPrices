@@ -72,8 +72,6 @@ train.mod <- train %>% filter(GrLivArea < 4000)
 
 The Ames, Iowa Data Set describes the sale of individual residential properities from 2006-2010 in Ames, Iowa \cite{Cock}. The data was retreved from the dataset hosting site Kaggle, where it is listed under a machine learning competition named \href{https://www.kaggle.com/c/house-prices-advanced-regression-techniques/overview}{\textit{House Prices: Advanced Regression Techniques}} \cite{Kaggle2016}. The data is comprised of 37 numeric features, 43 non-numeric features and an observation index split between a training set and a testing set, which contain 1460 and 1459 observations, respectively. The response variable (`SalePrice`) is only provided for the training set. The output of a model on the test set can be submitted to the Kaggle competition for scoring the performance of the model in terms of RMSE. The first analysis models property sale prices (`SalePrice`) as the response of living room area (`GrLivArea`) of the property and neighborhood (`Neighborhood`) where it is located. **Add some details on the question 2 variables?**
 
-Through analyzing our variable selection and cross-validation processes - along wth our nascant domain knowledge of residential real estate - we ultimately arrived at a model including **some amount we can determine later** linear predictor variables and **some amount we can determine later** interaction terms. After performing visual analysis, we determined 18 predictor variables would need logarithmic transformating. However, after performing these transformations, none were determined necessary for the model **Paul can provide some code for this if you want to include the steps taken and visuals**. Nonetheless, the response variable, `SalePrice`, adhered to an exponential distribution, which we normalized with a natural logarithmic transformation. We performed this transformation to assume normality for the most important variable, improving our model's fit without requiring additional parameters nor accepting a higher standard error.
-
 # Analysis Question I
 
 ## Question of Interest
@@ -82,7 +80,7 @@ Century 21 has commissioned an analysis of this data to determine how the sale p
 
 ## Modeling
 
-Linear regression will be used to model sale price as a response of the living room area. From the intial exploratory data analysis, it was determined that sale prices should be log transformed to meet the model assumptions **Add appendix reference**. Additionally, two observations were removed as they appeared to be from a different population than the other observations in the dataset **Add appendix reference**.
+Linear regression will be used to model sale price as a response of the living room area. From the initial exploratory data analysis, it was determined that sale prices should be log-transformed to meet the model assumptions **Add appendix reference** for normality, thus improving our models fit and reducing standard error. Additionally, two observations were removed as they appeared to be from a different population than the other observations in the dataset **Add appendix reference**.
 
 We will consider two models: the logarithm of sale price as the response of living room area (1), the reduced model, and the logarithm of sale price as the response of living room area accounting for differences in the three neighborhood of interest (Brookside, Northwest Ames, and Edwards) where Edwards will be used as the reference (2), the full model. An extra sums of square (ESS) test will be used to verify that the addition of `Neighborhood` improves the model.
 
@@ -219,6 +217,8 @@ A short summary of the analysis
 Restatement of the problem
 
 ## Modeling
+
+Through analyzing our variable selection and cross-validation processes - along wth our nascant domain knowledge of residential real estate - we ultimately arrived at a multiple linear regression model featuring **some amount we can determine later** linear predictor variables and **some amount we can determine later** interaction terms. After performing visual analysis, we determined 18 of the predictor variables would need logarithmic transforming. However, after performing these transformations, none were determined necessary for the model **Paul can provide some code for this if you want to include the steps taken and visuals**.
 
 Type of selection
 
