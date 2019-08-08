@@ -32,6 +32,7 @@ editor_options:
 ### Compuational Setup
 # libraries
 library(knitr)
+library(kableExtra)
 library(tidyverse)
 library(olsrr)
 library(gridExtra)
@@ -75,13 +76,13 @@ The Ames, Iowa Data Set describes the sale of individual residential properities
 
 ## Question of Interest
 
-Restatement of the problem
+Century 21 has commissioned an analysis of this data to determine how the sale price of property is related to living room area of the property in the Edwards, Northwest Ames, and Brookside neighborhoods of Ames, IA.
 
 ## Modeling
 
-TODO: Build and fit the model
+Linear regression will be used to model sale price as a response of the living room area. From the intial exploratory data analysis, it was determined that sale prices should be log transformed to meet the model assumptions **Add appendix reference**. Additionally, two observations were removed as they appeared to be from a different population than the other observations in the dataset **Add appendix reference**.
 
-We will consider two models: (1) the logarithm of sale price as the response of living room area and (2) the logarithm of sale price as the response of living room area accounting for differences in the three neighborhood of interest (Brookside, Northwest Ames, and Edwards) where Edwards will be used as the reference.
+We will consider two models: the logarithm of sale price as the response of living room area (1), the reduced model, and the logarithm of sale price as the response of living room area accounting for differences in the three neighborhood of interest (Brookside, Northwest Ames, and Edwards) where Edwards will be used as the reference (2), the full model. An extra sums of square (ESS) test will be used to verify that the addition of `Neighborhood` improves the model.
 
 **Reduced Model**
 
@@ -96,7 +97,7 @@ We will consider two models: (1) the logarithm of sale price as the response of 
 \beta_3(Brookside)(LivingRoomArea) + \beta_4(NorthwestAmes)(LivingRoomArea) (\#eq:full)
 \end{align}
 
-We will use an extra sums of square test to verify that the interaction terms are useful for the model. The ESS test provides convincing evidence that the interaction terms are useful for the model (p-value < 0.0001); thus, we will continue with the full model.
+The ESS test provides convincing evidence that the interaction terms are useful for the model (p-value < 0.0001); thus, we will continue with the full model.
 
 ```{r, ESS, echo=FALSE}
 # full model formula
@@ -118,32 +119,33 @@ anova(model.reduced, model)
 
 ```
 
-## Model Assumption Assessment
+## Model Assumptions Assessment
 
-Address each assumption
+The following assessments for model assumptions are made based on Figure \@ref(fig:diag-plots) and Figure 2 (**TODO**):
 
-```{r, diag-plots, echo=FALSE, fig.width=5, fig.height=5, fig.align='center'}
+* The residuals of the model appear to be approximately normally distrubited based on the QQ plot of the residuals and histogram of the residuals, suggesting the assumption of normality is met.
+* No patterns are evident in the scatter plots of residuals and studentized residuals vs predicted value, suggesting the assumption of constant variance is met.
+* While some observations appear to be influential and have high leverage, removing these observations does not have a significant impact on the result of the model fit.
+* Based on the scatter plot of the log transform of `SalePrice` vs `GrLivArea`, it appears that a linear model is reasonable.
+
+The sampling procedure is not known. We will assume the independence assumption is met.
+
+```{r, diag-plots, echo=FALSE, fig.width=5, fig.height=5, fig.align='center', fig.cap='Diagnostic Plots', out.width = '45%', fig.pos="htbp", fig.show = 'hold'}
+# option 'htbp' is used to lock the position of the image
+# option 'hold' is used to arrange images side-by-side
+
 basic.fit.plots(train.mod, model)
-#ols_plot_resid_lev(model)
+ols_plot_resid_lev(model)
 #ols_plot_cooksd_bar(model)
 ```
 
 ## Comparing Competing Models
 
-* Adj $R^2$
-* CV Press
-
-\begin{table}[h]
-\centering
-\begin{tabular}{|c|c|c|}
-\hline
-Model         & Adj $R^2$ & CV PRESS \\ \hline
-Reduced Model & 0.5       & 2000     \\ \hline
-Full Model    & 0.7       & 1500     \\ \hline
-\end{tabular}
-\end{table}
+The two models were trained and validated on the training dataset using 10-fold cross validation. The table below summerizes the performance of the models with RMSE, adjusted $R^2$, and PRESS. These results show that the full model is an improvement over the reduced model, which is consistent with the result of the ESS test.
 
 ```{r, cross-validation, results='hide', message=FALSE, include=FALSE, echo=FALSE}
+## cross validate the full model
+
 # Set up repeated k-fold cross-validation
 train.control <- trainControl(method = "cv", number = 10)
 # Train the model
@@ -160,22 +162,49 @@ res <- model.cv$results
 # get cross-validated PRESS statistic
 PCV <- PRESS.cv(model.cv)
 
+## cross validate the reduced model
 
+# Set up repeated k-fold cross-validation
+train.control <- trainControl(method = "cv", number = 10)
+# Train the model
+model.reduced.cv <- train(model.reduced.formula, 
+                    data = train.mod,
+                    method = 'lm',
+                    trControl = train.control)
+# print model summary
+model.reduced.cv
+
+# get the CV results
+res.red <- model.reduced.cv$results
+
+# get cross-validated PRESS statistic
+PCV.red <- PRESS.cv(model.reduced.cv)
 ```
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, fig.align='center'}
 # print accuracy metrics to md table
-kable(data.frame('RMSE'=res$RMSE,
-           'CV Press'=PCV,
-           'Adjused R Squared'=res$Rsquared))
+kable(data.frame('Model' = c('Full Model', 'Reduced Model'), 
+                 'RMSE'=c(res$RMSE, res.red$RMSE),
+                 'CV Press'=c(PCV, PCV.red),
+                 'Adjused R Squared'=c(res$Rsquared, res.red$Rsquared)),
+      "latex", booktabs = T)  %>%
+  kable_styling(position = "center")
 ```
-
 
 ## Parameters
 
-* Estimates
-* Influential points
-* Residual plots
+* Estimates **TODO**
+* CI
+
+## Model Interpretation
+
+We estimate that for increase in 100 sq. ft., there is associated multiplicative increase in median price of
+
+* 1.055 for the Edwards neighborhood with a 95% confidence interval of [1.044 , 1.066]
+* 1.033 for the Northwest Ames neighorhood with a 95% confidence interval of [1.026 , 1.040]
+* 1.077 for the Brookside neighorhood with a 95% confidence interval of [1.063 , 1.090]
+
+Since the sampling procedure is not known and this is an observational study, the results only apply to this data.
 
 ## Conclusion
 
