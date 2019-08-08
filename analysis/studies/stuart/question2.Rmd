@@ -1,31 +1,85 @@
 ---
 title: "Question 2"
 author: "Stuart Miller"
-date: "August 3, 2019"
-output: 
-  github_document
+date: "August 5, 2019"
+output: github_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r, echo=T, message=F, warning=FALSE}
+library(tidyverse)
+library(MASS)
+library(caret)
+library(knitr)
+
+source('../../helper/visual.R')
+
+load('../../data/data.RData')
 ```
 
-## R Markdown
+## Model
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+"By Hand" constuction.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+Based on the correlation heatmap the following parameters have a reasonible correlation with the log of `SalePrice` without high mutual correlation.
 
-```{r cars}
-summary(cars)
+* `GarageArea` 
+* `OverallQual` 
+* `GrLivArea` 
+* `TotalBsmtSF` 
+* `BsmtQual` 
+* `YearRemodAdd` 
+* `Fireplaces` 
+* `YearBuilt`
+
+Based on EDA, `TotalBsmtSF` varies by `BsmtQual`, so it will be included as an interaction. Year built tend to vary by neighborhood, so neighborhood will be included as an interation on this variable.
+
+This model produces an adjusted R-squared of 0.882, which is an estimate of the variability in logSalePrice that is explained by the model.
+
+```{r, echo=T}
+model.formula = log(SalePrice) ~ GarageArea + OverallQual + GrLivArea + TotalBsmtSF:BsmtQual + YearRemodAdd + Fireplaces + YearBuilt:Neighborhood
+
+#model.formula = log(SalePrice) ~ GarageArea + OverallQual + GrLivArea + TotalBsmtSF:BsmtQual + TotalBsmtSF:BsmtExposure + YearRemodAdd + Fireplaces + YearBuilt:Neighborhood + log(LotArea) + TotRmsAbvGrd
+
+m <- lm(model.formula, data = train)
+summary(m)
 ```
 
-## Including Plots
+## Model Cross Validation
 
-You can also embed plots, for example:
+The RMSE and adjusted R-squared are estimated with 10 fold cross validation.
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+* RMSE: 0.15
+* Adj R-squared: 0.86
+
+Since this data is from Kaggle, it was also tested with Kaggle, resulting in a score of 0.15575.
+
+```{r, warning=FALSE}
+# Set up repeated k-fold cross-validation
+train.control <- trainControl(method = "cv", number = 10)
+# Train the model
+model.cv <- train(model.formula, 
+                    data = train,
+                    method = 'lm',
+                    trControl = train.control)
+# print model summary
+model.cv
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+## Model Fit Plots
+
+```{r, message=FALSE, warning=FALSE}
+basic.fit.plots(train, m)
+```
+
+
+
+
+## Prediction
+
+```{r, warning=FALSE}
+predictions <- as.double(exp(predict(m, test)))
+submission <- data.frame(test$Id,predictions)
+names(submission) <- c('Id','SalePrice')
+write_csv(submission, '../../data/submission_stuart.csv')
+```
+

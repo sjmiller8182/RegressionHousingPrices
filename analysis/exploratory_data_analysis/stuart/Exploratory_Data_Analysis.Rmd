@@ -20,6 +20,8 @@ library(tidyverse)
 library(naniar)
 library(Hmisc)
 library(GGally)
+require(gplots)
+require(corrplot)
 
 # helper files
 source('../../helper/data_munging.R')
@@ -30,9 +32,9 @@ source('../../helper/data_munging.R')
 ### Load the data into R
 
 ```{r results='hide', message=FALSE}
-train <- read_csv('../../data/train.csv')
-test <- read_csv('../../data/test.csv')
+load('../../data/data.RData')
 
+# add log of saleprice
 train <- train %>% mutate(logSalePrice = log(SalePrice))
 
 train$MSSubClass <- factor(train$MSSubClass)
@@ -69,78 +71,6 @@ dim(test.nonnumeric)
 #str(train)
 ```
 
-## Missing Data
-
-5 of the features, `PoolQC`, `MiscFeature`, `Alley`, `Fence`, and `FireplaceQu`, have very high missing rates in both sets of data. It seems unlikely that these features would provide value as imbuing values for the missing values would likely bias the training set towards the imbued value. The feature `LotFrontage` is missing at a rate of ~17% and ~ 15% in the training and testing set respectively. This is also a fairly high missing rate, but the usefulness of the feature should be investigated. Fortunately, the rate of missingness for each feature is approximately the same between the training and testing datasets.
-
-```{r}
-train.nabular <- train %>% bind_shadow()
-train.missing.summary <- train.nabular %>% miss_var_summary()
-#train.missing.summary
-
-train.missing.summary %>%
-  filter(n_miss > 0) %>%
-  ggplot(aes(x = reorder(variable, -n_miss), y = pct_miss)) + geom_bar(stat = 'identity') +
-  theme(axis.text.x = element_text(angle = 70, hjust = 1)) +
-  labs(title = 'Percent Missing Values of Features (Training Set)',
-       y = '% Observations Missing', x = 'Feature Name')
-```
-
-`PoolQC`, `MiscFeature`, `Alley`, `Fence`, `FireplaceQu`, and `LotFrontage` are the primary missing values in the training dataset.
-
-```{r}
-test.nabular <- test %>% bind_shadow()
-test.missing.summary <- test.nabular %>% miss_var_summary()
-#test.missing.summary
-
-test.missing.summary %>%
-  filter(n_miss > 0) %>%
-  ggplot(aes(x = reorder(variable, -n_miss), y = pct_miss)) + geom_bar(stat = 'identity') +
-  theme(axis.text.x = element_text(angle = 70, hjust = 1)) +
-  labs(title = 'Percent Missing Values of Features (Test Set)',
-       y = '% Observations Missing', x = 'Feature Name')
-```
-
-`PoolQC`, `MiscFeature`, `Alley`, `Fence`,`FireplaceQu`, and `LotFrontage` are the primary missing values in the testing dataset.
-
-**Summary of the Data Missing per Feature from the Datasets**
-
-|Variable       | Number Missing (Train)| Percent Missing (Train)| Number Missing (Test)| Percent Missing (Test)|
-|---------------|-----------------------|------------------------|----------------------|------------------------|
-|PoolQC         | 1453                  | 99.5%                  | 1456                 | 99.7%                  |
-|MiscFeature    | 1406                  | 96.3%                  | 1408                 | 96.5%                  |
-|Alley          | 1369                  | 93.7%                  | 1352                 | 92.6%                  |
-|Fence          | 1179                  | 80.7%                  | 1169                 | 80.1%                  |
-|FireplaceQu    | 690                   | 47.2%                  | 730                  | 50.0%                  |
-|LotFrontage    | 259                   | 17.8%                  | 227                  | 15.5%                  |
-|GarageType     | 81                    | 5.55%                  | 76                   | 5.21%                  |
-|GarageYrBlt    | 81                    | 5.55%                  | 78                   | 5.34%                  |
-|GarageFinish   | 81                    | 5.55%                  | 78                   | 5.34%                  |
-|GarageQual     | 81                    | 5.55%                  | 78                   | 5.34%                  |
-|GarageCond     | 81                    | 5.55%                  | 78                   | 5.34%                  |
-|BsmtExposure   | 38                    | 2.60%                  | 44                   | 3.01%                  |
-|BsmtFinType2   | 38                    | 2.60%                  | 42                   | 2.87%                  |
-|BsmtQual       | 37                    | 2.53%                  | 44                   | 3.01%                  | 
-|BsmtCond       | 37                    | 2.53%                  | 45                   | 3.08%                  |
-|BsmtFinType1   | 37                    | 2.53%                  | 42                   | 2.87%                  |
-|MasVnrType     | 8                     | 0.55%                  | 16                   | 0.27%                  |
-|MasVnrArea     | 8                     | 0.55%                  | 15                   | 0.13%                  |
-|Electrical     | 1                     | 0.07%                  | N/A                  | N/A                    |
-|MSZoning       | N/A                   | N/A                    | 4                    | 0.27%                  |
-|Utilities      | N/A                   | N/A                    | 2                    | 0.14%                  |
-|BsmtFullBath   | N/A                   | N/A                    | 2                    | 0.14%                  |
-|BsmtHalfBath   | N/A                   | N/A                    | 2                    | 0.14%                  |
-|Functional     | N/A                   | N/A                    | 2                    | 0.14%                  |
-|Exterior1st    | N/A                   | N/A                    | 1                    | 0.07%                  |
-|Exterior2nd    | N/A                   | N/A                    | 1                    | 0.07%                  |
-|BsmtFinSF1     | N/A                   | N/A                    | 1                    | 0.07%                  |
-|BsmtFinSF2     | N/A                   | N/A                    | 1                    | 0.07%                  |
-|BsmtUnfSF      | N/A                   | N/A                    | 1                    | 0.07%                  |
-|TotalBsmtSF    | N/A                   | N/A                    | 1                    | 0.07%                  |
-|KitchenQual    | N/A                   | N/A                    | 1                    | 0.07%                  |
-|GarageCars     | N/A                   | N/A                    | 1                    | 0.07%                  |
-|GarageArea     | N/A                   | N/A                    | 1                    | 0.07%                  |
-|SaleType       | N/A                   | N/A                    | 1                    | 0.07%                  |
 
 
 
@@ -163,25 +93,43 @@ ggplot(aes_string(x = 'SalePrice'), data = train) +
 **Table of Correlated Features from Training Set (r > 0.5)**
 
 ```{r}
-train.dropna <- train.numeric %>% drop_na() %>% select(-one_of(c('SalePrice')))
+train.dropna <- train.numeric %>% drop_na() %>% dplyr::select(-one_of(c('SalePrice')))
 res2<-rcorr(as.matrix(train.dropna))
 flattenedCor <- flattenCorrMatrix(res2$r, res2$P) %>% arrange(desc(cor))
-flattenedCor <- flattenedCor %>% filter(cor > 0.5) %>% select(-one_of(c('p')))
+flattenedCor <- flattenedCor %>% filter(cor > 0.5) %>% dplyr::select(-one_of(c('p')))
 names(flattenedCor) <- c('Feature1','Feature2','Correlation Coefficient')
 kable(flattenedCor)
 ```
+
+**Heatmap of Correlation Amoing Variables**
+
+```{r, fig.height=15, fig.width=15}
+heatmap.cor.lab <- function(df){
+  df %>%
+    keep(is.numeric) %>%
+    drop_na() %>%
+    cor %>%
+    corrplot(addCoef.col = 'white',
+             number.digits = 2,
+             number.cex = 0.5,
+             method = 'square')
+}
+
+train %>% heatmap.cor.lab
+```
+
 
 #### Varaince of Explanatory Variables
 
 
 ```{r}
 temp.table <- train.numeric %>%
-  select(-one_of(c('Id', 'Set'))) %>%
+  dplyr::select(-one_of(c('Id', 'Set'))) %>%
   summarise_all(funs(sd(., na.rm=TRUE))) %>%
   rownames_to_column %>%
   gather(var, value, -rowname) %>%
   arrange(-value) %>%
-  select(-one_of(c('rowname')))
+  dplyr::select(-one_of(c('rowname')))
 names(temp.table) <- c('Feature','Standard Deviation')
 kable(temp.table)
 ```
@@ -199,8 +147,8 @@ train.numeric$Set <- rep('train', (dim(train.numeric)[1]))
 test.numeric$Set <- rep('test', (dim(test.numeric)[1]))
 
 # combine the training and testing set for histogram plotting
-numeric.both <- rbind(train.numeric %>% select(-one_of(c('SalePrice','Id','logSalePrice'))),
-                      test.numeric %>% select(-one_of(c('Id'))))
+numeric.both <- rbind(train.numeric %>% dplyr::select(-SalePrice,-Id,-logSalePrice),
+                      test.numeric %>% dplyr::select(-Id))
 numeric.both$Set <- as.factor(numeric.both$Set)
 
 # remove points based on initial analysis
@@ -264,7 +212,7 @@ train.numeric %>% ggplot(aes(x = LotFrontage, y = logSalePrice)) +
 ```{r}
 ggplot(aes_string(x = 'LotArea'), data = numeric.both) + 
   geom_histogram() + facet_wrap(~ Set)
-train.numeric %>% ggplot(aes(x = LotArea, y = logSalePrice)) +
+train.numeric %>% ggplot(aes(x = log(LotArea), y = logSalePrice)) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 

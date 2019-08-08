@@ -1,10 +1,8 @@
 ---
-title: "Title"
+title: "Regression Analysis of the Ames, Iowa Dataset"
 author: "Stuart Miller, Paul Adams, and Chance Robinson"
 date: |
   Master of Science in Data Science, Southern Methodist University, USA
-abstract: |
-  Abstract
 lang: en-US
 class: man
 # figsintext: true
@@ -22,28 +20,222 @@ header-includes:
    - \usepackage[utf8]{inputenc}
    - \usepackage[T1]{fontenc}
    - \usepackage{setspace}
+   - \usepackage{hyperref}
    - \onehalfspacing
-   - \setcitestyle{round}
+   - \setcitestyle{numbers}
    - \newcommand\numberthis{\addtocounter{equation}{1}\tag{\theequation}}
 editor_options: 
   chunk_output_type: console
 ---
 
+```{r, lib-read, results='hide', message=FALSE, include=FALSE, echo=FALSE}
+### Compuational Setup
+# libraries
+library(knitr)
+library(kableExtra)
+library(tidyverse)
+library(olsrr)
+library(gridExtra)
+library(caret)
+library(multcomp)
+
+# set a random seed for repodicibility
+set.seed(123)
+getwd()
+# helper code
+source('./helper/visual.R')
+source('./helper/data_munging.R')
+source('./helper/performance.R')
+
+# load data
+read.csv('./data/test.csv')
+train <- read_csv('./data/train.csv')
+test <- read_csv('./data/test.csv')
+
+train <- train %>% 
+  filter(Neighborhood %in% c("Edwards", "BrkSide", "NAmes"))
+train$Neighborhood <- as.factor(train$Neighborhood)
+
+# create dummy variables with Neighborhood == 'Edwards' as reference
+train <- get.dummies(train, "Neighborhood", reference = 'Edwards')
+
+# remove suspect points from training data
+train.mod <- train %>% filter(GrLivArea < 4000)
+
+```
+
 # Introduction
 
 @Sleuth
 
-# Ames, Iowa Data
+# Ames, Iowa Data Set
 
-@Kaggle2016
+The Ames, Iowa Data Set describes the sale of individual residential properities from 2006-2010 in Ames, Iowa \cite{Cock}. The data was retreved from the dataset hosting site Kaggle, where is it listed under a machine learning competition named \href{https://www.kaggle.com/c/house-prices-advanced-regression-techniques/overview}{\textit{House Prices: Advanced Regression Techniques}} \cite{Kaggle2016}. The data is comprized of 37 numeric features, 43 non-numeric features and an obervation index split between a training set and a testing set, which contain 1460 and 1459 observations, respectively. The response variable (`SalePrice`) is only provided for the training set. The output of a model on the test set can be submitted to the Kaggle competition for scoring the performance of the model in terms of RMSE. The first analysis models property sale prices (`SalePrice`) as the response of living room area (`GrLivArea`) of the property and neighborhood (`Neighborhood`) where it is located. **Add some details on the question 2 variables?**
 
 # Analysis Question I
 
+## Question of Interest
 
+Century 21 has commissioned an analysis of this data to determine how the sale price of property is related to living room area of the property in the Edwards, Northwest Ames, and Brookside neighborhoods of Ames, IA.
+
+## Modeling
+
+Linear regression will be used to model sale price as a response of the living room area. From the intial exploratory data analysis, it was determined that sale prices should be log transformed to meet the model assumptions **Add appendix reference**. Additionally, two observations were removed as they appeared to be from a different population than the other observations in the dataset **Add appendix reference**.
+
+We will consider two models: the logarithm of sale price as the response of living room area (1), the reduced model, and the logarithm of sale price as the response of living room area accounting for differences in the three neighborhood of interest (Brookside, Northwest Ames, and Edwards) where Edwards will be used as the reference (2), the full model. An extra sums of square (ESS) test will be used to verify that the addition of `Neighborhood` improves the model.
+
+**Reduced Model**
+
+\begin{equation}
+\mu \lbrace log(SalePrice) \rbrace = \beta_0 + \beta_1(LivingRoomArea) (\#eq:reduced)
+\end{equation}
+
+**Full Model**
+
+\begin{align}
+\mu \lbrace log(SalePrice) \rbrace = \beta_0 + \beta_1(LivingRoomArea) +  \beta_2(Brookside) +\beta_3(NorthwestAmes) + \nonumber\\
+\beta_3(Brookside)(LivingRoomArea) + \beta_4(NorthwestAmes)(LivingRoomArea) (\#eq:full)
+\end{align}
+
+The ESS test provides convincing evidence that the interaction terms are useful for the model (p-value < 0.0001); thus, we will continue with the full model.
+
+```{r, ESS, echo=FALSE}
+# full model formula
+model.formula = log(SalePrice) ~ (GrLivArea) + 
+     Neighborhood_BrkSide + 
+     Neighborhood_NAmes +
+     (GrLivArea) * Neighborhood_BrkSide + 
+     (GrLivArea) * Neighborhood_NAmes
+# reduced model formula
+model.reduced.formula = log(SalePrice) ~ (GrLivArea) + 
+     Neighborhood_BrkSide + 
+     Neighborhood_NAmes
+
+# fit models
+model <- lm(formula = model.formula, data = train.mod)
+model.reduced <- lm(formula = model.reduced.formula, data = train.mod)
+# ESS test on models
+anova(model.reduced, model)
+
+```
+
+## Model Assumptions Assessment
+
+The following assessments for model assumptions are made based on Figure \@ref(fig:diag-plots) and Figure 2 (**TODO**):
+
+* The residuals of the model appear to be approximately normally distrubited based on the QQ plot of the residuals and histogram of the residuals, suggesting the assumption of normality is met.
+* No patterns are evident in the scatter plots of residuals and studentized residuals vs predicted value, suggesting the assumption of constant variance is met.
+* While some observations appear to be influential and have high leverage, removing these observations does not have a significant impact on the result of the model fit.
+* Based on the scatter plot of the log transform of `SalePrice` vs `GrLivArea`, it appears that a linear model is reasonable.
+
+The sampling procedure is not known. We will assume the independence assumption is met.
+
+```{r, diag-plots, echo=FALSE, fig.width=5, fig.height=5, fig.align='center', fig.cap='Diagnostic Plots', out.width = '45%', fig.pos="htbp", fig.show = 'hold'}
+# option 'htbp' is used to lock the position of the image
+# option 'hold' is used to arrange images side-by-side
+
+basic.fit.plots(train.mod, model)
+ols_plot_resid_lev(model)
+#ols_plot_cooksd_bar(model)
+```
+
+## Comparing Competing Models
+
+The two models were trained and validated on the training dataset using 10-fold cross validation. The table below summerizes the performance of the models with RMSE, adjusted $R^2$, and PRESS. These results show that the full model is an improvement over the reduced model, which is consistent with the result of the ESS test.
+
+```{r, cross-validation, results='hide', message=FALSE, include=FALSE, echo=FALSE}
+## cross validate the full model
+
+# Set up repeated k-fold cross-validation
+train.control <- trainControl(method = "cv", number = 10)
+# Train the model
+model.cv <- train(model.formula, 
+                    data = train.mod,
+                    method = 'lm',
+                    trControl = train.control)
+# print model summary
+model.cv
+
+# get the CV results
+res <- model.cv$results
+
+# get cross-validated PRESS statistic
+PCV <- PRESS.cv(model.cv)
+
+## cross validate the reduced model
+
+# Set up repeated k-fold cross-validation
+train.control <- trainControl(method = "cv", number = 10)
+# Train the model
+model.reduced.cv <- train(model.reduced.formula, 
+                    data = train.mod,
+                    method = 'lm',
+                    trControl = train.control)
+# print model summary
+model.reduced.cv
+
+# get the CV results
+res.red <- model.reduced.cv$results
+
+# get cross-validated PRESS statistic
+PCV.red <- PRESS.cv(model.reduced.cv)
+```
+
+```{r, echo=FALSE, fig.align='center'}
+# print accuracy metrics to md table
+kable(data.frame('Model' = c('Full Model', 'Reduced Model'), 
+                 'RMSE'=c(res$RMSE, res.red$RMSE),
+                 'CV Press'=c(PCV, PCV.red),
+                 'Adjused R Squared'=c(res$Rsquared, res.red$Rsquared)),
+      "latex", booktabs = T)  %>%
+  kable_styling(position = "center")
+```
+
+## Parameters
+
+* Estimates **TODO**
+* CI
+
+## Model Interpretation
+
+We estimate that for increase in 100 sq. ft., there is associated multiplicative increase in median price of
+
+* 1.055 for the Edwards neighborhood with a 95% confidence interval of [1.044 , 1.066]
+* 1.033 for the Northwest Ames neighorhood with a 95% confidence interval of [1.026 , 1.040]
+* 1.077 for the Brookside neighorhood with a 95% confidence interval of [1.063 , 1.090]
+
+Since the sampling procedure is not known and this is an observational study, the results only apply to this data.
+
+## Conclusion
+
+A short summary of the analysis
 
 # Analysis Question II
 
+## Question of Interest
+
+Restatement of the problem
+
+## Modeling
+
+Type of selection
+
+## Model Assumption Assessment
+
+Address each assumption
+
+## Comparing Competing Models
+
+* Adj $R^2$
+* CV Press
+* Kaggle score
+
+## Conclusion
+
+A short summary of the analysis
 
 # Appendix
+
+Include "well commented" `code` in the appendex!
 
 # References
