@@ -72,11 +72,11 @@ test$MasVnrArea[is.na(test$MasVnrArea)] <- 0
 
 ```{r neighborhood}
 # Reduce Neighborhood into 3 categories
-# train %>% 
-#   group_by(Neighborhood) %>%
-#   summarise(mean = mean(log(SalePrice)), n = n()) %>%
-#   arrange(desc(mean))
-# 
+train %>%
+  group_by(Neighborhood) %>%
+  summarise(mean = mean(log(SalePrice)), n = n()) %>%
+  arrange(desc(mean))
+
 # neighborhood_high <- c('NoRidge', 'NridgHt', 'StoneBr', 'Timber', 'Veenker', 'Somerst', 'ClearCr', 'Crawfor', 'Blmngtn', 'CollgCr')
 # 
 # neighborhood_medium <- c('Gilbert', 'NWAmes', 'SawyerW', 'Mitchel', 'NAmes', 'NPkVill', 'SWISU', 'Blueste', 'Sawyer', 'Edwards')
@@ -93,7 +93,17 @@ test$MasVnrArea[is.na(test$MasVnrArea)] <- 0
 #                test$Neighborhood %in% c('OldTown', 'BrkSide', 'BrDale', 'MeadowV', 'IDOTRR') ~ 'Low')
 
 
-table(train$Neighborhood)
+
+# modelMatrix <- model.matrix(~Neighborhood - 1, data = train)
+# modelData <- data.frame(train, modelMatrix)
+
+
+
+# class(train$Neighborhood)
+# 
+# table(train$Neighborhood)
+# 
+# levels(train$Neighborhood)
 
 
 ```
@@ -101,12 +111,49 @@ table(train$Neighborhood)
 
 ```{r MSSubClass}
 # Reduce Neighborhood into 3 categories
-train %>% 
-  group_by(MSSubClass) %>%
-  summarise(mean = mean(log(SalePrice)), n = n()) %>%
-  arrange(desc(mean))
+# train %>% 
+#   group_by(MSSubClass) %>%
+#   summarise(mean = mean(log(SalePrice)), n = n()) %>%
+#   arrange(mean)
+# 
+# 
+# 
+# train$MSSubClass <- dplyr::recode(train$MSSubClass, `30` = 1L, `180` = 2L, `45` = 3L, `190` = 4L, `90` = 5L, `160` = 6L, `50` = 7L, `40` = 8L, `85` = 9L, `70` = 10L,
+#                                 `80` = 11L, `20` = 12L, `75` = 13L, `120` = 14L, `60` = 15L, `150` = 7L)
+# 
+# 
+# test$MSSubClass <- dplyr::recode(test$MSSubClass, `30` = 1L, `180` = 2L, `45` = 3L, `190` = 4L, `90` = 5L, `160` = 6L, `50` = 7L, `40` = 8L, `85` = 9L, `70` = 10L,
+#                                 `80` = 11L, `20` = 12L, `75` = 13L, `120` = 14L, `60` = 15L, `150` = 7L)
+# 
+# test %>% 
+#   group_by(MSSubClass) %>%
+#   summarise(n = n()) %>%
+#   arrange(n)
+# 
+# 
+# train$MSSubClass <- as.factor(train$MSSubClass)
+# levels(train$MSSubClass)
+# 
+# test$MSSubClass <- as.factor(test$MSSubClass)
+# levels(test$MSSubClass)
 
-table(train$mean)
+# 
+# train %>% 
+#   group_by(MSSubClass) %>%
+#   summarise(mean = mean(log(SalePrice)), n = n()) %>%
+#   arrange(mean)
+# 
+# 
+# test$MSSubClass <- plyr::mapvalues(test$MSSubClass, from = c(30, 180, 45, 190, 90, 160, 50, 40, 85, 70, 80, 20, 75, 120, 60), 
+#                                                   to = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15))
+# 
+# 
+# # train$MSSubClass <- ordered(train$MSSubClass, c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15))
+# 
+# 
+# # 
+# class(train$MSSubClass)
+
 
 
 ```
@@ -188,6 +235,10 @@ test$BsmtExposure[is.na(test$BsmtExposure)] <- 'None'
 
 train$Utilities <- as.factor(train$Utilities)
 test$Utilities <- as.factor(test$Utilities)
+
+
+train$Neighborhood <- as.factor(train$Neighborhood)
+test$Neighborhood <- as.factor(test$Neighborhood)
 
 
 
@@ -286,6 +337,7 @@ test$Alley <- ordered(test$Alley, levels = c("None", "Grvl", "Pave"))
 train$MasVnrType <- ordered(train$MasVnrType, levels = c("None", "CBlock", "BrkFace", "BrkCmn", "Stone"))
 test$MasVnrType <- ordered(test$MasVnrType, levels = c("None", "CBlock", "BrkFace", "BrkCmn", "Stone"))
 
+
 train$BsmtQual <- ordered(train$BsmtQual, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
 test$BsmtQual <- ordered(test$BsmtQual, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
 
@@ -294,6 +346,7 @@ test$BsmtCond <- ordered(test$BsmtCond, levels = c("None", "Po", "Fa", "TA", "Gd
 
 # train$BsmtExposure <- ordered(train$BsmtExposure, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
 # test$BsmtExposure <- ordered(test$BsmtExposure, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
+
 
 train$BsmtFinType1 <- ordered(train$BsmtFinType1, levels = c("None", "Unf", "LwQ", "Rec", "BLQ", "ALQ", "GLQ"))
 test$BsmtFinType1 <- ordered(test$BsmtFinType1, levels = c("None", "Unf", "LwQ", "Rec", "BLQ", "ALQ", "GLQ"))
@@ -397,7 +450,18 @@ sales.price.cor %>%
 #### base model
 ```{r model, results='hide', message=FALSE}
 
-# model.formula <- log(SalePrice) ~ OverallQual + GrLivArea + GarageCars + TotalBsmtSF + YearBuilt +YearRemodAdd + Fireplaces + GrLivArea:Neighborhood + as.factor(BldgType)
+model.formula <- log(SalePrice) ~ MSSubClass + MSZoning + LotFrontage + 
+    LotArea + Street + LotConfig + LandSlope + Neighborhood + 
+    Condition1 + Condition2 + OverallQual + 
+    OverallCond + YearBuilt + YearRemodAdd + RoofStyle + RoofMatl + 
+    Foundation + BsmtQual + BsmtCond + 
+    BsmtExposure + BsmtFinSF1 + BsmtFinSF2 + BsmtUnfSF + Heating + 
+    HeatingQC + CentralAir + `1stFlrSF` + `2ndFlrSF` + LowQualFinSF + 
+    BsmtFullBath + FullBath + HalfBath + KitchenAbvGr + KitchenQual + 
+    TotRmsAbvGrd + Functional + Fireplaces + GarageCars + 
+    GarageArea + GarageQual + GarageCond + WoodDeckSF + EnclosedPorch + 
+    ScreenPorch + PoolArea + PoolQC + SaleType + 
+    SaleCondition
 
 # model.formula <- log(SalePrice) ~ MSZoning + LotFrontage + LotArea +
 #     Street + LotConfig + LandSlope + 
@@ -425,29 +489,19 @@ sales.price.cor %>%
 
 ## backward model ##
 
-# model.formula <- log(SalePrice) ~ MSZoning + LotFrontage + LotArea +
-#     Street + LotConfig + LandSlope + Neighborhood + Condition1 +
-#     Condition2 + BldgType + OverallQual + OverallCond + YearBuilt +
-#     YearRemodAdd + RoofMatl + Exterior1st + ExterCond + Foundation +
-#     BsmtQual + BsmtExposure + BsmtFinSF1 + BsmtFinSF2 + BsmtUnfSF +
-#     Heating + HeatingQC + CentralAir + `1stFlrSF` + `2ndFlrSF` +
-#     LowQualFinSF + BsmtFullBath + FullBath + HalfBath + KitchenAbvGr +
-#     KitchenQual + TotRmsAbvGrd + Functional + Fireplaces + GarageYrBlt +
-#     GarageCars + GarageArea + GarageQual + GarageCond + WoodDeckSF +
-#     EnclosedPorch + `3SsnPorch` + ScreenPorch + PoolArea + PoolQC +
-#     SaleType + SaleCondition
+# model.formula <- log(SalePrice) ~ MSSubClass + MSZoning + LotFrontage + 
+#     LotArea + Street + LotConfig + LandSlope + Neighborhood + 
+#     Condition1 + Condition2 + BldgType + HouseStyle + OverallQual + 
+#     OverallCond + YearBuilt + YearRemodAdd + RoofStyle + RoofMatl + 
+#     Exterior1st + ExterCond + Foundation + BsmtQual + BsmtCond + 
+#     BsmtExposure + BsmtFinSF1 + BsmtFinSF2 + BsmtUnfSF + Heating + 
+#     HeatingQC + CentralAir + `1stFlrSF` + `2ndFlrSF` + LowQualFinSF + 
+#     BsmtFullBath + FullBath + HalfBath + KitchenAbvGr + KitchenQual + 
+#     TotRmsAbvGrd + Functional + Fireplaces + GarageYrBlt + GarageCars + 
+#     GarageArea + GarageQual + GarageCond + WoodDeckSF + EnclosedPorch + 
+#     `3SsnPorch` + ScreenPorch + PoolArea + PoolQC + SaleType + 
+#     SaleCondition
 
-
-model.formula <- log(SalePrice) ~ MSZoning + LotFrontage + LotArea + 
-    Street + LotConfig + LandSlope + Neighborhood + Condition1 + 
-    Condition2 + BldgType + OverallQual + OverallCond + YearBuilt + 
-    YearRemodAdd + RoofMatl + Exterior1st + Foundation + BsmtQual + 
-    BsmtExposure + BsmtFinSF1 + BsmtFinSF2 + BsmtUnfSF + Heating + 
-    HeatingQC + CentralAir + `1stFlrSF` + `2ndFlrSF` + LowQualFinSF + 
-    BsmtFullBath + FullBath + HalfBath + KitchenAbvGr + KitchenQual + 
-    Functional + Fireplaces + GarageCars + GarageArea + GarageCond + 
-    WoodDeckSF + EnclosedPorch + `3SsnPorch` + ScreenPorch + 
-    PoolArea + PoolQC + SaleType + SaleCondition
 
 ## stepwise model ##
 
@@ -491,7 +545,7 @@ submit <- test %>%
 
 # head(submit)
 
-# write.csv(submit, file = "./kaggle_submission.csv", row.names = FALSE)
+write.csv(submit, file = "./kaggle_submission.csv", row.names = FALSE)
 
 summary(base.model)
 ```

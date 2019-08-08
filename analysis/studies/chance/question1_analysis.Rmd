@@ -30,6 +30,7 @@ Finally, of course, provide your client with a well written conclusion that quan
 
 # install.packages("tidyverse")
 library(tidyverse)
+library(multcomp)
 
 train <- read.csv("train.csv")
 
@@ -75,6 +76,16 @@ train.fit <- lm(logSalePrice ~ GrLivArea + Neighborhood + GrLivArea * Neighborho
 
 summary(train.fit)
 ```
+
+```{r}
+PRESS <- function(train.fit) {
+   pr <- residuals(train.fit)/(1 - lm.influence(train.fit)$hat)
+sum(pr^2)
+}
+
+PRESS(train.fit)
+```
+
 
 ```{r}
 ggplot(data = train.fit) +
@@ -139,6 +150,16 @@ confint(train.fit)
 ```
 
 
+```{r}
+# get CI for Northwest Ames
+confint(glht(train.fit, linfct = "GrLivArea + GrLivArea:NeighborhoodBrkSide = 1"))
+# get CI for Brookside
+confint(glht(train.fit, linfct = "GrLivArea + GrLivArea:NeighborhoodNAmes = 1"))
+```
+
+
+
+
 ## 95 Percent confidence intervals for the increase Sales Price for every additional 100 sq.ft.
 
 ### - 4.15 ~ 6.47% (Edwards)
@@ -156,6 +177,17 @@ edwards_high
 ```
 
 ```{r confintbrkside}
+
+
+
+estimate = (exp((0.0007437) * 100) - 1) * 100
+estimate # confint(glht(train.fit, linfct = "GrLivArea + GrLivArea:NeighborhoodBrkSide = 1"))
+
+bl = (exp((0.0006181) * 100) - 1) * 100
+bl  # confint(glht(train.fit, linfct = "GrLivArea + GrLivArea:NeighborhoodBrkSide = 1"))
+
+bh = (exp((0.0008692) * 100) - 1) * 100
+bh # confint(glht(train.fit, linfct = "GrLivArea + GrLivArea:NeighborhoodBrkSide = 1"))
 
 brkside_low = (exp((4.067084e-04 + 5.955141e-05) * 100) - 1) * 100
 brkside_low
