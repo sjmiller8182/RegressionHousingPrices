@@ -37,6 +37,46 @@
 \fi
 \usepackage{natbib}
 \bibliographystyle{apalike}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
 \usepackage{longtable,booktabs}
 \usepackage{graphicx,grffile}
 \makeatletter
@@ -114,7 +154,7 @@
 \usepackage{setspace}
 \usepackage{hyperref}
 \onehalfspacing
-\setcitestyle{numbers}
+\setcitestyle{numbers,square,super}
 \newcommand\numberthis{\addtocounter{equation}{1}\tag{\theequation}}
 
 \begin{document}
@@ -165,7 +205,8 @@ determined that sale prices should be log transformed to meet the model
 assumptions \textbf{Add appendix reference}. Additionally, two
 observations were removed as they appeared to be from a different
 population than the other observations in the dataset \textbf{Add
-appendix reference}.
+appendix reference}; therefore, analysis only considers properties with
+living rooms less than 3500 sq. ft. in area.
 
 We will consider two models: the logarithm of sale price as the response
 of living room area (1), the reduced model, and the logarithm of sale
@@ -210,7 +251,7 @@ continue with the full model.
 Assessment}\label{model-assumptions-assessment}}
 
 The following assessments for model assumptions are made based on Figure
-\ref{fig:diag-plots} and Figure 2 (\textbf{TODO}):
+\ref{fig:diag-plots} and Figure \ref{fig:scatter-plots}:
 
 \begin{itemize}
 \tightlist
@@ -268,13 +309,30 @@ Reduced Model & 0.1988473 & 13.55835 & 0.4750767\\
 \hypertarget{parameters}{%
 \subsection{Parameters}\label{parameters}}
 
-\begin{itemize}
-\tightlist
-\item
-  Estimates \textbf{TODO}
-\item
-  CI
-\end{itemize}
+The following table summerizes the parameter estimates for the full
+model.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lrrr}
+\toprule
+Parameter & Estimate & CI.Lower & CI.Upper\\
+\midrule
+Intercept & 11.0254845 & 10.8861855 & 11.1647836\\
+GrLivArea & 0.0005387 & 0.0004324 & 11.1647836\\
+Neighborhood\_BrkSide & -0.2338906 & -0.4468114 & -0.0209698\\
+Neighborhood\_NAmes & 0.4178562 & 0.2558923 & 0.5798200\\
+GrLivArea:Neighborhood\_BrkSide & 0.0001996 & 0.0000336 & 0.0003656\\
+GrLivArea:Neighborhood\_NAmes & -0.0002145 & -0.0003366 & -0.0000924\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Where \texttt{Intercept} is \(\beta_0\), \texttt{GrLivArea} is
+\(\beta_1\), \texttt{Neighborhood\_BrkSide} is \(\beta_2\),
+\texttt{Neighborhood\_NAmes} is \(\beta_3\),
+\texttt{GrLivArea:Neighborhood\_BrkSide} is \(\beta_4\), and
+\texttt{GrLivArea:Neighborhood\_NAmes} is \(\beta_5\)
 
 \hypertarget{model-interpretation}{%
 \subsection{Model Interpretation}\label{model-interpretation}}
@@ -301,7 +359,14 @@ study, the results only apply to this data.
 \hypertarget{conclusion}{%
 \subsection{Conclusion}\label{conclusion}}
 
-A short summary of the analysis
+In response to the analysis commissioned by Century 21, the log
+transform of property sale price was modeled as a linear response to the
+property living room area for residential properties in Ames, IA. It was
+determined that it was necessary to include interaction terms to allow
+for the influence of neighborhood on sale price. Based on the model,
+there is strong evidence of an associated multiplicative increase in
+median sale price for an increase in living room area (p-vlue
+\textless{} 0.0001, overall F-test).
 
 \hypertarget{analysis-question-ii}{%
 \section{Analysis Question II}\label{analysis-question-ii}}
@@ -344,7 +409,93 @@ A short summary of the analysis
 \hypertarget{appendix}{%
 \section{Appendix}\label{appendix}}
 
+\hypertarget{checking-for-linearity}{%
+\subsection{Checking for Linearity}\label{checking-for-linearity}}
+
+The images below show the scatter plots of log sale price vs living room
+area (Figure \ref{fig:scatter-plots}). In the image on the right, the
+scatter plot is shown for each neighborhood. In the image on the left
+the observations for all three neighborhoods are included. In all cases,
+a linear model appears to be reasonable to model this data.
+
+\begin{figure}[htbp]
+
+{\centering \includegraphics[width=0.45\linewidth]{HousePriceRegressionAnalysis_files/figure-latex/scatter-plots-1} \includegraphics[width=0.45\linewidth]{HousePriceRegressionAnalysis_files/figure-latex/scatter-plots-2} 
+
+}
+
+\caption{Scatter Plots of Log of Sale Price vs Living Room Area}\label{fig:scatter-plots}
+\end{figure}
+
+\hypertarget{analysis-of-influential-points}{%
+\subsection{Analysis of Influential
+points}\label{analysis-of-influential-points}}
+
+Some text Figure \ref{fig:infleu-points} \textbf{Add some disucssion on
+this influential points here}
+
+\begin{figure}[htbp]
+
+{\centering \includegraphics[width=0.5\linewidth]{HousePriceRegressionAnalysis_files/figure-latex/infleu-points-1} 
+
+}
+
+\caption{Influential Points}\label{fig:infleu-points}
+\end{figure}
+
+\hypertarget{r-code-for-analysis-1}{%
+\subsection{R Code For Analysis 1}\label{r-code-for-analysis-1}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{### Compuational Setup}
+\CommentTok{# libraries}
+\KeywordTok{library}\NormalTok{(knitr)}
+\KeywordTok{library}\NormalTok{(kableExtra)}
+\KeywordTok{library}\NormalTok{(tidyverse)}
+\KeywordTok{library}\NormalTok{(olsrr)}
+\KeywordTok{library}\NormalTok{(gridExtra)}
+\KeywordTok{library}\NormalTok{(caret)}
+\KeywordTok{library}\NormalTok{(multcomp)}
+
+\CommentTok{# set a random seed for repodicibility}
+\KeywordTok{set.seed}\NormalTok{(}\DecValTok{123}\NormalTok{)}
+\KeywordTok{getwd}\NormalTok{()}
+\CommentTok{# helper code}
+\KeywordTok{source}\NormalTok{(}\StringTok{'./helper/visual.R'}\NormalTok{)}
+\KeywordTok{source}\NormalTok{(}\StringTok{'./helper/data_munging.R'}\NormalTok{)}
+\KeywordTok{source}\NormalTok{(}\StringTok{'./helper/performance.R'}\NormalTok{)}
+
+\CommentTok{# load data}
+\NormalTok{train <-}\StringTok{ }\KeywordTok{read_csv}\NormalTok{(}\StringTok{'./data/train.csv'}\NormalTok{)}
+\NormalTok{test <-}\StringTok{ }\KeywordTok{read_csv}\NormalTok{(}\StringTok{'./data/test.csv'}\NormalTok{)}
+
+\NormalTok{train }\OperatorTok{%>%}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =}\NormalTok{ (GrLivArea), }\DataTypeTok{y =} \KeywordTok{log}\NormalTok{(SalePrice))) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_point}\NormalTok{(}\DataTypeTok{alpha =} \FloatTok{0.3}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{labs}\NormalTok{(}\DataTypeTok{title =} \StringTok{'Log of Sale Price vs Living Room Area'}\NormalTok{, }
+       \DataTypeTok{y =} \StringTok{'Log of Sale Price'}\NormalTok{, }\DataTypeTok{x =} \StringTok{'Living Room Area'}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_text}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{label =} \KeywordTok{ifelse}\NormalTok{((}\KeywordTok{log}\NormalTok{(GrLivArea) }\OperatorTok{>}\StringTok{ }\FloatTok{7.75} \OperatorTok{&}\StringTok{ }\KeywordTok{log}\NormalTok{(SalePrice) }\OperatorTok{>}\StringTok{ }\DecValTok{11}\NormalTok{) }\OperatorTok{|}
+\StringTok{                                 }\NormalTok{(}\KeywordTok{log}\NormalTok{(SalePrice) }\OperatorTok{>}\StringTok{ }\FloatTok{12.45}\NormalTok{),}
+\NormalTok{                               SaleCondition, }\StringTok{''}\NormalTok{)), }\DataTypeTok{hjust=}\DecValTok{0}\NormalTok{, }\DataTypeTok{vjust=}\DecValTok{0}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{r-code-for-analysis-2}{%
+\subsection{R Code For Analysis 2}\label{r-code-for-analysis-2}}
+
 Include ``well commented'' \texttt{code} in the appendex!
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{train }\OperatorTok{%>%}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =}\NormalTok{ (GrLivArea), }\DataTypeTok{y =} \KeywordTok{log}\NormalTok{(SalePrice))) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_point}\NormalTok{(}\DataTypeTok{alpha =} \FloatTok{0.3}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{labs}\NormalTok{(}\DataTypeTok{title =} \StringTok{'Log of Sale Price vs Living Room Area'}\NormalTok{, }
+       \DataTypeTok{y =} \StringTok{'Log of Sale Price'}\NormalTok{, }\DataTypeTok{x =} \StringTok{'Living Room Area'}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_text}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{label =} \KeywordTok{ifelse}\NormalTok{((}\KeywordTok{log}\NormalTok{(GrLivArea) }\OperatorTok{>}\StringTok{ }\FloatTok{7.75} \OperatorTok{&}\StringTok{ }\KeywordTok{log}\NormalTok{(SalePrice) }\OperatorTok{>}\StringTok{ }\DecValTok{11}\NormalTok{) }\OperatorTok{|}
+\StringTok{                                 }\NormalTok{(}\KeywordTok{log}\NormalTok{(SalePrice) }\OperatorTok{>}\StringTok{ }\FloatTok{12.45}\NormalTok{),}
+\NormalTok{                               SaleCondition, }\StringTok{''}\NormalTok{)), }\DataTypeTok{hjust=}\DecValTok{0}\NormalTok{, }\DataTypeTok{vjust=}\DecValTok{0}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
 
 \renewcommand\refname{References}
 \bibliography{references.bib}
