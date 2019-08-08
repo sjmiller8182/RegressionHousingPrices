@@ -22,10 +22,12 @@ library(tidyverse)
 library(naniar)
 library(Hmisc)
 library(GGally)
-# Correlations
+# Correlation
 library(corrr)
-# Stepwise Regression
+# Forward, Backward and Stepwise Regression
 library(MASS)
+
+library(caret)
 
 # helper files
 source('../../helper/data_munging.R')
@@ -38,8 +40,6 @@ source('../../helper/data_munging.R')
 ``` r
 train <- read_csv('../../data/train.csv')
 test <- read_csv('../../data/test.csv')
-
-train <- train %>% mutate(logSalePrice = log(SalePrice))
 ```
 
 ## Data Cleaning
@@ -75,6 +75,75 @@ train$MasVnrArea[is.na(train$MasVnrArea)] <- 0
 test$MasVnrArea[is.na(test$MasVnrArea)] <- 0
 ```
 
+``` r
+# Reduce Neighborhood into 3 categories
+# train %>% 
+#   group_by(Neighborhood) %>%
+#   summarise(mean = mean(log(SalePrice)), n = n()) %>%
+#   arrange(desc(mean))
+# 
+# neighborhood_high <- c('NoRidge', 'NridgHt', 'StoneBr', 'Timber', 'Veenker', 'Somerst', 'ClearCr', 'Crawfor', 'Blmngtn', 'CollgCr')
+# 
+# neighborhood_medium <- c('Gilbert', 'NWAmes', 'SawyerW', 'Mitchel', 'NAmes', 'NPkVill', 'SWISU', 'Blueste', 'Sawyer', 'Edwards')
+# 
+# neighborhood_low <- c('OldTown', 'BrkSide', 'BrDale', 'MeadowV', 'IDOTRR')
+# 
+# train$Neighborhood <- case_when(train$Neighborhood %in% c('NoRidge', 'NridgHt', 'StoneBr', 'Timber', 'Veenker', 'Somerst', 'ClearCr', 'Crawfor', 'Blmngtn', 'CollgCr') ~ 'High',
+#                train$Neighborhood %in% c('Gilbert', 'NWAmes', 'SawyerW', 'Mitchel', 'NAmes', 'NPkVill', 'SWISU', 'Blueste', 'Sawyer', 'Edwards') ~ 'Medium',
+#                train$Neighborhood %in% c('OldTown', 'BrkSide', 'BrDale', 'MeadowV', 'IDOTRR') ~ 'Low')
+# 
+# 
+# test$Neighborhood <- case_when(test$Neighborhood %in% c('NoRidge', 'NridgHt', 'StoneBr', 'Timber', 'Veenker', 'Somerst', 'ClearCr', 'Crawfor', 'Blmngtn', 'CollgCr') ~ 'High',
+#                test$Neighborhood %in% c('Gilbert', 'NWAmes', 'SawyerW', 'Mitchel', 'NAmes', 'NPkVill', 'SWISU', 'Blueste', 'Sawyer', 'Edwards') ~ 'Medium',
+#                test$Neighborhood %in% c('OldTown', 'BrkSide', 'BrDale', 'MeadowV', 'IDOTRR') ~ 'Low')
+
+
+table(train$Neighborhood)
+```
+
+    ## 
+    ## Blmngtn Blueste  BrDale BrkSide ClearCr CollgCr Crawfor Edwards Gilbert 
+    ##      17       2      16      58      28     150      51     100      79 
+    ##  IDOTRR MeadowV Mitchel   NAmes NoRidge NPkVill NridgHt  NWAmes OldTown 
+    ##      37      17      49     225      41       9      77      73     113 
+    ##  Sawyer SawyerW Somerst StoneBr   SWISU  Timber Veenker 
+    ##      74      59      86      25      25      38      11
+
+``` r
+# Reduce Neighborhood into 3 categories
+train %>% 
+  group_by(MSSubClass) %>%
+  summarise(mean = mean(log(SalePrice)), n = n()) %>%
+  arrange(desc(mean))
+```
+
+    ## # A tibble: 15 x 3
+    ##    MSSubClass  mean     n
+    ##         <dbl> <dbl> <int>
+    ##  1         60  12.3   299
+    ##  2        120  12.2    87
+    ##  3         75  12.1    16
+    ##  4         20  12.1   536
+    ##  5         80  12.0    58
+    ##  6         70  12.0    60
+    ##  7         85  11.9    20
+    ##  8         40  11.9     4
+    ##  9         50  11.8   144
+    ## 10        160  11.8    63
+    ## 11         90  11.8    52
+    ## 12        190  11.7    30
+    ## 13         45  11.6    12
+    ## 14        180  11.5    10
+    ## 15         30  11.4    69
+
+``` r
+table(train$mean)
+```
+
+    ## Warning: Unknown or uninitialised column: 'mean'.
+
+    ## < table of extent 0 >
+
 ### Handle null values for categorical variables
 
   - Alley
@@ -92,63 +161,41 @@ test$MasVnrArea[is.na(test$MasVnrArea)] <- 0
   - PoolQC
   - Fence
   - MiscFeature
-  - Electrical (SBrkr Standard Circuit Breakers & Romex)
-
-<!-- end list -->
-
-``` r
-train$Alley[is.na(train$Alley)] <- 'None'
-test$Alley[is.na(test$Alley)] <- 'None'
-
-train$MasVnrType[is.na(train$MasVnrType)] <- 'None'
-test$MasVnrType[is.na(test$MasVnrType)] <- 'None'
-
-train$BsmtQual[is.na(train$BsmtQual)] <- 'None'
-test$BsmtQual[is.na(test$BsmtQual)] <- 'None'
-
-train$BsmtCond[is.na(train$BsmtCond)] <- 'None'
-test$BsmtCond[is.na(test$BsmtCond)] <- 'None'
-
-train$BsmtExposure[is.na(train$BsmtExposure)] <- 'None'
-test$BsmtExposure[is.na(test$BsmtExposure)] <- 'None'
-
-train$BsmtFinType1[is.na(train$BsmtFinType1)] <- 'None'
-test$BsmtFinType1[is.na(test$BsmtFinType1)] <- 'None'
-
-train$BsmtFinType2[is.na(train$BsmtFinType2)] <- 'None'
-test$BsmtFinType2[is.na(test$BsmtFinType2)] <- 'None'
-
-train$FireplaceQu[is.na(train$FireplaceQu)] <- 'None'
-test$FireplaceQu[is.na(test$FireplaceQu)] <- 'None'
-
-train$GarageType[is.na(train$GarageType)] <- 'None'
-test$GarageType[is.na(test$GarageType)] <- 'None'
-
-train$GarageFinish[is.na(train$GarageFinish)] <- 'None'
-test$GarageFinish[is.na(test$GarageFinish)] <- 'None'
-
-train$GarageQual[is.na(train$GarageQual)] <- 'None'
-test$GarageQual[is.na(test$GarageQual)] <- 'None'
-
-train$GarageCond[is.na(train$GarageCond)] <- 'None'
-test$GarageCond[is.na(test$GarageCond)] <- 'None'
-
-train$PoolQC[is.na(train$PoolQC)] <- 'None'
-test$PoolQC[is.na(test$PoolQC)] <- 'None'
-
-train$Fence[is.na(train$Fence)] <- 'None'
-test$Fence[is.na(test$Fence)] <- 'None'
-
-train$MiscFeature[is.na(train$MiscFeature)] <- 'None'
-test$MiscFeature[is.na(test$MiscFeature)] <- 'None'
-
-train$Electrical[is.na(train$Electrical)] <- 'SBrkr'
-test$Electrical[is.na(test$Electrical)] <- 'SBrkr'
-```
+  - Electrical (SBrkr Standard Circuit Breakers &
+Romex)
 
 ### Set ordered factor values
 
 ``` r
+# train$Neighborhood <- ordered(train$Neighborhood, levels = c("Low", "Medium", "High"))
+# test$Neighborhood <- ordered(test$Neighborhood, levels = c("Low", "Medium", "High"))
+
+train$MSZoning <- ordered(train$MSZoning, levels = c("C (all)", "RM", "RH", "RL", "FV"))
+test$MSZoning <- ordered(test$MSZoning, levels = c("C (all)", "RM", "RH", "RL", "FV"))
+
+train$Street <- ordered(train$Street, levels = c("Grvl", "Pave"))
+test$Street <- ordered(test$Street, levels = c("Grvl", "Pave"))
+
+train$LotShape <- ordered(train$LotShape, levels = c("Reg", "IR1", "IR2", "IR3"))
+test$LotShape <- ordered(test$LotShape, levels = c("Reg", "IR1", "IR2", "IR3"))
+
+
+train$LandContour <- ordered(train$LandContour, levels = c("Bnk", "Lvl", "Low", "HLS"))
+test$LandContour <- ordered(test$LandContour, levels = c("Bnk", "Lvl", "Low", "HLS"))
+
+train$LotConfig <- ordered(train$LotConfig, levels = c("Inside", "Corner", "CulDSac", "FR2", "FR3"))
+test$LotConfig <- ordered(test$LotConfig, levels = c("Inside", "Corner", "CulDSac", "FR2", "FR3"))
+
+train$LandSlope <- ordered(train$LandSlope, levels = c("Gtl", "Mod", "Sev"))
+test$LandSlope <- ordered(test$LandSlope, levels = c("Gtl", "Mod", "Sev"))
+
+
+train$Condition1 <- ordered(train$Condition1, levels = c("Artery", "Feedr", "RRAe", "Norm", "RRAn", "RRNe", "RRNn", "PosA", "PosN"))
+test$Condition1 <- ordered(test$Condition1, levels = c("Artery", "Feedr", "RRAe", "Norm", "RRAn", "RRNe", "RRNn", "PosA", "PosN"))
+
+train$Condition2 <- ordered(train$Condition2, levels = c("Artery", "RRNn","RRAn","Feedr", "Norm", "RRAe", "PosN", "PosA"))
+test$Condition2 <- ordered(test$Condition2, levels = c("Artery", "RRNn","RRAn","Feedr", "Norm", "RRAe", "PosN", "PosA"))
+
 train$Alley <- ordered(train$Alley, levels = c("None", "Grvl", "Pave"))
 test$Alley <- ordered(test$Alley, levels = c("None", "Grvl", "Pave"))
 
@@ -161,8 +208,8 @@ test$BsmtQual <- ordered(test$BsmtQual, levels = c("None", "Po", "Fa", "TA", "Gd
 train$BsmtCond <- ordered(train$BsmtCond, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
 test$BsmtCond <- ordered(test$BsmtCond, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
 
-train$BsmtExposure <- ordered(train$BsmtExposure, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
-test$BsmtExposure <- ordered(test$BsmtExposure, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
+# train$BsmtExposure <- ordered(train$BsmtExposure, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
+# test$BsmtExposure <- ordered(test$BsmtExposure, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
 
 train$BsmtFinType1 <- ordered(train$BsmtFinType1, levels = c("None", "Unf", "LwQ", "Rec", "BLQ", "ALQ", "GLQ"))
 test$BsmtFinType1 <- ordered(test$BsmtFinType1, levels = c("None", "Unf", "LwQ", "Rec", "BLQ", "ALQ", "GLQ"))
@@ -196,244 +243,67 @@ test$Electrical <- ordered(test$Electrical, levels = c("Mix", "FuseP", "FuseF", 
 
 train$MiscFeature <- ordered(train$MiscFeature, levels = c("None", "Othr", "Shed", "Gar2", "TenC"))
 test$MiscFeature <- ordered(test$MiscFeature, levels = c("None", "Othr", "Shed", "Gar2", "TenC"))
+
+
+train$SaleCondition <- factor(train$SaleCondition, levels = c("Abnorml", "AdjLand", "Alloca", "Partial", "Family", "Normal"))
+test$SaleCondition <- factor(test$SaleCondition, levels = c("Abnorml", "AdjLand", "Alloca", "Partial", "Family", "Normal"))
+
+train$BldgType[is.na(train$BldgType)] <- '1Fam'
+test$BldgType[is.na(test$BldgType)] <- '1Fam'
+
+
+# str(train)
+```
+
+``` r
+# describe(train)
 ```
 
 #### Describe all categorical variables after handling nulls
 
 ``` r
-train.nonnumeric <- train %>% 
-  select_if(is.character)
+# # Scatterplot of Numeric Variable
+# train.numeric %>% filter(WoodDeckSF != 0) %>% ggplot(aes(x = WoodDeckSF, y = log(SalePrice))) +
+#   geom_point() + geom_smooth(method = 'lm')
 
-describe(train.nonnumeric)
+
+# Bar Chart of Categorical Variable
+ggplot(test) + geom_bar(aes(x = Neighborhood))
 ```
 
-    ## train.nonnumeric 
-    ## 
-    ##  27  Variables      1460  Observations
-    ## ---------------------------------------------------------------------------
-    ## MSZoning 
-    ##        n  missing distinct 
-    ##     1460        0        5 
-    ##                                                   
-    ## Value      C (all)      FV      RH      RL      RM
-    ## Frequency       10      65      16    1151     218
-    ## Proportion   0.007   0.045   0.011   0.788   0.149
-    ## ---------------------------------------------------------------------------
-    ## Street 
-    ##        n  missing distinct 
-    ##     1460        0        2 
-    ##                       
-    ## Value       Grvl  Pave
-    ## Frequency      6  1454
-    ## Proportion 0.004 0.996
-    ## ---------------------------------------------------------------------------
-    ## LotShape 
-    ##        n  missing distinct 
-    ##     1460        0        4 
-    ##                                   
-    ## Value        IR1   IR2   IR3   Reg
-    ## Frequency    484    41    10   925
-    ## Proportion 0.332 0.028 0.007 0.634
-    ## ---------------------------------------------------------------------------
-    ## LandContour 
-    ##        n  missing distinct 
-    ##     1460        0        4 
-    ##                                   
-    ## Value        Bnk   HLS   Low   Lvl
-    ## Frequency     63    50    36  1311
-    ## Proportion 0.043 0.034 0.025 0.898
-    ## ---------------------------------------------------------------------------
-    ## Utilities 
-    ##        n  missing distinct 
-    ##     1460        0        2 
-    ##                         
-    ## Value      AllPub NoSeWa
-    ## Frequency    1459      1
-    ## Proportion  0.999  0.001
-    ## ---------------------------------------------------------------------------
-    ## LotConfig 
-    ##        n  missing distinct 
-    ##     1460        0        5 
-    ##                                                   
-    ## Value       Corner CulDSac     FR2     FR3  Inside
-    ## Frequency      263      94      47       4    1052
-    ## Proportion   0.180   0.064   0.032   0.003   0.721
-    ## ---------------------------------------------------------------------------
-    ## LandSlope 
-    ##        n  missing distinct 
-    ##     1460        0        3 
-    ##                             
-    ## Value        Gtl   Mod   Sev
-    ## Frequency   1382    65    13
-    ## Proportion 0.947 0.045 0.009
-    ## ---------------------------------------------------------------------------
-    ## Neighborhood 
-    ##        n  missing distinct 
-    ##     1460        0       25 
-    ## 
-    ## lowest : Blmngtn Blueste BrDale  BrkSide ClearCr
-    ## highest: Somerst StoneBr SWISU   Timber  Veenker
-    ## ---------------------------------------------------------------------------
-    ## Condition1 
-    ##        n  missing distinct 
-    ##     1460        0        9 
-    ##                                                                          
-    ## Value      Artery  Feedr   Norm   PosA   PosN   RRAe   RRAn   RRNe   RRNn
-    ## Frequency      48     81   1260      8     19     11     26      2      5
-    ## Proportion  0.033  0.055  0.863  0.005  0.013  0.008  0.018  0.001  0.003
-    ## ---------------------------------------------------------------------------
-    ## Condition2 
-    ##        n  missing distinct 
-    ##     1460        0        8 
-    ##                                                                   
-    ## Value      Artery  Feedr   Norm   PosA   PosN   RRAe   RRAn   RRNn
-    ## Frequency       2      6   1445      1      2      1      1      2
-    ## Proportion  0.001  0.004  0.990  0.001  0.001  0.001  0.001  0.001
-    ## ---------------------------------------------------------------------------
-    ## BldgType 
-    ##        n  missing distinct 
-    ##     1460        0        5 
-    ##                                              
-    ## Value        1Fam 2fmCon Duplex  Twnhs TwnhsE
-    ## Frequency    1220     31     52     43    114
-    ## Proportion  0.836  0.021  0.036  0.029  0.078
-    ## ---------------------------------------------------------------------------
-    ## HouseStyle 
-    ##        n  missing distinct 
-    ##     1460        0        8 
-    ##                                                                   
-    ## Value      1.5Fin 1.5Unf 1Story 2.5Fin 2.5Unf 2Story SFoyer   SLvl
-    ## Frequency     154     14    726      8     11    445     37     65
-    ## Proportion  0.105  0.010  0.497  0.005  0.008  0.305  0.025  0.045
-    ## ---------------------------------------------------------------------------
-    ## RoofStyle 
-    ##        n  missing distinct 
-    ##     1460        0        6 
-    ##                                                           
-    ## Value         Flat   Gable Gambrel     Hip Mansard    Shed
-    ## Frequency       13    1141      11     286       7       2
-    ## Proportion   0.009   0.782   0.008   0.196   0.005   0.001
-    ## ---------------------------------------------------------------------------
-    ## RoofMatl 
-    ##        n  missing distinct 
-    ##     1460        0        8 
-    ##                                                                           
-    ## Value      ClyTile CompShg Membran   Metal    Roll Tar&Grv WdShake WdShngl
-    ## Frequency        1    1434       1       1       1      11       5       6
-    ## Proportion   0.001   0.982   0.001   0.001   0.001   0.008   0.003   0.004
-    ## ---------------------------------------------------------------------------
-    ## Exterior1st 
-    ##        n  missing distinct 
-    ##     1460        0       15 
-    ##                                                                           
-    ## Value      AsbShng AsphShn BrkComm BrkFace  CBlock CemntBd HdBoard ImStucc
-    ## Frequency       20       1       2      50       1      61     222       1
-    ## Proportion   0.014   0.001   0.001   0.034   0.001   0.042   0.152   0.001
-    ##                                                                   
-    ## Value      MetalSd Plywood   Stone  Stucco VinylSd Wd Sdng WdShing
-    ## Frequency      220     108       2      25     515     206      26
-    ## Proportion   0.151   0.074   0.001   0.017   0.353   0.141   0.018
-    ## ---------------------------------------------------------------------------
-    ## Exterior2nd 
-    ##        n  missing distinct 
-    ##     1460        0       16 
-    ##                                                                           
-    ## Value      AsbShng AsphShn Brk Cmn BrkFace  CBlock CmentBd HdBoard ImStucc
-    ## Frequency       20       3       7      25       1      60     207      10
-    ## Proportion   0.014   0.002   0.005   0.017   0.001   0.041   0.142   0.007
-    ##                                                                           
-    ## Value      MetalSd   Other Plywood   Stone  Stucco VinylSd Wd Sdng Wd Shng
-    ## Frequency      214       1     142       5      26     504     197      38
-    ## Proportion   0.147   0.001   0.097   0.003   0.018   0.345   0.135   0.026
-    ## ---------------------------------------------------------------------------
-    ## ExterQual 
-    ##        n  missing distinct 
-    ##     1460        0        4 
-    ##                                   
-    ## Value         Ex    Fa    Gd    TA
-    ## Frequency     52    14   488   906
-    ## Proportion 0.036 0.010 0.334 0.621
-    ## ---------------------------------------------------------------------------
-    ## ExterCond 
-    ##        n  missing distinct 
-    ##     1460        0        5 
-    ##                                         
-    ## Value         Ex    Fa    Gd    Po    TA
-    ## Frequency      3    28   146     1  1282
-    ## Proportion 0.002 0.019 0.100 0.001 0.878
-    ## ---------------------------------------------------------------------------
-    ## Foundation 
-    ##        n  missing distinct 
-    ##     1460        0        6 
-    ##                                                     
-    ## Value      BrkTil CBlock  PConc   Slab  Stone   Wood
-    ## Frequency     146    634    647     24      6      3
-    ## Proportion  0.100  0.434  0.443  0.016  0.004  0.002
-    ## ---------------------------------------------------------------------------
-    ## Heating 
-    ##        n  missing distinct 
-    ##     1460        0        6 
-    ##                                               
-    ## Value      Floor  GasA  GasW  Grav  OthW  Wall
-    ## Frequency      1  1428    18     7     2     4
-    ## Proportion 0.001 0.978 0.012 0.005 0.001 0.003
-    ## ---------------------------------------------------------------------------
-    ## HeatingQC 
-    ##        n  missing distinct 
-    ##     1460        0        5 
-    ##                                         
-    ## Value         Ex    Fa    Gd    Po    TA
-    ## Frequency    741    49   241     1   428
-    ## Proportion 0.508 0.034 0.165 0.001 0.293
-    ## ---------------------------------------------------------------------------
-    ## CentralAir 
-    ##        n  missing distinct 
-    ##     1460        0        2 
-    ##                       
-    ## Value          N     Y
-    ## Frequency     95  1365
-    ## Proportion 0.065 0.935
-    ## ---------------------------------------------------------------------------
-    ## KitchenQual 
-    ##        n  missing distinct 
-    ##     1460        0        4 
-    ##                                   
-    ## Value         Ex    Fa    Gd    TA
-    ## Frequency    100    39   586   735
-    ## Proportion 0.068 0.027 0.401 0.503
-    ## ---------------------------------------------------------------------------
-    ## Functional 
-    ##        n  missing distinct 
-    ##     1460        0        7 
-    ##                                                     
-    ## Value       Maj1  Maj2  Min1  Min2   Mod   Sev   Typ
-    ## Frequency     14     5    31    34    15     1  1360
-    ## Proportion 0.010 0.003 0.021 0.023 0.010 0.001 0.932
-    ## ---------------------------------------------------------------------------
-    ## PavedDrive 
-    ##        n  missing distinct 
-    ##     1460        0        3 
-    ##                             
-    ## Value          N     P     Y
-    ## Frequency     90    30  1340
-    ## Proportion 0.062 0.021 0.918
-    ## ---------------------------------------------------------------------------
-    ## SaleType 
-    ##        n  missing distinct 
-    ##     1460        0        9 
-    ##                                                                 
-    ## Value        COD   Con ConLD ConLI ConLw   CWD   New   Oth    WD
-    ## Frequency     43     2     9     5     5     4   122     3  1267
-    ## Proportion 0.029 0.001 0.006 0.003 0.003 0.003 0.084 0.002 0.868
-    ## ---------------------------------------------------------------------------
-    ## SaleCondition 
-    ##        n  missing distinct 
-    ##     1460        0        6 
-    ##                                                           
-    ## Value      Abnorml AdjLand  Alloca  Family  Normal Partial
-    ## Frequency      101       4      12      20    1198     125
-    ## Proportion   0.069   0.003   0.008   0.014   0.821   0.086
-    ## ---------------------------------------------------------------------------
+![](Exploratory_Data_Analysis_files/figure-gfm/describe_factors-1.png)<!-- -->
+
+``` r
+# Scatterplot of Categroical Variable
+train %>% ggplot(aes(x = Condition2, y = log(SalePrice))) +
+  geom_point() + geom_smooth(method = 'lm')
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/describe_factors-2.png)<!-- -->
+
+``` r
+# Scatterplot of Categroical Variable
+train %>% ggplot(aes(x = Condition2, y = log(SalePrice))) +
+  geom_boxplot()
+```
+
+![](Exploratory_Data_Analysis_files/figure-gfm/describe_factors-3.png)<!-- -->
+
+``` r
+# 
+# ggplot(train,aes(y=log(SalePrice),x=GrLivArea,color=factor(Neighborhood)))+geom_point()+stat_smooth(method="lm",se=FALSE)
+
+
+# # Scatterplot of Categroical Variable
+# train %>% ggplot(aes(x = factor(Neighborhood), y = log(SalePrice))) +
+#   geom_boxplot()
+
+
+# head(train$SalePrice)
+# 
+# 
+# describe(test$Condition2)
+```
 
 #### Correlation Table
 
@@ -453,104 +323,146 @@ sales.price.cor %>%
   arrange(desc(SalePrice))
 ```
 
-    ## # A tibble: 38 x 2
+    ## # A tibble: 37 x 2
     ##    rowname      SalePrice
     ##    <chr>            <dbl>
-    ##  1 logSalePrice     0.948
-    ##  2 OverallQual      0.791
-    ##  3 GrLivArea        0.709
-    ##  4 GarageCars       0.640
-    ##  5 GarageArea       0.623
-    ##  6 TotalBsmtSF      0.614
-    ##  7 1stFlrSF         0.606
-    ##  8 FullBath         0.561
-    ##  9 TotRmsAbvGrd     0.534
-    ## 10 YearBuilt        0.523
-    ## # ... with 28 more rows
+    ##  1 OverallQual      0.791
+    ##  2 GrLivArea        0.709
+    ##  3 GarageCars       0.640
+    ##  4 GarageArea       0.623
+    ##  5 TotalBsmtSF      0.614
+    ##  6 1stFlrSF         0.606
+    ##  7 FullBath         0.561
+    ##  8 TotRmsAbvGrd     0.534
+    ##  9 YearBuilt        0.523
+    ## 10 YearRemodAdd     0.507
+    ## # ... with 27 more rows
 
 #### base model
 
 ``` r
-base.model <- lm(log(SalePrice) ~
-                 OverallQual +
-                 GrLivArea +
-                 TotalBsmtSF +
-                 `1stFlrSF` + 
-                 YearBuilt +
-                 Neighborhood,
+# model.formula <- log(SalePrice) ~ OverallQual + GrLivArea + GarageCars + TotalBsmtSF + YearBuilt +YearRemodAdd + Fireplaces + GrLivArea:Neighborhood + as.factor(BldgType)
+
+# model.formula <- log(SalePrice) ~ MSZoning + LotFrontage + LotArea +
+#     Street + LotConfig + LandSlope + 
+#     Condition2 + BldgType + OverallQual + OverallCond + YearBuilt +
+#     YearRemodAdd + RoofMatl + Foundation +
+#     BsmtFinSF1 + BsmtFinSF2 + BsmtUnfSF +
+#     HeatingQC + CentralAir + `1stFlrSF` + `2ndFlrSF` +
+#     LowQualFinSF + BsmtFullBath + FullBath + HalfBath + KitchenAbvGr +
+#     KitchenQual + TotRmsAbvGrd + Functional + Fireplaces + GarageYrBlt +
+#     GarageCars + GarageArea + WoodDeckSF +
+#     EnclosedPorch + `3SsnPorch` + ScreenPorch + PoolArea + PoolQC +
+#     SaleType + OverallQual:Neighborhood
+
+## forward model ##
+# model.formula <- log(SalePrice) ~ OverallQual + Neighborhood + GrLivArea + 
+#     BsmtFinType1 + GarageCars + OverallCond + RoofMatl + TotalBsmtSF + 
+#     YearBuilt + Condition2 + MSZoning + BsmtUnfSF + SaleCondition + 
+#     Functional + BldgType + CentralAir + LotArea + KitchenQual + 
+#     ScreenPorch + Condition1 + Fireplaces + Heating + BsmtExposure + 
+#     Exterior1st + YearRemodAdd + LandSlope + GarageArea + WoodDeckSF + 
+#     LotConfig + Foundation + LotFrontage + HeatingQC + PoolQC + 
+#     BsmtFullBath + EnclosedPorch + PoolArea + SaleType + HalfBath + 
+#     GarageCond + BsmtQual + FullBath + Street + KitchenAbvGr + 
+#     `3SsnPorch` + GarageQual + ExterCond + GarageYrBlt + TotRmsAbvGrd
+
+## backward model ##
+
+# model.formula <- log(SalePrice) ~ MSZoning + LotFrontage + LotArea +
+#     Street + LotConfig + LandSlope + Neighborhood + Condition1 +
+#     Condition2 + BldgType + OverallQual + OverallCond + YearBuilt +
+#     YearRemodAdd + RoofMatl + Exterior1st + ExterCond + Foundation +
+#     BsmtQual + BsmtExposure + BsmtFinSF1 + BsmtFinSF2 + BsmtUnfSF +
+#     Heating + HeatingQC + CentralAir + `1stFlrSF` + `2ndFlrSF` +
+#     LowQualFinSF + BsmtFullBath + FullBath + HalfBath + KitchenAbvGr +
+#     KitchenQual + TotRmsAbvGrd + Functional + Fireplaces + GarageYrBlt +
+#     GarageCars + GarageArea + GarageQual + GarageCond + WoodDeckSF +
+#     EnclosedPorch + `3SsnPorch` + ScreenPorch + PoolArea + PoolQC +
+#     SaleType + SaleCondition
+
+
+model.formula <- log(SalePrice) ~ MSZoning + LotFrontage + LotArea + 
+    Street + LotConfig + LandSlope + Neighborhood + Condition1 + 
+    Condition2 + BldgType + OverallQual + OverallCond + YearBuilt + 
+    YearRemodAdd + RoofMatl + Exterior1st + Foundation + BsmtQual + 
+    BsmtExposure + BsmtFinSF1 + BsmtFinSF2 + BsmtUnfSF + Heating + 
+    HeatingQC + CentralAir + `1stFlrSF` + `2ndFlrSF` + LowQualFinSF + 
+    BsmtFullBath + FullBath + HalfBath + KitchenAbvGr + KitchenQual + 
+    Functional + Fireplaces + GarageCars + GarageArea + GarageCond + 
+    WoodDeckSF + EnclosedPorch + `3SsnPorch` + ScreenPorch + 
+    PoolArea + PoolQC + SaleType + SaleCondition
+
+## stepwise model ##
+
+# model.formula <- log(SalePrice) ~ OverallQual + Neighborhood + GrLivArea + 
+#     GarageCars + OverallCond + RoofMatl + TotalBsmtSF + YearBuilt + 
+#     Condition2 + MSZoning + BsmtUnfSF + SaleCondition + Functional + 
+#     BldgType + CentralAir + LotArea + KitchenQual + ScreenPorch + 
+#     Condition1 + Fireplaces + Heating + BsmtExposure + Exterior1st + 
+#     YearRemodAdd + LandSlope + GarageArea + WoodDeckSF + LotConfig + 
+#     Foundation + LotFrontage + HeatingQC + PoolQC + BsmtFullBath + 
+#     EnclosedPorch + PoolArea + SaleType + BsmtFinSF1 + GarageCond + 
+#     HalfBath + Street + KitchenAbvGr + FullBath + `3SsnPorch` + 
+#     ExterCond + GarageQual
+
+
+# Remove utilities from dataframe as it doesn't have enough observations in the 2 levels
+dat <- subset(train, select = -c(Utilities, Id) )
+
+# dat <- na.omit(dat)
+
+base.model <- lm(model.formula,
                data = train)
-summary(base.model)
+
+fit1 <- lm(log(SalePrice) ~ ., data=dat)
+
+fit2 <- lm(log(SalePrice) ~ 1, data=dat)
+
+# summary(fit1)
 ```
 
-    ## 
-    ## Call:
-    ## lm(formula = log(SalePrice) ~ OverallQual + GrLivArea + TotalBsmtSF + 
-    ##     `1stFlrSF` + YearBuilt + Neighborhood, data = train)
-    ## 
-    ## Residuals:
-    ##      Min       1Q   Median       3Q      Max 
-    ## -1.92412 -0.07239  0.00827  0.09058  0.51996 
-    ## 
-    ## Coefficients:
-    ##                       Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)          6.546e+00  6.309e-01  10.377  < 2e-16 ***
-    ## OverallQual          9.863e-02  5.443e-03  18.121  < 2e-16 ***
-    ## GrLivArea            2.410e-04  1.245e-05  19.365  < 2e-16 ***
-    ## TotalBsmtSF          8.113e-05  1.851e-05   4.382 1.26e-05 ***
-    ## `1stFlrSF`           3.767e-05  2.225e-05   1.693 0.090697 .  
-    ## YearBuilt            2.199e-03  3.179e-04   6.917 6.93e-12 ***
-    ## NeighborhoodBlueste -7.742e-02  1.229e-01  -0.630 0.528846    
-    ## NeighborhoodBrDale  -2.399e-01  5.878e-02  -4.081 4.73e-05 ***
-    ## NeighborhoodBrkSide  1.058e-03  5.061e-02   0.021 0.983321    
-    ## NeighborhoodClearCr  2.078e-01  5.215e-02   3.985 7.10e-05 ***
-    ## NeighborhoodCollgCr  7.409e-02  4.217e-02   1.757 0.079171 .  
-    ## NeighborhoodCrawfor  2.084e-01  4.985e-02   4.180 3.09e-05 ***
-    ## NeighborhoodEdwards -7.374e-02  4.591e-02  -1.606 0.108452    
-    ## NeighborhoodGilbert  6.665e-02  4.469e-02   1.492 0.136037    
-    ## NeighborhoodIDOTRR  -1.759e-01  5.378e-02  -3.270 0.001101 ** 
-    ## NeighborhoodMeadowV -1.863e-01  5.817e-02  -3.203 0.001390 ** 
-    ## NeighborhoodMitchel  3.241e-02  4.696e-02   0.690 0.490191    
-    ## NeighborhoodNAmes    3.944e-02  4.369e-02   0.903 0.366859    
-    ## NeighborhoodNoRidge  1.762e-01  4.866e-02   3.622 0.000303 ***
-    ## NeighborhoodNPkVill -3.054e-02  6.825e-02  -0.447 0.654630    
-    ## NeighborhoodNridgHt  1.963e-01  4.421e-02   4.440 9.71e-06 ***
-    ## NeighborhoodNWAmes   5.568e-02  4.521e-02   1.232 0.218252    
-    ## NeighborhoodOldTown -6.174e-02  4.955e-02  -1.246 0.212931    
-    ## NeighborhoodSawyer   3.754e-02  4.629e-02   0.811 0.417504    
-    ## NeighborhoodSawyerW  3.476e-02  4.560e-02   0.762 0.446000    
-    ## NeighborhoodSomerst  9.771e-02  4.377e-02   2.232 0.025745 *  
-    ## NeighborhoodStoneBr  2.046e-01  5.173e-02   3.954 8.05e-05 ***
-    ## NeighborhoodSWISU   -2.058e-02  5.731e-02  -0.359 0.719608    
-    ## NeighborhoodTimber   1.419e-01  4.795e-02   2.959 0.003140 ** 
-    ## NeighborhoodVeenker  2.433e-01  6.365e-02   3.823 0.000138 ***
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ## 
-    ## Residual standard error: 0.1634 on 1430 degrees of freedom
-    ## Multiple R-squared:  0.836,  Adjusted R-squared:  0.8327 
-    ## F-statistic: 251.4 on 29 and 1430 DF,  p-value: < 2.2e-16
+    ## Warning in predict.lm(modelFit, newdata): prediction from a rank-deficient
+    ## fit may be misleading
+    
+    ## Warning in predict.lm(modelFit, newdata): prediction from a rank-deficient
+    ## fit may be misleading
+    
+    ## Warning in predict.lm(modelFit, newdata): prediction from a rank-deficient
+    ## fit may be misleading
+    
+    ## Warning in predict.lm(modelFit, newdata): prediction from a rank-deficient
+    ## fit may be misleading
+    
+    ## Warning in predict.lm(modelFit, newdata): prediction from a rank-deficient
+    ## fit may be misleading
+    
+    ## Warning in predict.lm(modelFit, newdata): prediction from a rank-deficient
+    ## fit may be misleading
+    
+    ## Warning in predict.lm(modelFit, newdata): prediction from a rank-deficient
+    ## fit may be misleading
+    
+    ## Warning in predict.lm(modelFit, newdata): prediction from a rank-deficient
+    ## fit may be misleading
+    
+    ## Warning in predict.lm(modelFit, newdata): prediction from a rank-deficient
+    ## fit may be misleading
+    
+    ## Warning in predict.lm(modelFit, newdata): prediction from a rank-deficient
+    ## fit may be misleading
 
-``` r
-test$predicted.log.price <- predict.lm(base.model, test)
-
-test$predicted.log.price[is.na(test$predicted.log.price)] <- mean(test$predicted.log.price, na.rm=TRUE)
-  
-submit <- test %>%
-  mutate(SalePrice = exp(predicted.log.price)) %>%
-  subset(select = c(Id, SalePrice))
-head(submit)
-```
-
-    ## # A tibble: 6 x 2
-    ##      Id SalePrice
-    ##   <dbl>     <dbl>
-    ## 1  1461   122123.
-    ## 2  1462   156646.
-    ## 3  1463   162878.
-    ## 4  1464   179032.
-    ## 5  1465   238292.
-    ## 6  1466   175826.
-
-``` r
-# write.csv(submit, file = "./kaggle_submission.csv", row.names = FALSE)
-```
+    ## Linear Regression 
+    ## 
+    ## 1460 samples
+    ##   46 predictor
+    ## 
+    ## No pre-processing
+    ## Resampling: Cross-Validated (10 fold) 
+    ## Summary of sample sizes: 1315, 1314, 1315, 1314, 1314, 1314, ... 
+    ## Resampling results:
+    ## 
+    ##   RMSE       Rsquared   MAE       
+    ##   0.1783295  0.8177431  0.09065102
+    ## 
+    ## Tuning parameter 'intercept' was held constant at a value of TRUE

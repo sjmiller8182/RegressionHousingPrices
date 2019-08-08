@@ -21,9 +21,9 @@ library(tidyverse)
 library(naniar)
 library(Hmisc)
 library(GGally)
-# Correlations
+# Correlation
 library(corrr)
-# Stepwise Regression
+# Forward, Backward and Stepwise Regression
 library(MASS)
 
 library(caret)
@@ -39,8 +39,6 @@ source('../../helper/data_munging.R')
 ```{r results='hide', message=FALSE}
 train <- read_csv('../../data/train.csv')
 test <- read_csv('../../data/test.csv')
-
-train <- train %>% mutate(logSalePrice = log(SalePrice))
 
 ```
 
@@ -72,6 +70,48 @@ test$MasVnrArea[is.na(test$MasVnrArea)] <- 0
 
 ```
 
+```{r neighborhood}
+# Reduce Neighborhood into 3 categories
+# train %>% 
+#   group_by(Neighborhood) %>%
+#   summarise(mean = mean(log(SalePrice)), n = n()) %>%
+#   arrange(desc(mean))
+# 
+# neighborhood_high <- c('NoRidge', 'NridgHt', 'StoneBr', 'Timber', 'Veenker', 'Somerst', 'ClearCr', 'Crawfor', 'Blmngtn', 'CollgCr')
+# 
+# neighborhood_medium <- c('Gilbert', 'NWAmes', 'SawyerW', 'Mitchel', 'NAmes', 'NPkVill', 'SWISU', 'Blueste', 'Sawyer', 'Edwards')
+# 
+# neighborhood_low <- c('OldTown', 'BrkSide', 'BrDale', 'MeadowV', 'IDOTRR')
+# 
+# train$Neighborhood <- case_when(train$Neighborhood %in% c('NoRidge', 'NridgHt', 'StoneBr', 'Timber', 'Veenker', 'Somerst', 'ClearCr', 'Crawfor', 'Blmngtn', 'CollgCr') ~ 'High',
+#                train$Neighborhood %in% c('Gilbert', 'NWAmes', 'SawyerW', 'Mitchel', 'NAmes', 'NPkVill', 'SWISU', 'Blueste', 'Sawyer', 'Edwards') ~ 'Medium',
+#                train$Neighborhood %in% c('OldTown', 'BrkSide', 'BrDale', 'MeadowV', 'IDOTRR') ~ 'Low')
+# 
+# 
+# test$Neighborhood <- case_when(test$Neighborhood %in% c('NoRidge', 'NridgHt', 'StoneBr', 'Timber', 'Veenker', 'Somerst', 'ClearCr', 'Crawfor', 'Blmngtn', 'CollgCr') ~ 'High',
+#                test$Neighborhood %in% c('Gilbert', 'NWAmes', 'SawyerW', 'Mitchel', 'NAmes', 'NPkVill', 'SWISU', 'Blueste', 'Sawyer', 'Edwards') ~ 'Medium',
+#                test$Neighborhood %in% c('OldTown', 'BrkSide', 'BrDale', 'MeadowV', 'IDOTRR') ~ 'Low')
+
+
+table(train$Neighborhood)
+
+
+```
+
+
+```{r MSSubClass}
+# Reduce Neighborhood into 3 categories
+train %>% 
+  group_by(MSSubClass) %>%
+  summarise(mean = mean(log(SalePrice)), n = n()) %>%
+  arrange(desc(mean))
+
+table(train$mean)
+
+
+```
+
+
 
 ###  Handle null values for categorical variables
 - Alley 
@@ -91,7 +131,8 @@ test$MasVnrArea[is.na(test$MasVnrArea)] <- 0
 - MiscFeature
 - Electrical (SBrkr	Standard Circuit Breakers & Romex)
 
-```{r non_numeric_clean_data}
+```{r non_numeric_clean_data, results='hide', echo=FALSE, message=FALSE}
+
 
 train$Alley[is.na(train$Alley)] <- 'None'
 test$Alley[is.na(test$Alley)] <- 'None'
@@ -141,10 +182,103 @@ test$MiscFeature[is.na(test$MiscFeature)] <- 'None'
 train$Electrical[is.na(train$Electrical)] <- 'SBrkr'
 test$Electrical[is.na(test$Electrical)] <- 'SBrkr'
 
+train$BsmtExposure[is.na(train$BsmtExposure)] <- 'None'
+test$BsmtExposure[is.na(test$BsmtExposure)] <- 'None'
+
+
+train$Utilities <- as.factor(train$Utilities)
+test$Utilities <- as.factor(test$Utilities)
+
+
+
+
+
+train$BldgType <- as.factor(train$BldgType)
+test$BldgType <- as.factor(test$BldgType)
+
+train$HouseStyle <- as.factor(train$HouseStyle)
+test$HouseStyle <- as.factor(test$HouseStyle)
+
+train$RoofStyle <- as.factor(train$RoofStyle)
+test$RoofStyle <- as.factor(test$RoofStyle)
+
+train$RoofMatl <- as.factor(train$RoofMatl)
+test$RoofMatl <- as.factor(test$RoofMatl)
+
+train$Exterior1st <- as.factor(train$Exterior1st)
+test$Exterior1st <- as.factor(test$Exterior1st)
+
+train$Exterior2nd <- as.factor(train$Exterior2nd)
+test$Exterior2nd <- as.factor(test$Exterior2nd)
+
+train$ExterQual <- as.factor(train$ExterQual)
+test$ExterQual <- as.factor(test$ExterQual)
+
+train$ExterCond <- as.factor(train$ExterCond)
+test$ExterCond <- as.factor(test$ExterCond)
+
+train$Foundation <- as.factor(train$Foundation)
+test$Foundation <- as.factor(test$Foundation)
+
+train$Heating <- as.factor(train$Heating)
+test$Heating <- as.factor(test$Heating)
+
+train$HeatingQC <- as.factor(train$HeatingQC)
+test$HeatingQC <- as.factor(test$HeatingQC)
+
+train$CentralAir <- as.factor(train$CentralAir)
+test$CentralAir <- as.factor(test$CentralAir)
+
+train$KitchenQual <- as.factor(train$KitchenQual)
+test$KitchenQual <- as.factor(test$KitchenQual)
+
+train$Functional <- as.factor(train$Functional)
+test$Functional <- as.factor(test$Functional)
+
+train$PavedDrive <- as.factor(train$PavedDrive)
+test$PavedDrive <- as.factor(test$PavedDrive)
+
+train$SaleType <- as.factor(train$SaleType)
+test$SaleType <- as.factor(test$SaleType)
+
+train$BsmtExposure <- as.factor(train$BsmtExposure)
+test$BsmtExposure <- as.factor(test$BsmtExposure)
+
+
 ```
 
 ### Set ordered factor values
 ```{r non_numeric_factors}
+
+
+# train$Neighborhood <- ordered(train$Neighborhood, levels = c("Low", "Medium", "High"))
+# test$Neighborhood <- ordered(test$Neighborhood, levels = c("Low", "Medium", "High"))
+
+train$MSZoning <- ordered(train$MSZoning, levels = c("C (all)", "RM", "RH", "RL", "FV"))
+test$MSZoning <- ordered(test$MSZoning, levels = c("C (all)", "RM", "RH", "RL", "FV"))
+
+train$Street <- ordered(train$Street, levels = c("Grvl", "Pave"))
+test$Street <- ordered(test$Street, levels = c("Grvl", "Pave"))
+
+train$LotShape <- ordered(train$LotShape, levels = c("Reg", "IR1", "IR2", "IR3"))
+test$LotShape <- ordered(test$LotShape, levels = c("Reg", "IR1", "IR2", "IR3"))
+
+
+train$LandContour <- ordered(train$LandContour, levels = c("Bnk", "Lvl", "Low", "HLS"))
+test$LandContour <- ordered(test$LandContour, levels = c("Bnk", "Lvl", "Low", "HLS"))
+
+train$LotConfig <- ordered(train$LotConfig, levels = c("Inside", "Corner", "CulDSac", "FR2", "FR3"))
+test$LotConfig <- ordered(test$LotConfig, levels = c("Inside", "Corner", "CulDSac", "FR2", "FR3"))
+
+train$LandSlope <- ordered(train$LandSlope, levels = c("Gtl", "Mod", "Sev"))
+test$LandSlope <- ordered(test$LandSlope, levels = c("Gtl", "Mod", "Sev"))
+
+
+train$Condition1 <- ordered(train$Condition1, levels = c("Artery", "Feedr", "RRAe", "Norm", "RRAn", "RRNe", "RRNn", "PosA", "PosN"))
+test$Condition1 <- ordered(test$Condition1, levels = c("Artery", "Feedr", "RRAe", "Norm", "RRAn", "RRNe", "RRNn", "PosA", "PosN"))
+
+train$Condition2 <- ordered(train$Condition2, levels = c("Artery", "RRNn","RRAn","Feedr", "Norm", "RRAe", "PosN", "PosA"))
+test$Condition2 <- ordered(test$Condition2, levels = c("Artery", "RRNn","RRAn","Feedr", "Norm", "RRAe", "PosN", "PosA"))
 
 train$Alley <- ordered(train$Alley, levels = c("None", "Grvl", "Pave"))
 test$Alley <- ordered(test$Alley, levels = c("None", "Grvl", "Pave"))
@@ -158,8 +292,8 @@ test$BsmtQual <- ordered(test$BsmtQual, levels = c("None", "Po", "Fa", "TA", "Gd
 train$BsmtCond <- ordered(train$BsmtCond, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
 test$BsmtCond <- ordered(test$BsmtCond, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
 
-train$BsmtExposure <- ordered(train$BsmtExposure, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
-test$BsmtExposure <- ordered(test$BsmtExposure, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
+# train$BsmtExposure <- ordered(train$BsmtExposure, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
+# test$BsmtExposure <- ordered(test$BsmtExposure, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
 
 train$BsmtFinType1 <- ordered(train$BsmtFinType1, levels = c("None", "Unf", "LwQ", "Rec", "BLQ", "ALQ", "GLQ"))
 test$BsmtFinType1 <- ordered(test$BsmtFinType1, levels = c("None", "Unf", "LwQ", "Rec", "BLQ", "ALQ", "GLQ"))
@@ -194,15 +328,57 @@ test$Electrical <- ordered(test$Electrical, levels = c("Mix", "FuseP", "FuseF", 
 train$MiscFeature <- ordered(train$MiscFeature, levels = c("None", "Othr", "Shed", "Gar2", "TenC"))
 test$MiscFeature <- ordered(test$MiscFeature, levels = c("None", "Othr", "Shed", "Gar2", "TenC"))
 
+
+train$SaleCondition <- factor(train$SaleCondition, levels = c("Abnorml", "AdjLand", "Alloca", "Partial", "Family", "Normal"))
+test$SaleCondition <- factor(test$SaleCondition, levels = c("Abnorml", "AdjLand", "Alloca", "Partial", "Family", "Normal"))
+
+train$BldgType[is.na(train$BldgType)] <- '1Fam'
+test$BldgType[is.na(test$BldgType)] <- '1Fam'
+
+
+# str(train)
+
+```
+
+
+```{r}
+
+# describe(train)
+
+
 ```
 
 #### Describe all categorical variables after handling nulls
 ```{r describe_factors}
 
-train.nonnumeric <- train %>% 
-  select_if(is.character)
+# # Scatterplot of Numeric Variable
+# train.numeric %>% filter(WoodDeckSF != 0) %>% ggplot(aes(x = WoodDeckSF, y = log(SalePrice))) +
+#   geom_point() + geom_smooth(method = 'lm')
 
-describe(train.nonnumeric)
+
+# Bar Chart of Categorical Variable
+ggplot(test) + geom_bar(aes(x = Neighborhood))
+
+# Scatterplot of Categroical Variable
+train %>% ggplot(aes(x = Condition2, y = log(SalePrice))) +
+  geom_point() + geom_smooth(method = 'lm')
+
+# Scatterplot of Categroical Variable
+train %>% ggplot(aes(x = Condition2, y = log(SalePrice))) +
+  geom_boxplot()
+# 
+# ggplot(train,aes(y=log(SalePrice),x=GrLivArea,color=factor(Neighborhood)))+geom_point()+stat_smooth(method="lm",se=FALSE)
+
+
+# # Scatterplot of Categroical Variable
+# train %>% ggplot(aes(x = factor(Neighborhood), y = log(SalePrice))) +
+#   geom_boxplot()
+
+
+# head(train$SalePrice)
+# 
+# 
+# describe(test$Condition2)
 
 ```
 
@@ -219,18 +395,133 @@ sales.price.cor %>%
 
 
 #### base model
-```{r}
+```{r model, results='hide', message=FALSE}
 
-model.formula <- log(SalePrice) ~ OverallQual + GrLivArea + GarageArea + TotalBsmtSF + YearBuilt + Neighborhood
+# model.formula <- log(SalePrice) ~ OverallQual + GrLivArea + GarageCars + TotalBsmtSF + YearBuilt +YearRemodAdd + Fireplaces + GrLivArea:Neighborhood + as.factor(BldgType)
+
+# model.formula <- log(SalePrice) ~ MSZoning + LotFrontage + LotArea +
+#     Street + LotConfig + LandSlope + 
+#     Condition2 + BldgType + OverallQual + OverallCond + YearBuilt +
+#     YearRemodAdd + RoofMatl + Foundation +
+#     BsmtFinSF1 + BsmtFinSF2 + BsmtUnfSF +
+#     HeatingQC + CentralAir + `1stFlrSF` + `2ndFlrSF` +
+#     LowQualFinSF + BsmtFullBath + FullBath + HalfBath + KitchenAbvGr +
+#     KitchenQual + TotRmsAbvGrd + Functional + Fireplaces + GarageYrBlt +
+#     GarageCars + GarageArea + WoodDeckSF +
+#     EnclosedPorch + `3SsnPorch` + ScreenPorch + PoolArea + PoolQC +
+#     SaleType + OverallQual:Neighborhood
+
+## forward model ##
+# model.formula <- log(SalePrice) ~ OverallQual + Neighborhood + GrLivArea + 
+#     BsmtFinType1 + GarageCars + OverallCond + RoofMatl + TotalBsmtSF + 
+#     YearBuilt + Condition2 + MSZoning + BsmtUnfSF + SaleCondition + 
+#     Functional + BldgType + CentralAir + LotArea + KitchenQual + 
+#     ScreenPorch + Condition1 + Fireplaces + Heating + BsmtExposure + 
+#     Exterior1st + YearRemodAdd + LandSlope + GarageArea + WoodDeckSF + 
+#     LotConfig + Foundation + LotFrontage + HeatingQC + PoolQC + 
+#     BsmtFullBath + EnclosedPorch + PoolArea + SaleType + HalfBath + 
+#     GarageCond + BsmtQual + FullBath + Street + KitchenAbvGr + 
+#     `3SsnPorch` + GarageQual + ExterCond + GarageYrBlt + TotRmsAbvGrd
+
+## backward model ##
+
+# model.formula <- log(SalePrice) ~ MSZoning + LotFrontage + LotArea +
+#     Street + LotConfig + LandSlope + Neighborhood + Condition1 +
+#     Condition2 + BldgType + OverallQual + OverallCond + YearBuilt +
+#     YearRemodAdd + RoofMatl + Exterior1st + ExterCond + Foundation +
+#     BsmtQual + BsmtExposure + BsmtFinSF1 + BsmtFinSF2 + BsmtUnfSF +
+#     Heating + HeatingQC + CentralAir + `1stFlrSF` + `2ndFlrSF` +
+#     LowQualFinSF + BsmtFullBath + FullBath + HalfBath + KitchenAbvGr +
+#     KitchenQual + TotRmsAbvGrd + Functional + Fireplaces + GarageYrBlt +
+#     GarageCars + GarageArea + GarageQual + GarageCond + WoodDeckSF +
+#     EnclosedPorch + `3SsnPorch` + ScreenPorch + PoolArea + PoolQC +
+#     SaleType + SaleCondition
+
+
+model.formula <- log(SalePrice) ~ MSZoning + LotFrontage + LotArea + 
+    Street + LotConfig + LandSlope + Neighborhood + Condition1 + 
+    Condition2 + BldgType + OverallQual + OverallCond + YearBuilt + 
+    YearRemodAdd + RoofMatl + Exterior1st + Foundation + BsmtQual + 
+    BsmtExposure + BsmtFinSF1 + BsmtFinSF2 + BsmtUnfSF + Heating + 
+    HeatingQC + CentralAir + `1stFlrSF` + `2ndFlrSF` + LowQualFinSF + 
+    BsmtFullBath + FullBath + HalfBath + KitchenAbvGr + KitchenQual + 
+    Functional + Fireplaces + GarageCars + GarageArea + GarageCond + 
+    WoodDeckSF + EnclosedPorch + `3SsnPorch` + ScreenPorch + 
+    PoolArea + PoolQC + SaleType + SaleCondition
+
+## stepwise model ##
+
+# model.formula <- log(SalePrice) ~ OverallQual + Neighborhood + GrLivArea + 
+#     GarageCars + OverallCond + RoofMatl + TotalBsmtSF + YearBuilt + 
+#     Condition2 + MSZoning + BsmtUnfSF + SaleCondition + Functional + 
+#     BldgType + CentralAir + LotArea + KitchenQual + ScreenPorch + 
+#     Condition1 + Fireplaces + Heating + BsmtExposure + Exterior1st + 
+#     YearRemodAdd + LandSlope + GarageArea + WoodDeckSF + LotConfig + 
+#     Foundation + LotFrontage + HeatingQC + PoolQC + BsmtFullBath + 
+#     EnclosedPorch + PoolArea + SaleType + BsmtFinSF1 + GarageCond + 
+#     HalfBath + Street + KitchenAbvGr + FullBath + `3SsnPorch` + 
+#     ExterCond + GarageQual
+
+
+# Remove utilities from dataframe as it doesn't have enough observations in the 2 levels
+dat <- subset(train, select = -c(Utilities, Id) )
+
+# dat <- na.omit(dat)
 
 base.model <- lm(model.formula,
                data = train)
-summary(base.model)
+
+fit1 <- lm(log(SalePrice) ~ ., data=dat)
+
+fit2 <- lm(log(SalePrice) ~ 1, data=dat)
+
+# summary(fit1)
 
 ```
 
 
-```{r cv}
+```{r submit, results='hide', echo=FALSE, message=FALSE}
+
+test$predicted.log.price <- predict.lm(base.model, test)
+test$predicted.log.price[is.na(test$predicted.log.price)] <- mean(test$predicted.log.price, na.rm=TRUE)
+  
+submit <- test %>%
+  mutate(SalePrice = exp(predicted.log.price)) %>%
+  subset(select = c(Id, SalePrice))
+
+# head(submit)
+
+# write.csv(submit, file = "./kaggle_submission.csv", row.names = FALSE)
+
+summary(base.model)
+```
+
+
+
+
+```{r aic, message=FALSE, echo=FALSE, results='hide'}
+# bwd.model <- stepAIC(fit1,direction="backward")
+
+# fwd.model <- stepAIC(fit2,direction="forward",scope=list(upper=fit1,lower=fit2))
+
+# stpwise.model <- stepAIC(fit2,direction="both",scope=list(upper=fit1,lower=fit2))
+
+# 
+# fwd.model$predicted.log.price <- predict.lm(base.model, test)
+# 
+# stpwise.model$predicted.log.price[is.na(test$predicted.log.price)] <- mean(test$predicted.log.price, na.rm=TRUE)
+  
+# submit <- stpwise.model %>%
+#   mutate(SalePrice = exp(predicted.log.price)) %>%
+#   subset(select = c(Id, SalePrice))
+
+# write.csv(submit, file = "./kaggle_submission_forward.csv", row.names = FALSE)
+
+# summary(bwd.model)
+
+```
+
+```{r cv, message=FALSE, echo=FALSE}
 
 
 # Set up repeated k-fold cross-validation
@@ -243,19 +534,4 @@ model.cv <- train(model.formula,
 
 model.cv
 ```
-
-
-```{r submit}
-test$predicted.log.price <- predict.lm(base.model, test)
-
-test$predicted.log.price[is.na(test$predicted.log.price)] <- mean(test$predicted.log.price, na.rm=TRUE)
-  
-submit <- test %>%
-  mutate(SalePrice = exp(predicted.log.price)) %>%
-  subset(select = c(Id, SalePrice))
-head(submit)
-
-# write.csv(submit, file = "./kaggle_submission.csv", row.names = FALSE)
-```
-
 
