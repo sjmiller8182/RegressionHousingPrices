@@ -38,6 +38,7 @@ library(olsrr)
 library(gridExtra)
 library(caret)
 library(multcomp)
+library(Hmisc)
 
 # set a random seed for repodicibility
 set.seed(123)
@@ -262,7 +263,7 @@ Forward selection is a variable selection methodology that begins with a constan
 
 ```{r, echo=F}
 # Count NAs, impute where needed
-na_count <- sapply(dfTrain, function(cnt) sum(length(which(is.na(cnt)))))
+na_count <- sapply(train2, function(cnt) sum(length(which(is.na(cnt)))))
 train2$LotFrontage[is.na(train2$LotFrontage)] <- 0
 train2$Alley[is.na(train2$Alley)] <- "None"
 train2$MasVnrType[is.na(train2$MasVnrType)] <- "None"
