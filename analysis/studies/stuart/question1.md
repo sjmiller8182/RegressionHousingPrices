@@ -372,10 +372,8 @@ ols_plot_resid_lev(model)
 ![](question1_files/figure-gfm/diag-plots-2.png)<!-- -->
 
 ``` r
-ols_plot_cooksd_bar(model)
+#ols_plot_cooksd_bar(model)
 ```
-
-![](question1_files/figure-gfm/diag-plots-3.png)<!-- -->
 
 ## Conclusion
 

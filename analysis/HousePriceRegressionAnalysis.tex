@@ -170,11 +170,11 @@
 
 The Ames, Iowa Data Set describes the sale of individual residential
 properities from 2006-2010 in Ames, Iowa \cite{Cock}. The data was
-retreved from the dataset hosting site Kaggle, where is it listed under
+retreved from the dataset hosting site Kaggle, where it is listed under
 a machine learning competition named
 \href{https://www.kaggle.com/c/house-prices-advanced-regression-techniques/overview}{\textit{House Prices: Advanced Regression Techniques}}
-\cite{Kaggle2016}. The data is comprized of 37 numeric features, 43
-non-numeric features and an obervation index split between a training
+\cite{Kaggle2016}. The data is comprised of 37 numeric features, 43
+non-numeric features and an observation index split between a training
 set and a testing set, which contain 1460 and 1459 observations,
 respectively. The response variable (\texttt{SalePrice}) is only
 provided for the training set. The output of a model on the test set can
@@ -200,13 +200,14 @@ Ames, IA.
 \subsection{Modeling}\label{modeling}}
 
 Linear regression will be used to model sale price as a response of the
-living room area. From the intial exploratory data analysis, it was
-determined that sale prices should be log transformed to meet the model
-assumptions \textbf{Add appendix reference}. Additionally, two
+living room area. From the initial exploratory data analysis, it was
+determined that sale prices should be log-transformed to meet the model
+assumptions for linearity (see section \ref{appendix:linearity}), thus
+improving our models fit and reducing standard error. Additionally, two
 observations were removed as they appeared to be from a different
-population than the other observations in the dataset \textbf{Add
-appendix reference}; therefore, analysis only considers properties with
-living rooms less than 3500 sq. ft. in area.
+population than the other observations in the dataset (see section
+\ref{appendix:infleu-points}); therefore, analysis only considers
+properties with living rooms less than 3500 sq. ft. in area.
 
 We will consider two models: the logarithm of sale price as the response
 of living room area (1), the reduced model, and the logarithm of sale
@@ -269,7 +270,8 @@ The following assessments for model assumptions are made based on Figure
   impact on the result of the model fit.
 \item
   Based on the scatter plot of the log transform of \texttt{SalePrice}
-  vs \texttt{GrLivArea}, it appears that a linear model is reasonable.
+  vs \texttt{GrLivArea}, it appears that a linear model is reasonable
+  (see section \ref{appendix:linearity}).
 \end{itemize}
 
 The sampling procedure is not known. We will assume the independence
@@ -379,6 +381,17 @@ Restatement of the problem
 \hypertarget{modeling-1}{%
 \subsection{Modeling}\label{modeling-1}}
 
+Through analyzing our variable selection and cross-validation processes
+- along wth our nascant domain knowledge of residential real estate - we
+ultimately arrived at a multiple linear regression model featuring
+\textbf{some amount we can determine later} linear predictor variables
+and \textbf{some amount we can determine later} interaction terms. After
+performing visual analysis, we determined 18 of the predictor variables
+would need logarithmic transforming. However, after performing these
+transformations, none were determined necessary for the model
+\textbf{Paul can provide some code for this if you want to include the
+steps taken and visuals}.
+
 Type of selection
 
 \hypertarget{model-assumption-assessment}{%
@@ -409,8 +422,28 @@ A short summary of the analysis
 \hypertarget{appendix}{%
 \section{Appendix}\label{appendix}}
 
-\hypertarget{checking-for-linearity}{%
-\subsection{Checking for Linearity}\label{checking-for-linearity}}
+\hypertarget{checking-for-linearity-in-saleprice-vs-grlivarea}{%
+\subsection{\texorpdfstring{Checking for Linearity in \texttt{SalePrice}
+vs
+\texttt{GrLivArea}}{Checking for Linearity in SalePrice vs GrLivArea}}\label{checking-for-linearity-in-saleprice-vs-grlivarea}}
+
+\label{appendix:linearity}
+
+The scatter plot in Figure \ref{fig:scatter-plot} shows relationship of
+\texttt{SalePrice} vs \texttt{GrLivArea} for all three neighborhoods of
+interest to Century 21. Based on this plot, it does not appear that this
+relationship meets the assumptions of linear regression, specifically
+the constant varaince assumption. The response will be transformed to
+attempt to handle the changing variance.
+
+\begin{figure}[htbp]
+
+{\centering \includegraphics[width=0.45\linewidth]{HousePriceRegressionAnalysis_files/figure-latex/scatter-plot-1} 
+
+}
+
+\caption{Scatter Plot of Sale Price vs Living Room Area}\label{fig:scatter-plot}
+\end{figure}
 
 The images below show the scatter plots of log sale price vs living room
 area (Figure \ref{fig:scatter-plots}). In the image on the right, the
@@ -431,8 +464,14 @@ a linear model appears to be reasonable to model this data.
 \subsection{Analysis of Influential
 points}\label{analysis-of-influential-points}}
 
-Some text Figure \ref{fig:infleu-points} \textbf{Add some disucssion on
-this influential points here}
+\label{appendix:infleu-points}
+
+The two outlying observations with living room areas greater than 4000
+sq. ft. appear to be from a different distribution than the main
+dataset. Since these are partial sales, it is possible that the sale
+prices do not reflect market value. For this reason, we will limit the
+analysis to properities with less than 3500 sq. ft.
+\ref{fig:infleu-points}
 
 \begin{figure}[htbp]
 
@@ -442,6 +481,8 @@ this influential points here}
 
 \caption{Influential Points}\label{fig:infleu-points}
 \end{figure}
+
+\newpage
 
 \hypertarget{r-code-for-analysis-1}{%
 \subsection{R Code For Analysis 1}\label{r-code-for-analysis-1}}
@@ -458,25 +499,285 @@ this influential points here}
 \KeywordTok{library}\NormalTok{(caret)}
 \KeywordTok{library}\NormalTok{(multcomp)}
 
-\CommentTok{# set a random seed for repodicibility}
-\KeywordTok{set.seed}\NormalTok{(}\DecValTok{123}\NormalTok{)}
-\KeywordTok{getwd}\NormalTok{()}
-\CommentTok{# helper code}
-\KeywordTok{source}\NormalTok{(}\StringTok{'./helper/visual.R'}\NormalTok{)}
-\KeywordTok{source}\NormalTok{(}\StringTok{'./helper/data_munging.R'}\NormalTok{)}
-\KeywordTok{source}\NormalTok{(}\StringTok{'./helper/performance.R'}\NormalTok{)}
-
 \CommentTok{# load data}
 \NormalTok{train <-}\StringTok{ }\KeywordTok{read_csv}\NormalTok{(}\StringTok{'./data/train.csv'}\NormalTok{)}
 \NormalTok{test <-}\StringTok{ }\KeywordTok{read_csv}\NormalTok{(}\StringTok{'./data/test.csv'}\NormalTok{)}
 
-\NormalTok{train }\OperatorTok{%>%}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =}\NormalTok{ (GrLivArea), }\DataTypeTok{y =} \KeywordTok{log}\NormalTok{(SalePrice))) }\OperatorTok{+}
+\CommentTok{# set a random seed for repodicibility}
+\KeywordTok{set.seed}\NormalTok{(}\DecValTok{123}\NormalTok{)}
+
+\CommentTok{### Helper Code}
+
+\CommentTok{#' Print Typical Regression Fit Plots}
+\CommentTok{#' }
+\CommentTok{#' @description}
+\CommentTok{#' Plots QQ plot of residuals, histogram of residuals,}
+\CommentTok{#' residuals vs predicted values, and studentized }
+\CommentTok{#' residuals vs predicted values. Depends on tidyverse}
+\CommentTok{#' and gridExtra packages being loaded.}
+\CommentTok{#'}
+\CommentTok{#' @param data The true values corresponding to the input.}
+\CommentTok{#' @param model The predicted/fitted values of the model.}
+\NormalTok{basic.fit.plots <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(data, model) \{}
+    
+    \CommentTok{# depends on}
+    \KeywordTok{require}\NormalTok{(tidyverse)}
+    \KeywordTok{require}\NormalTok{(gridExtra)}
+
+    \CommentTok{# get predicted values}
+\NormalTok{    data}\OperatorTok{$}\NormalTok{Predicted <-}\StringTok{ }\KeywordTok{predict}\NormalTok{(model, data)}
+    \CommentTok{# get residuals}
+\NormalTok{    data}\OperatorTok{$}\NormalTok{Resid <-}\StringTok{ }\NormalTok{model}\OperatorTok{$}\NormalTok{residuals}
+    \CommentTok{# get studentized residuals}
+\NormalTok{    data}\OperatorTok{$}\NormalTok{RStudent <-}\StringTok{ }\KeywordTok{rstudent}\NormalTok{(}\DataTypeTok{model =}\NormalTok{ model)}
+
+    \CommentTok{# create qqplot of residuals with reference line}
+\NormalTok{    qqplot.resid <-}\StringTok{ }\NormalTok{data }\OperatorTok{%>%}\StringTok{ }
+\StringTok{      }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{sample =}\NormalTok{ Resid)) }\OperatorTok{+}
+\StringTok{      }\KeywordTok{geom_qq}\NormalTok{() }\OperatorTok{+}\StringTok{ }\KeywordTok{geom_qq_line}\NormalTok{() }\OperatorTok{+}
+\StringTok{      }\KeywordTok{labs}\NormalTok{(}\DataTypeTok{subtitle =} \StringTok{'QQ Plot of Residuals'}\NormalTok{,}
+           \DataTypeTok{x =} \StringTok{'Theoretical Quantile'}\NormalTok{,}
+           \DataTypeTok{y =} \StringTok{'Acutal Quantile'}\NormalTok{)}
+    
+    \CommentTok{# create histogram of residuals}
+\NormalTok{    hist.resid <-}\StringTok{ }\NormalTok{data }\OperatorTok{%>%}\StringTok{ }
+\StringTok{      }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =}\NormalTok{ Resid)) }\OperatorTok{+}
+\StringTok{      }\KeywordTok{geom_histogram}\NormalTok{(}\DataTypeTok{bins =} \DecValTok{15}\NormalTok{) }\OperatorTok{+}\StringTok{ }
+\StringTok{      }\KeywordTok{labs}\NormalTok{(}\DataTypeTok{subtitle =} \StringTok{'Histogram of Residuals'}\NormalTok{,}
+           \DataTypeTok{x =} \StringTok{'Residuals'}\NormalTok{,}
+           \DataTypeTok{y =} \StringTok{'Count'}\NormalTok{)}
+
+    \CommentTok{# create scatter plot of residuals vs predicted values}
+\NormalTok{    resid.vs.pred <-}\StringTok{ }\NormalTok{data }\OperatorTok{%>%}\StringTok{ }
+\StringTok{      }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =}\NormalTok{ Predicted, }\DataTypeTok{y =}\NormalTok{ Resid)) }\OperatorTok{+}
+\StringTok{      }\KeywordTok{geom_point}\NormalTok{() }\OperatorTok{+}
+\StringTok{      }\KeywordTok{geom_abline}\NormalTok{(}\DataTypeTok{slope =} \DecValTok{0}\NormalTok{) }\OperatorTok{+}\StringTok{ }
+\StringTok{      }\KeywordTok{labs}\NormalTok{(}\DataTypeTok{subtitle =} \StringTok{'Residuals vs Prediction'}\NormalTok{,}
+           \DataTypeTok{x =} \StringTok{'Predicted Value'}\NormalTok{,}
+           \DataTypeTok{y =} \StringTok{'Residual'}\NormalTok{)}
+
+    \CommentTok{# create scatter plot of studentized }
+    \CommentTok{# residuals vs predicted values}
+\NormalTok{    rStud.vs.pred <-}\StringTok{ }\NormalTok{data }\OperatorTok{%>%}\StringTok{ }
+\StringTok{      }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =}\NormalTok{ Predicted, }\DataTypeTok{y =}\NormalTok{ RStudent)) }\OperatorTok{+}
+\StringTok{      }\KeywordTok{geom_point}\NormalTok{() }\OperatorTok{+}
+\StringTok{      }\KeywordTok{geom_abline}\NormalTok{(}\DataTypeTok{slope =} \DecValTok{0}\NormalTok{) }\OperatorTok{+}\StringTok{ }
+\StringTok{      }\KeywordTok{geom_abline}\NormalTok{(}\DataTypeTok{slope =} \DecValTok{0}\NormalTok{, }\DataTypeTok{intercept =} \DecValTok{-2}\NormalTok{) }\OperatorTok{+}\StringTok{ }
+\StringTok{      }\KeywordTok{geom_abline}\NormalTok{(}\DataTypeTok{slope =} \DecValTok{0}\NormalTok{, }\DataTypeTok{intercept =} \DecValTok{2}\NormalTok{) }\OperatorTok{+}\StringTok{ }
+\StringTok{      }\KeywordTok{labs}\NormalTok{(}\DataTypeTok{subtitle =} \StringTok{'RStudent vs Prediction'}\NormalTok{,}
+           \DataTypeTok{x =} \StringTok{'Predicted Value'}\NormalTok{,}
+           \DataTypeTok{y =} \StringTok{'RStudent'}\NormalTok{)}
+    
+    \CommentTok{# add all four plots to grid as}
+    \CommentTok{# qqplot           histogram}
+    \CommentTok{# resid vs pred    RStud vs pred}
+    \KeywordTok{grid.arrange}\NormalTok{(qqplot.resid,}
+\NormalTok{             hist.resid,}
+\NormalTok{             resid.vs.pred,}
+\NormalTok{             rStud.vs.pred, }
+             \DataTypeTok{nrow =} \DecValTok{2}\NormalTok{,}
+             \DataTypeTok{top =} \StringTok{'Fit Assessment Plots'}\NormalTok{)}
+\NormalTok{\}}
+
+\CommentTok{#' Creates dummy variables (columns) for given column}
+\CommentTok{#'}
+\CommentTok{#' @param data A dataframe.}
+\CommentTok{#' @param column A categorical column in data.}
+\CommentTok{#' @param reference A value in the column to use a reference.}
+\CommentTok{#' @param as.onehot Set to TRUE to use onehot encoding.}
+\CommentTok{#'}
+\NormalTok{get.dummies <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(data, column, reference, }\DataTypeTok{as.onehot =} \OtherTok{FALSE}\NormalTok{) \{}
+  \CommentTok{# get the levels of the factor in column}
+\NormalTok{  lev <-}\StringTok{ }\KeywordTok{levels}\NormalTok{(data[[column]])}
+  \CommentTok{# do not remove reference for onehot encoding}
+  \ControlFlowTok{if}\NormalTok{ (}\OperatorTok{!}\NormalTok{as.onehot) \{}
+    \CommentTok{# remove the reference value}
+\NormalTok{    lev <-}\StringTok{ }\NormalTok{lev[lev }\OperatorTok{!=}\StringTok{ }\NormalTok{reference]}
+\NormalTok{  \}}
+  \CommentTok{# add encodings}
+  \ControlFlowTok{for}\NormalTok{ (fct }\ControlFlowTok{in}\NormalTok{ lev)\{}
+\NormalTok{    new_col <-}\StringTok{ }\KeywordTok{paste}\NormalTok{(column, fct, }\DataTypeTok{sep =} \StringTok{'_'}\NormalTok{)}
+\NormalTok{    data[new_col] <-}\StringTok{ }\KeywordTok{as.numeric}\NormalTok{(data[, column] }\OperatorTok{==}\StringTok{ }\NormalTok{fct)}
+    \KeywordTok{print}\NormalTok{(new_col)}
+\NormalTok{  \}}
+\NormalTok{  data}
+\NormalTok{\}}
+
+\CommentTok{#' Calculates PRESS from `caret` CV model}
+\CommentTok{#'}
+\CommentTok{#' @param model.cv Calculates press from a model }
+\CommentTok{#' produced by `caret`}
+\CommentTok{#'}
+\NormalTok{PRESS.cv <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(model.cv) \{}
+\NormalTok{  meanN <-}\StringTok{ }\DecValTok{0}
+\NormalTok{  folds <-}\StringTok{ }\NormalTok{model.cv}\OperatorTok{$}\NormalTok{control}\OperatorTok{$}\NormalTok{index}
+  \ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \KeywordTok{seq}\NormalTok{(}\DecValTok{1}\OperatorTok{:}\KeywordTok{length}\NormalTok{(folds)))\{}
+\NormalTok{    meanN <-}\StringTok{ }\NormalTok{meanN }\OperatorTok{+}\StringTok{ }\KeywordTok{length}\NormalTok{(folds[[i]])}
+\NormalTok{  \}}
+\NormalTok{  meanN <-}\StringTok{ }\NormalTok{meanN }\OperatorTok{/}\StringTok{ }\KeywordTok{length}\NormalTok{(folds)}
+\NormalTok{  meanN }\OperatorTok{*}\StringTok{ }\NormalTok{((model.cv}\OperatorTok{$}\NormalTok{results}\OperatorTok{$}\NormalTok{RMSE)}\OperatorTok{^}\DecValTok{2}\NormalTok{)}
+\NormalTok{\}}
+
+\CommentTok{### plots of log of sale price ~ living room area}
+
+\CommentTok{# create scatter plot for northwest ames}
+\NormalTok{regplot.names <-}\StringTok{ }\NormalTok{train }\OperatorTok{%>%}\StringTok{ }\KeywordTok{filter}\NormalTok{(Neighborhood }\OperatorTok{==}\StringTok{ 'NAmes'}\NormalTok{) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =}\NormalTok{ (GrLivArea), }\DataTypeTok{y =} \KeywordTok{log}\NormalTok{(SalePrice))) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_point}\NormalTok{(}\DataTypeTok{alpha =} \FloatTok{0.3}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{ylim}\NormalTok{(}\DecValTok{10}\NormalTok{, }\DecValTok{13}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{xlim}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{3500}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{labs}\NormalTok{(}\DataTypeTok{subtitle =} \StringTok{'Northwest Ames'}\NormalTok{, }
+       \DataTypeTok{y =} \StringTok{'Log of Sale Price'}\NormalTok{, }\DataTypeTok{x =} \StringTok{'Living Room Area (sq. ft.)'}\NormalTok{)}
+
+\CommentTok{# create scatter plot for edwards}
+\NormalTok{regplot.ed <-}\StringTok{ }\NormalTok{train }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{filter}\NormalTok{(GrLivArea }\OperatorTok{<}\StringTok{ }\DecValTok{4000}\NormalTok{) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{filter}\NormalTok{(Neighborhood }\OperatorTok{==}\StringTok{ 'Edwards'}\NormalTok{) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =}\NormalTok{ (GrLivArea), }\DataTypeTok{y =} \KeywordTok{log}\NormalTok{(SalePrice))) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_point}\NormalTok{(}\DataTypeTok{alpha =} \FloatTok{0.3}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{ylim}\NormalTok{(}\DecValTok{10}\NormalTok{, }\DecValTok{13}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{xlim}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{3500}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{labs}\NormalTok{(}\DataTypeTok{subtitle =} \StringTok{'Edwards'}\NormalTok{, }
+       \DataTypeTok{y =} \StringTok{'Log of Sale Price'}\NormalTok{, }\DataTypeTok{x =} \StringTok{'Living Room Area (sq. ft.)'}\NormalTok{)}
+
+\CommentTok{# create regression plot for brookside}
+\NormalTok{regplot.brk <-}\StringTok{ }\NormalTok{train }\OperatorTok{%>%}\StringTok{ }\KeywordTok{filter}\NormalTok{(Neighborhood }\OperatorTok{==}\StringTok{ 'BrkSide'}\NormalTok{) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =}\NormalTok{ (GrLivArea), }\DataTypeTok{y =} \KeywordTok{log}\NormalTok{(SalePrice))) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_point}\NormalTok{(}\DataTypeTok{alpha =} \FloatTok{0.3}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{ylim}\NormalTok{(}\DecValTok{10}\NormalTok{, }\DecValTok{13}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{xlim}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{3500}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{labs}\NormalTok{(}\DataTypeTok{subtitle =} \StringTok{'Brook Side'}\NormalTok{, }
+       \DataTypeTok{y =} \StringTok{'Log of Sale Price'}\NormalTok{, }\DataTypeTok{x =} \StringTok{'Living Room Area (sq. ft.)'}\NormalTok{)}
+
+\CommentTok{# add the scatter plots for the neighborhood into a single plot}
+\KeywordTok{grid.arrange}\NormalTok{(regplot.names,regplot.ed,regplot.brk, }\DataTypeTok{nrow =} \DecValTok{2}\NormalTok{,}
+             \DataTypeTok{top =} \StringTok{'Regression Plots for Neighborhoods'}\NormalTok{)}
+
+\CommentTok{# scatter plot of observations from all three neighborhoods}
+\NormalTok{train }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{filter}\NormalTok{(GrLivArea }\OperatorTok{<}\StringTok{ }\DecValTok{4000}\NormalTok{) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =}\NormalTok{ (GrLivArea), }\DataTypeTok{y =} \KeywordTok{log}\NormalTok{(SalePrice))) }\OperatorTok{+}
 \StringTok{  }\KeywordTok{geom_point}\NormalTok{(}\DataTypeTok{alpha =} \FloatTok{0.3}\NormalTok{) }\OperatorTok{+}
 \StringTok{  }\KeywordTok{labs}\NormalTok{(}\DataTypeTok{title =} \StringTok{'Log of Sale Price vs Living Room Area'}\NormalTok{, }
-       \DataTypeTok{y =} \StringTok{'Log of Sale Price'}\NormalTok{, }\DataTypeTok{x =} \StringTok{'Living Room Area'}\NormalTok{) }\OperatorTok{+}
-\StringTok{  }\KeywordTok{geom_text}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{label =} \KeywordTok{ifelse}\NormalTok{((}\KeywordTok{log}\NormalTok{(GrLivArea) }\OperatorTok{>}\StringTok{ }\FloatTok{7.75} \OperatorTok{&}\StringTok{ }\KeywordTok{log}\NormalTok{(SalePrice) }\OperatorTok{>}\StringTok{ }\DecValTok{11}\NormalTok{) }\OperatorTok{|}
-\StringTok{                                 }\NormalTok{(}\KeywordTok{log}\NormalTok{(SalePrice) }\OperatorTok{>}\StringTok{ }\FloatTok{12.45}\NormalTok{),}
-\NormalTok{                               SaleCondition, }\StringTok{''}\NormalTok{)), }\DataTypeTok{hjust=}\DecValTok{0}\NormalTok{, }\DataTypeTok{vjust=}\DecValTok{0}\NormalTok{)}
+       \DataTypeTok{y =} \StringTok{'Log of Sale Price'}\NormalTok{, }\DataTypeTok{x =} \StringTok{'Living Room Area (sq. ft.)'}\NormalTok{)}
+
+\CommentTok{### Filter data for analysis 1}
+
+\NormalTok{train <-}\StringTok{ }\NormalTok{train }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{filter}\NormalTok{(Neighborhood }\OperatorTok{%in%}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"Edwards"}\NormalTok{, }\StringTok{"BrkSide"}\NormalTok{, }\StringTok{"NAmes"}\NormalTok{))}
+\NormalTok{train}\OperatorTok{$}\NormalTok{Neighborhood <-}\StringTok{ }\KeywordTok{as.factor}\NormalTok{(train}\OperatorTok{$}\NormalTok{Neighborhood)}
+
+\CommentTok{# create dummy variables with Neighborhood == 'Edwards' as reference}
+\NormalTok{train <-}\StringTok{ }\KeywordTok{get.dummies}\NormalTok{(train, }\StringTok{"Neighborhood"}\NormalTok{, }\DataTypeTok{reference =} \StringTok{'Edwards'}\NormalTok{)}
+
+\CommentTok{# remove suspect points from training data}
+\NormalTok{train.mod <-}\StringTok{ }\NormalTok{train }\OperatorTok{%>%}\StringTok{ }\KeywordTok{filter}\NormalTok{(GrLivArea }\OperatorTok{<}\StringTok{ }\DecValTok{4000}\NormalTok{)}
+
+\CommentTok{#### Extra Sum of Squares}
+
+\CommentTok{# full model formula}
+\NormalTok{model.formula =}\StringTok{ }\KeywordTok{log}\NormalTok{(SalePrice) }\OperatorTok{~}\StringTok{ }\NormalTok{(GrLivArea) }\OperatorTok{+}\StringTok{ }
+\StringTok{     }\NormalTok{Neighborhood_BrkSide }\OperatorTok{+}\StringTok{ }
+\StringTok{     }\NormalTok{Neighborhood_NAmes }\OperatorTok{+}
+\StringTok{     }\NormalTok{(GrLivArea) }\OperatorTok{*}\StringTok{ }\NormalTok{Neighborhood_BrkSide }\OperatorTok{+}\StringTok{ }
+\StringTok{     }\NormalTok{(GrLivArea) }\OperatorTok{*}\StringTok{ }\NormalTok{Neighborhood_NAmes}
+\CommentTok{# reduced model formula}
+\NormalTok{model.reduced.formula =}\StringTok{ }\KeywordTok{log}\NormalTok{(SalePrice) }\OperatorTok{~}\StringTok{ }\NormalTok{(GrLivArea) }\OperatorTok{+}\StringTok{ }
+\StringTok{     }\NormalTok{Neighborhood_BrkSide }\OperatorTok{+}\StringTok{ }
+\StringTok{     }\NormalTok{Neighborhood_NAmes}
+
+\CommentTok{# fit models}
+\NormalTok{model <-}\StringTok{ }\KeywordTok{lm}\NormalTok{(}\DataTypeTok{formula =}\NormalTok{ model.formula, }\DataTypeTok{data =}\NormalTok{ train.mod)}
+\NormalTok{model.reduced <-}\StringTok{ }\KeywordTok{lm}\NormalTok{(}\DataTypeTok{formula =}\NormalTok{ model.reduced.formula, }\DataTypeTok{data =}\NormalTok{ train.mod)}
+\CommentTok{# ESS test on models}
+\KeywordTok{anova}\NormalTok{(model.reduced, model)}
+
+\CommentTok{### Assessment plots}
+
+\CommentTok{# create plots of residuals}
+\KeywordTok{basic.fit.plots}\NormalTok{(train.mod, model)}
+\CommentTok{# create leverage / outlier plot}
+\KeywordTok{ols_plot_resid_lev}\NormalTok{(model)}
+
+\CommentTok{### cross validation}
+
+\CommentTok{## cross validate the full model}
+
+\CommentTok{# Set up repeated k-fold cross-validation}
+\NormalTok{train.control <-}\StringTok{ }\KeywordTok{trainControl}\NormalTok{(}\DataTypeTok{method =} \StringTok{"cv"}\NormalTok{, }\DataTypeTok{number =} \DecValTok{10}\NormalTok{)}
+\CommentTok{# Train the model}
+\NormalTok{model.cv <-}\StringTok{ }\KeywordTok{train}\NormalTok{(model.formula, }
+                    \DataTypeTok{data =}\NormalTok{ train.mod,}
+                    \DataTypeTok{method =} \StringTok{'lm'}\NormalTok{,}
+                    \DataTypeTok{trControl =}\NormalTok{ train.control)}
+\CommentTok{# print model summary}
+\NormalTok{model.cv}
+
+\CommentTok{# get the CV results}
+\NormalTok{res <-}\StringTok{ }\NormalTok{model.cv}\OperatorTok{$}\NormalTok{results}
+
+\CommentTok{# get cross-validated PRESS statistic}
+\NormalTok{PCV <-}\StringTok{ }\KeywordTok{PRESS.cv}\NormalTok{(model.cv)}
+
+\CommentTok{## cross validate the reduced model}
+
+\CommentTok{# Set up repeated k-fold cross-validation}
+\NormalTok{train.control <-}\StringTok{ }\KeywordTok{trainControl}\NormalTok{(}\DataTypeTok{method =} \StringTok{"cv"}\NormalTok{, }\DataTypeTok{number =} \DecValTok{10}\NormalTok{)}
+\CommentTok{# Train the model}
+\NormalTok{model.reduced.cv <-}\StringTok{ }\KeywordTok{train}\NormalTok{(model.reduced.formula, }
+                    \DataTypeTok{data =}\NormalTok{ train.mod,}
+                    \DataTypeTok{method =} \StringTok{'lm'}\NormalTok{,}
+                    \DataTypeTok{trControl =}\NormalTok{ train.control)}
+\CommentTok{# print model summary}
+\NormalTok{model.reduced.cv}
+
+\CommentTok{# get the CV results}
+\NormalTok{res.red <-}\StringTok{ }\NormalTok{model.reduced.cv}\OperatorTok{$}\NormalTok{results}
+
+\CommentTok{# get cross-validated PRESS statistic}
+\NormalTok{PCV.red <-}\StringTok{ }\KeywordTok{PRESS.cv}\NormalTok{(model.reduced.cv)}
+
+\CommentTok{# print accuracy metrics to md table}
+\KeywordTok{kable}\NormalTok{(}\KeywordTok{data.frame}\NormalTok{(}\StringTok{'Model'}\NormalTok{ =}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{'Full Model'}\NormalTok{, }\StringTok{'Reduced Model'}\NormalTok{), }
+                 \StringTok{'RMSE'}\NormalTok{=}\KeywordTok{c}\NormalTok{(res}\OperatorTok{$}\NormalTok{RMSE, res.red}\OperatorTok{$}\NormalTok{RMSE),}
+                 \StringTok{'CV Press'}\NormalTok{=}\KeywordTok{c}\NormalTok{(PCV, PCV.red),}
+                 \StringTok{'Adjused R Squared'}\NormalTok{=}\KeywordTok{c}\NormalTok{(res}\OperatorTok{$}\NormalTok{Rsquared, res.red}\OperatorTok{$}\NormalTok{Rsquared)),}
+      \StringTok{"latex"}\NormalTok{, }\DataTypeTok{booktabs =}\NormalTok{ T)  }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{kable_styling}\NormalTok{(}\DataTypeTok{position =} \StringTok{"center"}\NormalTok{)}
+
+\CommentTok{### get the parameters from the CV'ed model}
+
+\CommentTok{# extract the model estimates from the model summary}
+\NormalTok{sm <-}\StringTok{ }\KeywordTok{summary}\NormalTok{(model)}
+\NormalTok{sm.coe <-}\StringTok{ }\NormalTok{sm}\OperatorTok{$}\NormalTok{coefficients}
+\CommentTok{# get the CIs for the coefficients}
+\NormalTok{model.conf <-}\StringTok{ }\KeywordTok{confint}\NormalTok{(model)}
+
+\CommentTok{# print model estimates to md / latex table}
+\CommentTok{# extract the params and put into a dataframe}
+\KeywordTok{kable}\NormalTok{(}\KeywordTok{data.frame}\NormalTok{(}\StringTok{'Parameter'}\NormalTok{ =}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{'Intercept'}\NormalTok{, }\StringTok{'GrLivArea'}\NormalTok{, }
+                                 \StringTok{'Neighborhood_BrkSide'}\NormalTok{, }\StringTok{'Neighborhood_NAmes'}\NormalTok{, }
+                                 \StringTok{'GrLivArea:Neighborhood_BrkSide'}\NormalTok{, }
+                                 \StringTok{'GrLivArea:Neighborhood_NAmes '}\NormalTok{), }
+                 \StringTok{'Estimate'}\NormalTok{=}\KeywordTok{c}\NormalTok{(sm.coe[[}\DecValTok{1}\NormalTok{]],sm.coe[[}\DecValTok{2}\NormalTok{]],sm.coe[[}\DecValTok{3}\NormalTok{]],}
+\NormalTok{                              sm.coe[[}\DecValTok{4}\NormalTok{]],sm.coe[[}\DecValTok{5}\NormalTok{]],sm.coe[[}\DecValTok{6}\NormalTok{]]),}
+                 \StringTok{'CI Lower'}\NormalTok{ =}\StringTok{ }\KeywordTok{c}\NormalTok{(model.conf[[}\DecValTok{1}\NormalTok{]],model.conf[[}\DecValTok{2}\NormalTok{]],model.conf[[}\DecValTok{3}\NormalTok{]],}
+\NormalTok{                                model.conf[[}\DecValTok{4}\NormalTok{]],model.conf[[}\DecValTok{5}\NormalTok{]],model.conf[[}\DecValTok{6}\NormalTok{]]),}
+                 \StringTok{'CI Upper'}\NormalTok{ =}\StringTok{ }\KeywordTok{c}\NormalTok{(model.conf[[}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{]],model.conf[[}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{]],model.conf[[}\DecValTok{3}\NormalTok{,}\DecValTok{2}\NormalTok{]],}
+\NormalTok{                                model.conf[[}\DecValTok{4}\NormalTok{,}\DecValTok{2}\NormalTok{]],model.conf[[}\DecValTok{5}\NormalTok{,}\DecValTok{2}\NormalTok{]],model.conf[[}\DecValTok{6}\NormalTok{,}\DecValTok{2}\NormalTok{]])),}
+      \StringTok{"latex"}\NormalTok{, }\DataTypeTok{booktabs =}\NormalTok{ T)  }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{kable_styling}\NormalTok{(}\DataTypeTok{position =} \StringTok{"center"}\NormalTok{)}
+
+\CommentTok{# summary of model to get overall test}
+\KeywordTok{summary}\NormalTok{(}\KeywordTok{lm}\NormalTok{(model.formula, }\DataTypeTok{data =}\NormalTok{ train.mod))}
+
+\CommentTok{## Calculate CIs of slopes not in standard table}
+
+\CommentTok{# get CI for Northwest Ames}
+\KeywordTok{confint}\NormalTok{(}\KeywordTok{glht}\NormalTok{(model, }\DataTypeTok{linfct =} \StringTok{"GrLivArea + GrLivArea:Neighborhood_NAmes = 1"}\NormalTok{))}
+
+\CommentTok{# get CI for Brookside}
+\KeywordTok{confint}\NormalTok{(}\KeywordTok{glht}\NormalTok{(model, }\DataTypeTok{linfct =} \StringTok{"GrLivArea + GrLivArea:Neighborhood_BrkSide = 1"}\NormalTok{))}
 \end{Highlighting}
 \end{Shaded}
 

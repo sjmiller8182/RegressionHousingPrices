@@ -11,6 +11,11 @@ PRESS <- function(y_true, y_hat) {
   sum((y_true - y_hat)^2)
 }
 
+#' Calculates PRESS from `caret` CV model
+#'
+#' @param model.cv Calculates press from a model 
+#' produced by `caret`
+#'
 PRESS.cv <- function(model.cv) {
   meanN <- 0
   folds <- model.cv$control$index

@@ -251,7 +251,7 @@ kable(data.frame('RMSE'=res$RMSE,
 ```{r, diag-plots}
 basic.fit.plots(train.mod, model)
 ols_plot_resid_lev(model)
-ols_plot_cooksd_bar(model)
+#ols_plot_cooksd_bar(model)
 ```
 
 
