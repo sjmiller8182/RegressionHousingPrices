@@ -22,7 +22,7 @@ header-includes:
    - \usepackage{setspace}
    - \usepackage{hyperref}
    - \onehalfspacing
-   - \setcitestyle{numbers}
+   - \setcitestyle{numbers,square,super}
    - \newcommand\numberthis{\addtocounter{equation}{1}\tag{\theequation}}
 editor_options: 
   chunk_output_type: console
@@ -48,7 +48,6 @@ source('./helper/data_munging.R')
 source('./helper/performance.R')
 
 # load data
-read.csv('./data/test.csv')
 train <- read_csv('./data/train.csv')
 test <- read_csv('./data/test.csv')
 
@@ -80,7 +79,7 @@ Century 21 has commissioned an analysis of this data to determine how the sale p
 
 ## Modeling
 
-Linear regression will be used to model sale price as a response of the living room area. From the initial exploratory data analysis, it was determined that sale prices should be log-transformed to meet the model assumptions **Add appendix reference** for normality, thus improving our models fit and reducing standard error. Additionally, two observations were removed as they appeared to be from a different population than the other observations in the dataset **Add appendix reference**.
+Linear regression will be used to model sale price as a response of the living room area. From the initial exploratory data analysis, it was determined that sale prices should be log-transformed to meet the model assumptions **Add appendix reference** for normality, thus improving our models fit and reducing standard error. Additionally, two observations were removed as they appeared to be from a different population than the other observations in the dataset **Add appendix reference**; therefore, analysis only considers properties with living rooms less than 3500 sq. ft. in area.
 
 We will consider two models: the logarithm of sale price as the response of living room area (1), the reduced model, and the logarithm of sale price as the response of living room area accounting for differences in the three neighborhood of interest (Brookside, Northwest Ames, and Edwards) where Edwards will be used as the reference (2), the full model. An extra sums of square (ESS) test will be used to verify that the addition of `Neighborhood` improves the model.
 
@@ -121,7 +120,7 @@ anova(model.reduced, model)
 
 ## Model Assumptions Assessment
 
-The following assessments for model assumptions are made based on Figure \@ref(fig:diag-plots) and Figure 2 (**TODO**):
+The following assessments for model assumptions are made based on Figure \@ref(fig:diag-plots) and Figure \@ref(fig:scatter-plots):
 
 * The residuals of the model appear to be approximately normally distrubited based on the QQ plot of the residuals and histogram of the residuals, suggesting the assumption of normality is met.
 * No patterns are evident in the scatter plots of residuals and studentized residuals vs predicted value, suggesting the assumption of constant variance is met.
@@ -181,7 +180,7 @@ res.red <- model.reduced.cv$results
 PCV.red <- PRESS.cv(model.reduced.cv)
 ```
 
-```{r, echo=FALSE, fig.align='center'}
+```{r, echo=FALSE}
 # print accuracy metrics to md table
 kable(data.frame('Model' = c('Full Model', 'Reduced Model'), 
                  'RMSE'=c(res$RMSE, res.red$RMSE),
@@ -193,8 +192,28 @@ kable(data.frame('Model' = c('Full Model', 'Reduced Model'),
 
 ## Parameters
 
-* Estimates **TODO**
-* CI
+The following table summerizes the parameter estimates for the full model.
+
+```{r, echo=FALSE}
+#extract the model estimates from the model summary
+sm <- summary(model)
+sm.coe <- sm$coefficients
+model.conf <- confint(model)
+
+# print model estimates to md table
+kable(data.frame('Parameter' = c('Intercept', 'GrLivArea', 
+                                 'Neighborhood_BrkSide', 'Neighborhood_NAmes', 
+                                 'GrLivArea:Neighborhood_BrkSide', 'GrLivArea:Neighborhood_NAmes '), 
+                 'Estimate'=c(sm.coe[[1]],sm.coe[[2]],sm.coe[[3]],sm.coe[[4]],sm.coe[[5]],sm.coe[[6]]),
+                 'CI Lower' = c(model.conf[[1]],model.conf[[2]],model.conf[[3]],
+                                model.conf[[4]],model.conf[[5]],model.conf[[6]]),
+                 'CI Upper' = c(model.conf[[1,2]],model.conf[[1,2]],model.conf[[3,2]],
+                                model.conf[[4,2]],model.conf[[5,2]],model.conf[[6,2]])),
+      "latex", booktabs = T)  %>%
+  kable_styling(position = "center")
+```
+
+Where `Intercept` is $\beta_0$, `GrLivArea` is $\beta_1$, `Neighborhood_BrkSide` is $\beta_2$, `Neighborhood_NAmes` is $\beta_3$, `GrLivArea:Neighborhood_BrkSide` is $\beta_4$, and `GrLivArea:Neighborhood_NAmes` is $\beta_5$
 
 ## Model Interpretation
 
@@ -208,7 +227,12 @@ Since the sampling procedure is not known and this is an observational study, th
 
 ## Conclusion
 
-A short summary of the analysis
+```{r, echo=FALSE, results='hide'}
+summary(lm(model.formula, data = train.mod))
+```
+
+
+In response to the analysis commissioned by Century 21, the log transform of property sale price was modeled as a linear response to the property living room area for residential properties in Ames, IA. It was determined that it was necessary to include interaction terms to allow for the influence of neighborhood on sale price. Based on the model, there is strong evidence of an associated multiplicative increase in median sale price for an increase in living room area (p-vlue < 0.0001, overall F-test).
 
 # Analysis Question II
 
@@ -238,6 +262,109 @@ A short summary of the analysis
 
 # Appendix
 
+## Checking for Linearity
+
+The images below show the scatter plots of log sale price vs living room area (Figure \@ref(fig:scatter-plots)). In the image on the right, the scatter plot is shown for each neighborhood. In the image on the left the observations for all three neighborhoods are included. In all cases, a linear model appears to be reasonable to model this data.
+
+```{r, scatter-plots, echo=FALSE, fig.width=5, fig.height=5, fig.align='center', fig.cap='Scatter Plots of Log of Sale Price vs Living Room Area', out.width = '45%', fig.pos="htbp", fig.show='hold'}
+regplot.names <- train %>% filter(Neighborhood == 'NAmes') %>%
+  ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
+  geom_point(alpha = 0.3) +
+  ylim(10, 13) +
+  xlim(0, 3500) +
+  labs(subtitle = 'Northwest Ames', 
+       y = 'Log of Sale Price', x = 'Living Room Area (sq. ft.)')
+
+regplot.ed <- train %>%
+  filter(GrLivArea < 4000) %>%
+  filter(Neighborhood == 'Edwards') %>%
+  ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
+  geom_point(alpha = 0.3) +
+  ylim(10, 13) +
+  xlim(0, 3500) +
+  labs(subtitle = 'Edwards', 
+       y = 'Log of Sale Price', x = 'Living Room Area (sq. ft.)')
+
+regplot.brk <- train %>% filter(Neighborhood == 'BrkSide') %>%
+  ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
+  geom_point(alpha = 0.3) +
+  ylim(10, 13) +
+  xlim(0, 3500) +
+  labs(subtitle = 'Brook Side', 
+       y = 'Log of Sale Price', x = 'Living Room Area (sq. ft.)')
+grid.arrange(regplot.names,regplot.ed,regplot.brk, nrow = 2,
+             top = 'Regression Plots for Neighborhoods')
+
+train %>% 
+  filter(GrLivArea < 4000) %>%
+  ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
+  geom_point(alpha = 0.3) +
+  labs(title = 'Log of Sale Price vs Living Room Area', 
+       y = 'Log of Sale Price', x = 'Living Room Area (sq. ft.)')
+```
+
+
+## Analysis of Influential points
+
+Some text Figure \@ref(fig:infleu-points) **Add some disucssion on this influential points here** 
+
+```{r, infleu-points, echo=FALSE, fig.width=5, fig.height=5, fig.align='center', fig.cap='Influential Points', out.width = '50%', fig.pos="htbp"}
+train %>% ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
+  geom_point(alpha = 0.3) +
+  labs(title = 'Log of Sale Price vs Living Room Area', 
+       y = 'Log of Sale Price', x = 'Living Room Area (sq. ft.)') +
+  geom_text(aes(label = ifelse((log(GrLivArea) > 7.75 & log(SalePrice) > 11) |
+                                 (log(SalePrice) > 12.45),
+                               SaleCondition, '')), hjust=0, vjust=0)
+```
+
+
+## R Code For Analysis 1
+
+```r
+### Compuational Setup
+# libraries
+library(knitr)
+library(kableExtra)
+library(tidyverse)
+library(olsrr)
+library(gridExtra)
+library(caret)
+library(multcomp)
+
+# set a random seed for repodicibility
+set.seed(123)
+getwd()
+# helper code
+source('./helper/visual.R')
+source('./helper/data_munging.R')
+source('./helper/performance.R')
+
+# load data
+train <- read_csv('./data/train.csv')
+test <- read_csv('./data/test.csv')
+
+train %>% ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
+  geom_point(alpha = 0.3) +
+  labs(title = 'Log of Sale Price vs Living Room Area', 
+       y = 'Log of Sale Price', x = 'Living Room Area') +
+  geom_text(aes(label = ifelse((log(GrLivArea) > 7.75 & log(SalePrice) > 11) |
+                                 (log(SalePrice) > 12.45),
+                               SaleCondition, '')), hjust=0, vjust=0)
+```
+
+## R Code For Analysis 2
+
 Include "well commented" `code` in the appendex!
+
+```r
+train %>% ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
+  geom_point(alpha = 0.3) +
+  labs(title = 'Log of Sale Price vs Living Room Area', 
+       y = 'Log of Sale Price', x = 'Living Room Area') +
+  geom_text(aes(label = ifelse((log(GrLivArea) > 7.75 & log(SalePrice) > 11) |
+                                 (log(SalePrice) > 12.45),
+                               SaleCondition, '')), hjust=0, vjust=0)
+```
 
 # References
