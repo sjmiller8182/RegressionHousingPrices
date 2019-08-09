@@ -93,8 +93,7 @@ dfTrain$BsmtFinType2[is.na(dfTrain$BsmtFinType2)] <- 0
 dfTrain$Electrical[is.na(dfTrain$Electrical)] <- "SBrkr"
 dfTrain$FireplaceQu[is.na(dfTrain$FireplaceQu)] <- "None"
 dfTrain$GarageType[is.na(dfTrain$GarageType)] <- "None"
-dfTrain$GarageYrBlt[is.na(dfTrain$GarageYrBlt)] <- mean(dfTrain$YearBuilt)
-#dfTrain$GarageYrBlt[is.na(dfTrain$GarageYrBlt)] <- mean(dfTrain$GarageYrBlt)
+dfTrain$GarageYrBlt[is.na(dfTrain$GarageYrBlt)] <- mean(dfTrain$YearBuilt) #mean taken instead of 0 so variable does not skew exponentially as a result
 dfTrain$GarageFinish[is.na(dfTrain$GarageFinish)] <- "None"
 dfTrain$GarageQual[is.na(dfTrain$GarageQual)] <- "None"
 dfTrain$GarageCond[is.na(dfTrain$GarageCond)] <- "None"
@@ -127,13 +126,13 @@ hist(log(dfTrain$LotArea))
 dfTrain$LotArea <- log(dfTrain$LotArea)
 summary(lm(log(SalePrice) ~ log(LotArea), data = dfTrain))
 
- ggplot(data = dfTrain, aes(x = log(dfTrain$LotArea), y = log(SalePrice))) +
-  geom_point() +
-  geom_smooth(method=lm, se=FALSE) +
-  theme(
-        panel.background = element_rect(fill = 'ivory1')) +
-  ggtitle("Log-Linear Data") +
-  facet_grid(~Neighborhood)
+ # ggplot(data = dfTrain, aes(x = log(dfTrain$LotArea), y = log(SalePrice))) +
+ #  geom_point() +
+ #  geom_smooth(method=lm, se=FALSE) +
+ #  theme(
+ #        panel.background = element_rect(fill = 'ivory1')) +
+ #  ggtitle("Log-Linear Data") +
+ #  facet_grid(~Neighborhood)
  
 # 
 # hist(dfTrain$OverallQual)
@@ -158,8 +157,8 @@ summary(lm(log(SalePrice) ~ log(LotArea), data = dfTrain))
 # hist(log(dfTrain$BsmtUnfSF))
 
 
-dfTrain$BsmtUnfSF[dfTrain$BsmtUnfSF == 0] <- 1.5
-dfTrain$BsmtUnfSF <- log(dfTrain$BsmtUnfSF)
+# dfTrain$BsmtUnfSF[dfTrain$BsmtUnfSF == 0] <- 1.5
+# dfTrain$BsmtUnfSF <- log(dfTrain$BsmtUnfSF)
 # 
 # hist(dfTrain$TotalBsmtSF)
 # 
@@ -232,19 +231,15 @@ quantDataModel <- corDF[which(corDF$cor >= 0.5),]
 ### Testing Quantitative Data Model
 ```{r, echo=T,warning=F, message=F}
 #################################################################################
-###########Start testing quantitative data model variable selection##############
+###########Start testing data model variable selection###########################
 #################################################################################
-
-#fitQuant <- lm(log(SalePrice) ~ OverallQual + YearBuilt + YearRemodAdd + TotalBsmtSF + GrLivArea + X1stFlrSF + FullBath + TotRmsAbvGrd + GarageCars + GarageArea + Neighborhood, data = dfTrain)
-
-fitQuant <- lm(log(SalePrice) ~ YearBuilt + YearRemodAdd + GrLivArea + X1stFlrSF + FullBath + TotRmsAbvGrd + GarageArea + Neighborhood, data = dfTrain)
-summary(fitQuant)
 
 #################### The model below is for starting the variable selection test and contains all 81 variables (including ID)
 
 # Model using all variables
 fitFull.all1 <- lm(log(SalePrice) ~ Id + MSSubClass + MSZoning + LotFrontage + LotArea + Street + Alley + LotShape + LandContour + Utilities + LotConfig + LandSlope + Neighborhood + Condition1 + Condition2 + BldgType + HouseStyle + OverallQual + OverallCond + YearBuilt + YearRemodAdd + RoofStyle + RoofMatl + Exterior1st + Exterior2nd + MasVnrType + MasVnrArea + ExterQual + ExterCond + Foundation + BsmtQual + BsmtCond + BsmtExposure + BsmtFinType1 + BsmtFinSF1 + BsmtFinType2 + BsmtFinSF2 + BsmtUnfSF + TotalBsmtSF + Heating + HeatingQC + CentralAir + Electrical + X1stFlrSF + X2ndFlrSF + LowQualFinSF + GrLivArea + BsmtFullBath + BsmtHalfBath + FullBath + HalfBath + BedroomAbvGr + KitchenAbvGr + KitchenQual + TotRmsAbvGrd + Functional + Fireplaces + FireplaceQu + GarageType + GarageYrBlt + GarageFinish + GarageCars + GarageArea + GarageQual + GarageCond + PavedDrive + WoodDeckSF + OpenPorchSF + EnclosedPorch + X3SsnPorch + ScreenPorch + PoolArea + PoolQC + Fence + MiscFeature + MiscVal + MoSold + YrSold + SaleType + SaleCondition, data = dfTrain)
 
+# Model provided by backward selection
 fitFull.all.backward <- lm(log(SalePrice) ~ MSZoning + LotArea + Street + LotConfig + LandSlope + 
     Neighborhood + Condition1 + OverallQual + OverallCond + YearBuilt + 
     YearRemodAdd + Exterior1st + MasVnrType + ExterCond + Foundation + 
@@ -260,13 +255,31 @@ fitFull.all2 <- lm(log(SalePrice) ~ + BsmtFinSF2 + BsmtUnfSF + CentralAir + Cond
           
 fitFull.all3 <- lm(log(SalePrice) ~ + BsmtFinSF2 + BsmtUnfSF + CentralAir + HalfBath + KitchenQual + MSZoning +Neighborhood + OverallCond + OverallQual + RoofMatl + X1stFlrSF + X2ndFlrSF +YearBuilt + YearRemodAdd, data = dfTrain)
 
-# Final removal: BsmtFinSF2 - this is possibly because basements don't contribute to the square footage of a house, but are useful; nobody wants to pay significantly more for one, but would like one. An unfinished one is possibly good enough. This change reflected in .all4
-fitFull.all3 <- lm(log(SalePrice) ~ + BsmtFinSF2 + BsmtUnfSF + CentralAir + HalfBath + KitchenQual + MSZoning +Neighborhood + OverallCond + OverallQual + RoofMatl + X1stFlrSF + X2ndFlrSF +YearBuilt + YearRemodAdd, data = dfTrain)
-
-# Again, people want basements, but since they don't contribute much to SalePrice (and thus re-sale price), they're willing to pay extra to have a basement, but not willing to pay much extra to have a particularly nice basement. 
 fitFull.all4.old <- lm(log(SalePrice) ~ BsmtUnfSF + CentralAir + HalfBath + KitchenQual + Neighborhood + OverallCond + OverallQual + RoofMatl + X1stFlrSF + X2ndFlrSF + YearBuilt + MSZoning:Neighborhood + OverallQual:Neighborhood + YearBuilt:Neighborhood, data = dfTrain)
 summary(fitFull.all4.old)
 
+
+#Sum of Squares Regression
+a<-anova(fitFull.all1)
+a <- data.frame(a)
+#Residual Sum of Squares for model A = 1.173372e+01
+
+b <- anova(fitFull.all4.old)
+b <- data.frame(b)
+nrow(b)
+b[77,2]
+
+#Residual Sum of Squares for model B = 21.7905396
+#Extra Sum of Squares (Model):
+21.7905396 - 1.173372e+01
+
+
+
+fitFull.all5.old <- lm(log(SalePrice) ~ BsmtUnfSF + CentralAir + HalfBath + KitchenQual + Neighborhood + OverallCond + OverallQual + RoofMatl + X1stFlrSF + X2ndFlrSF + YearBuilt, data = dfTrain)
+summary(fitFull.all5.old)
+
+fitFull.all4 <- lm(log(SalePrice) ~ BsmtUnfSF + CentralAir + HalfBath + KitchenQual + Neighborhood + OverallCond + LotArea + OverallQual + RoofMatl + X1stFlrSF + X2ndFlrSF + YearBuilt + OverallQual:Neighborhood + YearBuilt:Neighborhood + LotArea:Neighborhood, data = dfTrain)
+summary(fitFull.all4)
 
 PRESS <- function(linear.model){
   pr <- residuals(linear.model)/(1-lm.influence(linear.model)$hat)
@@ -276,8 +289,7 @@ PRESS <- function(linear.model){
 PRESS(fitFull.all4.old)
 
 
-fitFull.all4 <- lm(log(SalePrice) ~ BsmtUnfSF + CentralAir + HalfBath + KitchenQual + Neighborhood + OverallCond + LotArea + OverallQual + RoofMatl + X1stFlrSF + X2ndFlrSF + YearBuilt + OverallQual:Neighborhood + YearBuilt:Neighborhood + LotArea:Neighborhood, data = dfTrain)
-summary(fitFull.all4)
+
 
 # dfTested.pred <- predict(fitFull.all4, dfTest)
 # dfTested <- data.frame(dfTested.pred)
@@ -286,8 +298,6 @@ summary(fitFull.all4)
 # #colnames(dfTested) <- c("Id", "SalePrice")
 # dim(dfTested.pred)
 
-############################################### Model with both Quant and Qual Data############
-# The model used here's variables went through process of selection/elimination#
 
 # Forward Selection
 stepForward.full.model4 <- stepAIC(fitFull.all1, direction = "forward", trace = F)
@@ -310,17 +320,20 @@ stepwise.full.model4$anova
 ```
 
 
-###Cross-validation and testing
+### Cross-validation and testing for Kaggle
 ```{r,echo=T}
 #Set up repeated k-fold cross-validation
 train.control <- trainControl(method="cv", number = 10)
+
 #Train the model
-model.cv <- train(fitFull.all4,
+model.cv <- train(log(SalePrice) ~ BsmtUnfSF + CentralAir + HalfBath + KitchenQual + Neighborhood + OverallCond + OverallQual + X1stFlrSF + X2ndFlrSF + RoofMatl + YearBuilt + MSZoning:Neighborhood + OverallQual:Neighborhood + YearBuilt:Neighborhood,
                   data = dfTrain,
                   method = 'lm',
                   trControl = train.control)
 
+model.cv
 
+## To test in Kaggle, submit the produced "submit" file
 dfTest$predicted.log.price <- predict.lm(fitFull.all4.old, dfTest)
 dfTest$predicted.log.price[is.na(dfTest$predicted.log.price)] <- mean(dfTest$predicted.log.price, na.rm = T)
 

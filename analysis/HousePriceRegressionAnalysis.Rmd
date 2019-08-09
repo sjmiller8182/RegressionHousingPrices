@@ -49,6 +49,7 @@ source('./helper/performance.R')
 
 # load data
 train <- read_csv('./data/train.csv')
+train2 <- read_csv('./data/train.csv')
 test <- read_csv('./data/test.csv')
 
 train <- train %>% 
@@ -60,7 +61,7 @@ train <- get.dummies(train, "Neighborhood", reference = 'Edwards')
 
 # remove suspect points from training data
 train.mod <- train %>% filter(GrLivArea < 4000)
-
+train2.mod <- train2 %>% filter(GrLivArea < 4000)
 ```
 
 
@@ -244,13 +245,142 @@ In response to the analysis commissioned by Century 21, the log transform of pro
 
 ## Question of Interest
 
-Restatement of the problem
+Century 21 has commissioned a second analysis using the same data set, expanded to include as many of the 80 total features, plus the index split, as required to determine the sale price of residential properties across all neighborhoods of Ames, Iowa, beyond only the three - Edwards, Northwest Ames, and Brookside - previously commissioned for analysis.
 
 ## Modeling
+Restatement of Problem
 
-Through analyzing our variable selection and cross-validation processes - along wth our nascant domain knowledge of residential real estate - we ultimately arrived at a multiple linear regression model featuring **some amount we can determine later** linear predictor variables and **some amount we can determine later** interaction terms. After performing visual analysis, we determined 18 of the predictor variables would need logarithmic transforming. However, after performing these transformations, none were determined necessary for the model **Paul can provide some code for this if you want to include the steps taken and visuals**.
+Through analyzing our variable selection and cross-validation processes - along with our nascant domain knowledge of residential real estate - we ultimately arrived at a multiple linear regression model featuring 11 linear predictor variables and three interaction terms. Specifically, our variable selection process included direct analysis of a correlation plot and a correlation matrix as well as performing forward selection, backward elimination, and stepwise regression. Because many variables contained zeroes that were significant to the factor (for example, bathrooms), we elected to perform logarithmic transformation only to variable `LotArea`, representative of the area of the real estate lot.
+
+In addition to the transformation of `LotArea`, we imputed NA values for 19 variables using a combination of the Data Dictionary provided by Century 21 as well as our domain knowledge.
 
 Type of selection
+
+Forward Selection
+
+Forward selection is a variable selection methodology that begins with a constant mean and adds explanatory variables one-by-one until no further additonal predictor variables significantly improve the model's fit. This employess the "F-to-enter" method from the extra-sum-of-squares F-statistic. This was the first method we employed. For this process, we provided the test a starting model with no predictor variables and a model from which terms can be selected, which included all predictor variables available. The process worked forward with selecting one parameter. The suggested model is output below.
+
+```{r, echo=F}
+# Count NAs, impute where needed
+na_count <- sapply(dfTrain, function(cnt) sum(length(which(is.na(cnt)))))
+train2$LotFrontage[is.na(train2$LotFrontage)] <- 0
+train2$Alley[is.na(train2$Alley)] <- "None"
+train2$MasVnrType[is.na(train2$MasVnrType)] <- "None"
+train2$MasVnrArea[is.na(train2$MasVnrArea)] <- 0
+train2$BsmtQual[is.na(train2$BsmtQual)] <- 0
+train2$BsmtCond[is.na(train2$BsmtCond)] <- 0
+train2$BsmtExposure[is.na(train2$BsmtExposure)] <- 0
+train2$BsmtFinType1[is.na(train2$BsmtFinType1)] <- 0
+train2$BsmtFinType2[is.na(train2$BsmtFinType2)] <- 0
+train2$Electrical[is.na(train2$Electrical)] <- "SBrkr"
+train2$FireplaceQu[is.na(train2$FireplaceQu)] <- "None"
+train2$GarageType[is.na(train2$GarageType)] <- "None"
+train2$GarageYrBlt[is.na(train2$GarageYrBlt)] <- mean(train2$YearBuilt)
+train2$GarageFinish[is.na(train2$GarageFinish)] <- "None"
+train2$GarageQual[is.na(train2$GarageQual)] <- "None"
+train2$GarageCond[is.na(train2$GarageCond)] <- "None"
+train2$PoolQC[is.na(train2$PoolQC)] <- "None"
+train2$Fence[is.na(train2$Fence)] <- "None"
+train2$MiscFeature[is.na(train2$MiscFeature)] <- "None"
+
+# Log-transform lot area
+train2$LotArea <- log(train2$LotArea)
+```
+
+```{r, echo=T}
+# Initial Model - Forward Selection
+model2.forward.Start <- lm(log(SalePrice)~1,data = train2)
+
+# All Variables Model - Forward Selection
+model2.Allvar <- lm(log(SalePrice) ~ Id + MSSubClass + MSZoning + LotFrontage + LotArea + Street + 
+                      Alley + LotShape + LandContour + Utilities + LotConfig + LandSlope +
+                      Neighborhood + Condition1 + Condition2 + BldgType + HouseStyle + OverallQual +
+                      OverallCond + YearBuilt + YearRemodAdd + RoofStyle + RoofMatl + Exterior1st +
+                      Exterior2nd + MasVnrType + MasVnrArea + ExterQual + ExterCond + Foundation +
+                      BsmtQual + BsmtCond + BsmtExposure + BsmtFinType1 + BsmtFinSF1 + BsmtFinType2 
+                    + BsmtFinSF2 + BsmtUnfSF + TotalBsmtSF + Heating + HeatingQC + CentralAir + 
+                      Electrical + `1stFlrSF` + `2ndFlrSF` + LowQualFinSF + GrLivArea + BsmtFullBath
+                    + BsmtHalfBath + FullBath + HalfBath + BedroomAbvGr + KitchenAbvGr + KitchenQual
+                    + TotRmsAbvGrd + Functional + Fireplaces + FireplaceQu + GarageType +
+                      GarageYrBlt + GarageFinish + GarageCars + GarageArea + GarageQual + GarageCond
+                    + PavedDrive + WoodDeckSF + OpenPorchSF + EnclosedPorch + `3SsnPorch` +
+                      ScreenPorch + PoolArea + PoolQC + Fence + MiscFeature + MiscVal + MoSold +
+                      YrSold + SaleType + SaleCondition, data = train2
+                    )
+
+model2.Forward <- stepAIC(model2.forward.Start, direction = "forward", trace = F, scope = formula(model2.Allvar))
+
+summary(model2.Forward)
+model2.Forward$anova
+
+final.Forward.Model <- lm(log(SalePrice) ~ OverallQual + Neighborhood + GrLivArea + BsmtFinType1 + 
+                  GarageCars + OverallCond + RoofMatl + TotalBsmtSF + YearBuilt + 
+                  LotArea + Condition2 + MSZoning + BsmtUnfSF + SaleCondition + 
+                  Functional + CentralAir + Condition1 + KitchenQual + Fireplaces + 
+                  Exterior1st + Heating + ScreenPorch + YearRemodAdd + BsmtQual + 
+                  PoolQC + Foundation + KitchenAbvGr + SaleType + GarageArea + 
+                  HeatingQC + BsmtExposure + EnclosedPorch + WoodDeckSF + LotConfig + 
+                  Street + BsmtFullBath + PoolArea + LandSlope + GarageCond + 
+                  HalfBath + FullBath + TotRmsAbvGrd + `3SsnPorch` + ExterCond + 
+                  GarageQual + GarageYrBlt + Utilities, data = train2
+                  )
+```
+
+
+Backward Elimination
+
+Backward elimination is a variable selection methodology that begins with all possible predictor variables and works backward, eliminating variables using all possible combinations until only the best for the fit are provided. This employess the "F-to-remove" method from the extra-sum-of-squares F-statistic. For this process, we provided the test a model with all available predictor variables from which insignificant variables were eliminated. The output is as follows below.
+```{r, echo=F}
+# Backward Elimination
+model2.Backward <- stepAIC(model2.Allvar, direction = "backward", trace = F)
+summary(model2.Backward)
+model2.Backward$anova
+```
+
+Stepwise Regression
+
+Stepwise regression is a variable selection methodology that performs one step of forward selection for each step of backward elimination. The steps are repeated, concurrently, until no further predictor variables can be added or removed. This is the third model approach we used. The suggested model is output below.
+
+```{r, echo=F}
+# Stepwise Selection
+stepwise.full.model4 <- stepAIC(model2.forward.Start, direction = "both", trace = F, scope = formula(model2.Allvar))
+
+summary(stepwise.full.model4)
+stepwise.full.model4$anova
+```
+
+Custom Variable Selection 
+
+To develop the custom model, we employed a combination of a correlation matrix for quantitative data, analysis of the summarization of the suggested model from stepwise selection, and through direct analysis of the pairs plots. As previously mentioned, our final model included 11 linear terms and three interaction terms. We removed all variables suggested to be removed by the stepwise regression and backward elimination tests, then reprocessed the updated models until forward selection, backward elimination, and stepwise regression were in agreeance with respect to the linear terms. Once this trial-and-error process was completed, we added interaction terms based on domain knowledge and re-applied the forward selection, backward elimination, and stepwise regression methods until only significant terms - both linear and interactive - remained. We then used graphical analysis to visually confirm interaction between the interactive terms remaining.
+
+```{r, echo=F}
+
+train2.numeric <- dplyr::select_if(train2, is.numeric) %>% data.frame()
+
+flattenCorrMatrix <- function(cormat, pmat) {
+  ut <- upper.tri(cormat)
+  data.frame(
+    row = rownames(cormat)[row(cormat)[ut]],
+    column = rownames(cormat)[col(cormat)[ut]],
+    cor  =(cormat)[ut],
+    p = pmat[ut]
+    )
+}
+
+#See what variables are correlated with eachother, p-values
+correlation.matrix <- rcorr(as.matrix(train2.numeric))
+corDF <- data.frame(flattenCorrMatrix(correlation.matrix$r, correlation.matrix$P))
+
+#Order the correlation matrix to show the highest correlated
+data.frame(corDF[order(-corDF$cor),])
+quantDataModel <- corDF[which(corDF$cor >= 0.5),]
+
+fitFull.all4.old <- lm(log(SalePrice) ~ (BsmtUnfSF) + CentralAir + HalfBath + KitchenQual + Neighborhood + OverallCond + OverallQual + RoofMatl + `1stFlrSF` + `2ndFlrSF` + YearBuilt + MSZoning:Neighborhood + OverallQual:Neighborhood + YearBuilt:Neighborhood, data = train2)
+summary(fitFull.all4.old)
+######################################################################
+###We need the graphs for interactive terms to display interaction####
+######################################################################
+```
 
 ## Model Assumption Assessment
 
@@ -259,7 +389,30 @@ Address each assumption
 ## Comparing Competing Models
 
 * Adj $R^2$
+The final adjusted $R^2$ of our model is 0.8916
+
 * CV Press
+Our cross-validated PRESS statistic output is below.
+```{r, echo=F}
+# Set up repeated k-fold cross-validation
+train.control2 <- trainControl(method = "cv", number = 10)
+# Train the model
+model.cv2 <- train(log(SalePrice) ~ (BsmtUnfSF) + CentralAir + HalfBath + KitchenQual + Neighborhood
+                   + OverallCond + OverallQual + RoofMatl + `1stFlrSF` + `2ndFlrSF` + YearBuilt +
+                     MSZoning:Neighborhood + OverallQual:Neighborhood + YearBuilt:Neighborhood, 
+                    data = train2,
+                    method = 'lm',
+                    trControl = train.control2)
+
+# print model summary
+model.cv2
+
+# get the CV results
+res <- model.cv2$results
+
+# get cross-validated PRESS statistic
+PCV <- PRESS.cv(model.cv2)
+```
 * Kaggle score
 
 ## Conclusion
