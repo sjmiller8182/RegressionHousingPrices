@@ -55,7 +55,7 @@ basic.fit.plots <- function(data, model) {
 	  geom_abline(slope = 0) + 
   	  geom_abline(slope = 0, intercept = -2) + 
   	  geom_abline(slope = 0, intercept = 2) + 
-	  labs(subtitle = 'Studentized Residuals vs Prediction',
+	  labs(subtitle = 'RStudent vs Prediction',
 	       x = 'Predicted Value',
 	       y = 'RStudent')
 	

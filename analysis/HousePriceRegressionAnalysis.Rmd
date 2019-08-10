@@ -38,11 +38,16 @@ library(olsrr)
 library(gridExtra)
 library(caret)
 library(multcomp)
+library(Hmisc)
 
 # set a random seed for repodicibility
 set.seed(123)
+<<<<<<< HEAD
 getwd()
 setwd("C:/users/pablo/desktop/kg6371/analysis")
+=======
+
+>>>>>>> c9f187e92155c3f398d0d6fd31c68d2d413e7352
 # helper code
 source('./helper/visual.R')
 source('./helper/data_munging.R')
@@ -65,9 +70,12 @@ train.mod <- train %>% filter(GrLivArea < 4000)
 train2 <- train2 %>% filter(GrLivArea < 4000)
 ```
 
+
+
+
 # Introduction
 
-@Sleuth
+@Sleuth CWR Update Test
 
 # Ames, Iowa Data Set
 
@@ -81,7 +89,7 @@ Century 21 has commissioned an analysis of this data to determine how the sale p
 
 ## Modeling
 
-Linear regression will be used to model sale price as a response of the living room area. From the initial exploratory data analysis, it was determined that sale prices should be log-transformed to meet the model assumptions **Add appendix reference** for normality, thus improving our models fit and reducing standard error. Additionally, two observations were removed as they appeared to be from a different population than the other observations in the dataset **Add appendix reference**; therefore, analysis only considers properties with living rooms less than 3500 sq. ft. in area.
+Linear regression will be used to model sale price as a response of the living room area. From the initial exploratory data analysis, it was determined that sale prices should be log-transformed to meet the model assumptions for linearity (see section \ref{appendix:linearity}), thus improving our models fit and reducing standard error. Additionally, two observations were removed as they appeared to be from a different population than the other observations in the dataset (see section \ref{appendix:infleu-points}); therefore, analysis only considers properties with living rooms less than 3500 sq. ft. in area.
 
 We will consider two models: the logarithm of sale price as the response of living room area (1), the reduced model, and the logarithm of sale price as the response of living room area accounting for differences in the three neighborhood of interest (Brookside, Northwest Ames, and Edwards) where Edwards will be used as the reference (2), the full model. An extra sums of square (ESS) test will be used to verify that the addition of `Neighborhood` improves the model.
 
@@ -127,7 +135,7 @@ The following assessments for model assumptions are made based on Figure \@ref(f
 * The residuals of the model appear to be approximately normally distrubited based on the QQ plot of the residuals and histogram of the residuals, suggesting the assumption of normality is met.
 * No patterns are evident in the scatter plots of residuals and studentized residuals vs predicted value, suggesting the assumption of constant variance is met.
 * While some observations appear to be influential and have high leverage, removing these observations does not have a significant impact on the result of the model fit.
-* Based on the scatter plot of the log transform of `SalePrice` vs `GrLivArea`, it appears that a linear model is reasonable.
+* Based on the scatter plot of the log transform of `SalePrice` vs `GrLivArea`, it appears that a linear model is reasonable (see section \ref{appendix:linearity}).
 
 The sampling procedure is not known. We will assume the independence assumption is met.
 
@@ -135,9 +143,10 @@ The sampling procedure is not known. We will assume the independence assumption 
 # option 'htbp' is used to lock the position of the image
 # option 'hold' is used to arrange images side-by-side
 
+# create plots of residuals
 basic.fit.plots(train.mod, model)
+# create leverage / outlier plot
 ols_plot_resid_lev(model)
-#ols_plot_cooksd_bar(model)
 ```
 
 ## Comparing Competing Models
@@ -197,12 +206,13 @@ kable(data.frame('Model' = c('Full Model', 'Reduced Model'),
 The following table summerizes the parameter estimates for the full model.
 
 ```{r, echo=FALSE}
-#extract the model estimates from the model summary
+# extract the model estimates from the model summary
 sm <- summary(model)
 sm.coe <- sm$coefficients
+# get the CIs for the coefficients
 model.conf <- confint(model)
 
-# print model estimates to md table
+# print model estimates to md / latex table
 kable(data.frame('Parameter' = c('Intercept', 'GrLivArea', 
                                  'Neighborhood_BrkSide', 'Neighborhood_NAmes', 
                                  'GrLivArea:Neighborhood_BrkSide', 'GrLivArea:Neighborhood_NAmes '), 
@@ -230,6 +240,7 @@ Since the sampling procedure is not known and this is an observational study, th
 ## Conclusion
 
 ```{r, echo=FALSE, results='hide'}
+# summary of model to get overall test
 summary(lm(model.formula, data = train.mod))
 ```
 
@@ -677,11 +688,29 @@ A short summary of the analysis
 
 # Appendix
 
-## Checking for Linearity
+## Checking for Linearity in `SalePrice` vs `GrLivArea`
+
+\label{appendix:linearity}
+
+The scatter plot in Figure \@ref(fig:scatter-plot) shows relationship of `SalePrice` vs `GrLivArea` for all three neighborhoods of interest to Century 21. Based on this plot, it does not appear that this relationship meets the assumptions of linear regression, specifically the constant varaince assumption. The response will be transformed to attempt to handle the changing variance.
+
+```{r, scatter-plot, echo=FALSE, fig.width=5, fig.height=5, fig.align='center', fig.cap='Scatter Plot of Sale Price vs Living Room Area', out.width = '45%', fig.pos="htbp"}
+
+# scatter plot of observations from all three neighborhoods
+train %>% 
+  ggplot(aes(x = (GrLivArea), y = (SalePrice))) +
+  geom_point(alpha = 0.3) +
+  labs(title = 'Log of Sale Price vs Living Room Area', 
+       y = 'Log of Sale Price', x = 'Living Room Area (sq. ft.)')
+```
 
 The images below show the scatter plots of log sale price vs living room area (Figure \@ref(fig:scatter-plots)). In the image on the right, the scatter plot is shown for each neighborhood. In the image on the left the observations for all three neighborhoods are included. In all cases, a linear model appears to be reasonable to model this data.
 
 ```{r, scatter-plots, echo=FALSE, fig.width=5, fig.height=5, fig.align='center', fig.cap='Scatter Plots of Log of Sale Price vs Living Room Area', out.width = '45%', fig.pos="htbp", fig.show='hold'}
+
+# plots of log of sale price ~ living room area
+
+# create scatter plot for northwest ames
 regplot.names <- train %>% filter(Neighborhood == 'NAmes') %>%
   ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
   geom_point(alpha = 0.3) +
@@ -690,6 +719,7 @@ regplot.names <- train %>% filter(Neighborhood == 'NAmes') %>%
   labs(subtitle = 'Northwest Ames', 
        y = 'Log of Sale Price', x = 'Living Room Area (sq. ft.)')
 
+# create scatter plot for edwards
 regplot.ed <- train %>%
   filter(GrLivArea < 4000) %>%
   filter(Neighborhood == 'Edwards') %>%
@@ -700,6 +730,7 @@ regplot.ed <- train %>%
   labs(subtitle = 'Edwards', 
        y = 'Log of Sale Price', x = 'Living Room Area (sq. ft.)')
 
+# create regression plot for brookside
 regplot.brk <- train %>% filter(Neighborhood == 'BrkSide') %>%
   ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
   geom_point(alpha = 0.3) +
@@ -707,9 +738,12 @@ regplot.brk <- train %>% filter(Neighborhood == 'BrkSide') %>%
   xlim(0, 3500) +
   labs(subtitle = 'Brook Side', 
        y = 'Log of Sale Price', x = 'Living Room Area (sq. ft.)')
+
+# add the scatter plots for the neighborhood into a single plot
 grid.arrange(regplot.names,regplot.ed,regplot.brk, nrow = 2,
              top = 'Regression Plots for Neighborhoods')
 
+# scatter plot of observations from all three neighborhoods
 train %>% 
   filter(GrLivArea < 4000) %>%
   ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
@@ -721,9 +755,13 @@ train %>%
 
 ## Analysis of Influential points
 
-Some text Figure \@ref(fig:infleu-points) **Add some disucssion on this influential points here** 
+\label{appendix:infleu-points}
+
+The two outlying observations with living room areas greater than 4000 sq. ft. appear to be from a different distribution than the main dataset. Since these are partial sales, it is possible that the sale prices do not reflect market value. For this reason, we will limit the analysis to properities with less than 3500 sq. ft.  \@ref(fig:infleu-points)
 
 ```{r, infleu-points, echo=FALSE, fig.width=5, fig.height=5, fig.align='center', fig.cap='Influential Points', out.width = '50%', fig.pos="htbp"}
+
+# scatter plot of observations from all three neighborhoods with labeling by `SaleCondition`
 train %>% ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
   geom_point(alpha = 0.3) +
   labs(title = 'Log of Sale Price vs Living Room Area', 
@@ -733,6 +771,7 @@ train %>% ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
                                SaleCondition, '')), hjust=0, vjust=0)
 ```
 
+\newpage
 
 ## R Code For Analysis 1
 
@@ -747,25 +786,286 @@ library(gridExtra)
 library(caret)
 library(multcomp)
 
-# set a random seed for repodicibility
-set.seed(123)
-getwd()
-# helper code
-source('./helper/visual.R')
-source('./helper/data_munging.R')
-source('./helper/performance.R')
-
 # load data
 train <- read_csv('./data/train.csv')
 test <- read_csv('./data/test.csv')
 
-train %>% ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
+# set a random seed for repodicibility
+set.seed(123)
+
+### Helper Code
+
+#' Print Typical Regression Fit Plots
+#' 
+#' @description
+#' Plots QQ plot of residuals, histogram of residuals,
+#' residuals vs predicted values, and studentized 
+#' residuals vs predicted values. Depends on tidyverse
+#' and gridExtra packages being loaded.
+#'
+#' @param data The true values corresponding to the input.
+#' @param model The predicted/fitted values of the model.
+basic.fit.plots <- function(data, model) {
+	
+	# depends on
+	require(tidyverse)
+	require(gridExtra)
+
+	# get predicted values
+	data$Predicted <- predict(model, data)
+	# get residuals
+	data$Resid <- model$residuals
+	# get studentized residuals
+	data$RStudent <- rstudent(model = model)
+
+	# create qqplot of residuals with reference line
+	qqplot.resid <- data %>% 
+	  ggplot(aes(sample = Resid)) +
+	  geom_qq() + geom_qq_line() +
+	  labs(subtitle = 'QQ Plot of Residuals',
+	       x = 'Theoretical Quantile',
+	       y = 'Acutal Quantile')
+	
+	# create histogram of residuals
+	hist.resid <- data %>% 
+	  ggplot(aes(x = Resid)) +
+	  geom_histogram(bins = 15) + 
+	  labs(subtitle = 'Histogram of Residuals',
+	       x = 'Residuals',
+	       y = 'Count')
+
+	# create scatter plot of residuals vs predicted values
+	resid.vs.pred <- data %>% 
+	  ggplot(aes(x = Predicted, y = Resid)) +
+	  geom_point() +
+	  geom_abline(slope = 0) + 
+	  labs(subtitle = 'Residuals vs Prediction',
+	       x = 'Predicted Value',
+	       y = 'Residual')
+
+	# create scatter plot of studentized 
+	# residuals vs predicted values
+	rStud.vs.pred <- data %>% 
+	  ggplot(aes(x = Predicted, y = RStudent)) +
+	  geom_point() +
+	  geom_abline(slope = 0) + 
+  	  geom_abline(slope = 0, intercept = -2) + 
+  	  geom_abline(slope = 0, intercept = 2) + 
+	  labs(subtitle = 'RStudent vs Prediction',
+	       x = 'Predicted Value',
+	       y = 'RStudent')
+	
+	# add all four plots to grid as
+	# qqplot           histogram
+	# resid vs pred    RStud vs pred
+	grid.arrange(qqplot.resid,
+		     hist.resid,
+		     resid.vs.pred,
+		     rStud.vs.pred, 
+		     nrow = 2,
+		     top = 'Fit Assessment Plots')
+}
+
+#' Creates dummy variables (columns) for given column
+#'
+#' @param data A dataframe.
+#' @param column A categorical column in data.
+#' @param reference A value in the column to use a reference.
+#' @param as.onehot Set to TRUE to use onehot encoding.
+#'
+get.dummies <- function(data, column, reference, as.onehot = FALSE) {
+  # get the levels of the factor in column
+  lev <- levels(data[[column]])
+  # do not remove reference for onehot encoding
+  if (!as.onehot) {
+    # remove the reference value
+    lev <- lev[lev != reference]
+  }
+  # add encodings
+  for (fct in lev){
+    new_col <- paste(column, fct, sep = '_')
+    data[new_col] <- as.numeric(data[, column] == fct)
+    print(new_col)
+  }
+  data
+}
+
+#' Calculates PRESS from `caret` CV model
+#'
+#' @param model.cv Calculates press from a model 
+#' produced by `caret`
+#'
+PRESS.cv <- function(model.cv) {
+  meanN <- 0
+  folds <- model.cv$control$index
+  for (i in seq(1:length(folds))){
+    meanN <- meanN + length(folds[[i]])
+  }
+  meanN <- meanN / length(folds)
+  meanN * ((model.cv$results$RMSE)^2)
+}
+
+### plots of log of sale price ~ living room area
+
+# create scatter plot for northwest ames
+regplot.names <- train %>% filter(Neighborhood == 'NAmes') %>%
+  ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
+  geom_point(alpha = 0.3) +
+  ylim(10, 13) +
+  xlim(0, 3500) +
+  labs(subtitle = 'Northwest Ames', 
+       y = 'Log of Sale Price', x = 'Living Room Area (sq. ft.)')
+
+# create scatter plot for edwards
+regplot.ed <- train %>%
+  filter(GrLivArea < 4000) %>%
+  filter(Neighborhood == 'Edwards') %>%
+  ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
+  geom_point(alpha = 0.3) +
+  ylim(10, 13) +
+  xlim(0, 3500) +
+  labs(subtitle = 'Edwards', 
+       y = 'Log of Sale Price', x = 'Living Room Area (sq. ft.)')
+
+# create regression plot for brookside
+regplot.brk <- train %>% filter(Neighborhood == 'BrkSide') %>%
+  ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
+  geom_point(alpha = 0.3) +
+  ylim(10, 13) +
+  xlim(0, 3500) +
+  labs(subtitle = 'Brook Side', 
+       y = 'Log of Sale Price', x = 'Living Room Area (sq. ft.)')
+
+# add the scatter plots for the neighborhood into a single plot
+grid.arrange(regplot.names,regplot.ed,regplot.brk, nrow = 2,
+             top = 'Regression Plots for Neighborhoods')
+
+# scatter plot of observations from all three neighborhoods
+train %>% 
+  filter(GrLivArea < 4000) %>%
+  ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
   geom_point(alpha = 0.3) +
   labs(title = 'Log of Sale Price vs Living Room Area', 
-       y = 'Log of Sale Price', x = 'Living Room Area') +
-  geom_text(aes(label = ifelse((log(GrLivArea) > 7.75 & log(SalePrice) > 11) |
-                                 (log(SalePrice) > 12.45),
-                               SaleCondition, '')), hjust=0, vjust=0)
+       y = 'Log of Sale Price', x = 'Living Room Area (sq. ft.)')
+
+### Filter data for analysis 1
+
+train <- train %>% 
+  filter(Neighborhood %in% c("Edwards", "BrkSide", "NAmes"))
+train$Neighborhood <- as.factor(train$Neighborhood)
+
+# create dummy variables with Neighborhood == 'Edwards' as reference
+train <- get.dummies(train, "Neighborhood", reference = 'Edwards')
+
+# remove suspect points from training data
+train.mod <- train %>% filter(GrLivArea < 4000)
+
+#### Extra Sum of Squares
+
+# full model formula
+model.formula = log(SalePrice) ~ (GrLivArea) + 
+     Neighborhood_BrkSide + 
+     Neighborhood_NAmes +
+     (GrLivArea) * Neighborhood_BrkSide + 
+     (GrLivArea) * Neighborhood_NAmes
+# reduced model formula
+model.reduced.formula = log(SalePrice) ~ (GrLivArea) + 
+     Neighborhood_BrkSide + 
+     Neighborhood_NAmes
+
+# fit models
+model <- lm(formula = model.formula, data = train.mod)
+model.reduced <- lm(formula = model.reduced.formula, data = train.mod)
+# ESS test on models
+anova(model.reduced, model)
+
+### Assessment plots
+
+# create plots of residuals
+basic.fit.plots(train.mod, model)
+# create leverage / outlier plot
+ols_plot_resid_lev(model)
+
+### cross validation
+
+## cross validate the full model
+
+# Set up repeated k-fold cross-validation
+train.control <- trainControl(method = "cv", number = 10)
+# Train the model
+model.cv <- train(model.formula, 
+                    data = train.mod,
+                    method = 'lm',
+                    trControl = train.control)
+# print model summary
+model.cv
+
+# get the CV results
+res <- model.cv$results
+
+# get cross-validated PRESS statistic
+PCV <- PRESS.cv(model.cv)
+
+## cross validate the reduced model
+
+# Set up repeated k-fold cross-validation
+train.control <- trainControl(method = "cv", number = 10)
+# Train the model
+model.reduced.cv <- train(model.reduced.formula, 
+                    data = train.mod,
+                    method = 'lm',
+                    trControl = train.control)
+# print model summary
+model.reduced.cv
+
+# get the CV results
+res.red <- model.reduced.cv$results
+
+# get cross-validated PRESS statistic
+PCV.red <- PRESS.cv(model.reduced.cv)
+
+# print accuracy metrics to md table
+kable(data.frame('Model' = c('Full Model', 'Reduced Model'), 
+                 'RMSE'=c(res$RMSE, res.red$RMSE),
+                 'CV Press'=c(PCV, PCV.red),
+                 'Adjused R Squared'=c(res$Rsquared, res.red$Rsquared)),
+      "latex", booktabs = T)  %>%
+  kable_styling(position = "center")
+
+### get the parameters from the CV'ed model
+
+# extract the model estimates from the model summary
+sm <- summary(model)
+sm.coe <- sm$coefficients
+# get the CIs for the coefficients
+model.conf <- confint(model)
+
+# print model estimates to md / latex table
+# extract the params and put into a dataframe
+kable(data.frame('Parameter' = c('Intercept', 'GrLivArea', 
+                                 'Neighborhood_BrkSide', 'Neighborhood_NAmes', 
+                                 'GrLivArea:Neighborhood_BrkSide', 
+                                 'GrLivArea:Neighborhood_NAmes '), 
+                 'Estimate'=c(sm.coe[[1]],sm.coe[[2]],sm.coe[[3]],
+                              sm.coe[[4]],sm.coe[[5]],sm.coe[[6]]),
+                 'CI Lower' = c(model.conf[[1]],model.conf[[2]],model.conf[[3]],
+                                model.conf[[4]],model.conf[[5]],model.conf[[6]]),
+                 'CI Upper' = c(model.conf[[1,2]],model.conf[[1,2]],model.conf[[3,2]],
+                                model.conf[[4,2]],model.conf[[5,2]],model.conf[[6,2]])),
+      "latex", booktabs = T)  %>%
+  kable_styling(position = "center")
+
+# summary of model to get overall test
+summary(lm(model.formula, data = train.mod))
+
+## Calculate CIs of slopes not in standard table
+
+# get CI for Northwest Ames
+confint(glht(model, linfct = "GrLivArea + GrLivArea:Neighborhood_NAmes = 1"))
+
+# get CI for Brookside
+confint(glht(model, linfct = "GrLivArea + GrLivArea:Neighborhood_BrkSide = 1"))
+
 ```
 
 ## R Code For Analysis 2

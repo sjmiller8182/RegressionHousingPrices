@@ -3,6 +3,21 @@ Question 1
 Stuart Miller
 August 2, 2019
 
+  - [Requested Analysis](#requested-analysis)
+  - [Analysis](#analysis)
+      - [Extract Data of Interest](#extract-data-of-interest)
+      - [Plots of Data](#plots-of-data)
+      - [Model](#model)
+          - [Interaction Terms](#interaction-terms)
+          - [Parameter Estimation](#parameter-estimation)
+          - [Model Accuracy Estimation](#model-accuracy-estimation)
+      - [Model Assumptions Assessment](#model-assumptions-assessment)
+      - [Conclusion](#conclusion)
+          - [Interpretation](#interpretation)
+          - [Linear Regression Lines for all three neighborhoods (Log
+            Scale of Sale
+            Price)](#linear-regression-lines-for-all-three-neighborhoods-log-scale-of-sale-price)
+
 # Requested Analysis
 
 Century 21 Ames wants to understand if there is a relationship between
@@ -31,7 +46,7 @@ train %>% ggplot(aes(x = Neighborhood)) + geom_bar() +
        y = 'Count')
 ```
 
-![](question1_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
+![](question_1_sm_original_scale_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
 
 Histogram of `SalePrice`, which is the sale price of the houses in the
 dataset.
@@ -44,7 +59,7 @@ train %>% ggplot(aes(x = SalePrice)) +
        y = 'Frequency', x = 'Sale Price')
 ```
 
-![](question1_files/figure-gfm/SalePriceHist-1.png)<!-- -->
+![](question_1_sm_original_scale_files/figure-gfm/SalePriceHist-1.png)<!-- -->
 
 Histogram of `GrLivArea`, which is the square footage of the living
 areas of houses in the dataset.
@@ -57,7 +72,7 @@ train %>% ggplot(aes(x = GrLivArea)) +
        y = 'Frequency', x = 'Living Room Area')
 ```
 
-![](question1_files/figure-gfm/LivingRoomHist-1.png)<!-- -->
+![](question_1_sm_original_scale_files/figure-gfm/LivingRoomHist-1.png)<!-- -->
 
 Scatter plot of `SalePrice` vs `GrLivArea` shows that the large values
 in `GrLivArea` are pulling the regression line. A log transfrom on
@@ -70,7 +85,7 @@ train %>% ggplot(aes(x = GrLivArea, y = SalePrice)) +
        y = 'Sale Price', x = 'Living Room Area')
 ```
 
-![](question1_files/figure-gfm/regression-original-scale-1.png)<!-- -->
+![](question_1_sm_original_scale_files/figure-gfm/regression-original-scale-1.png)<!-- -->
 
 Scatter plot of the log transform of `SalePrice` vs `GrLivArea` shows
 taking the log transform of `GrLivArea` does improve the linear
@@ -85,7 +100,7 @@ train %>% ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
        y = 'Log of Sale Price', x = 'Living Room Area')
 ```
 
-![](question1_files/figure-gfm/linear-log-plot-1.png)<!-- -->
+![](question_1_sm_original_scale_files/figure-gfm/linear-log-plot-1.png)<!-- -->
 
 Add labels of `SaleCondition` of the two points of interest and some
 neighboring points to the scatter plot the log transform of `SalePrice`
@@ -105,7 +120,7 @@ train %>% ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
                                SaleCondition, '')), hjust=0, vjust=0)
 ```
 
-![](question1_files/figure-gfm/linear-log-plot-labeled-1.png)<!-- -->
+![](question_1_sm_original_scale_files/figure-gfm/linear-log-plot-labeled-1.png)<!-- -->
 
 Scatter plot log of sale price vs living room area for each neighborhood
 with the suspect points excluded. In each case, there is not sigificant
@@ -144,7 +159,7 @@ grid.arrange(regplot.names,regplot.ed,regplot.brk, nrow = 2,
              top = 'Regression Plots for Neighborhoods')
 ```
 
-![](question1_files/figure-gfm/linear-log-plot-by-N-1.png)<!-- -->
+![](question_1_sm_original_scale_files/figure-gfm/linear-log-plot-by-N-1.png)<!-- -->
 
 ## Model
 
@@ -319,11 +334,11 @@ model.cv
     ## 
     ## No pre-processing
     ## Resampling: Cross-Validated (10 fold) 
-    ## Summary of sample sizes: 343, 344, 344, 341, 343, 342, ... 
+    ## Summary of sample sizes: 342, 342, 343, 342, 344, 343, ... 
     ## Resampling results:
     ## 
     ##   RMSE       Rsquared   MAE      
-    ##   0.1910566  0.5084024  0.1483625
+    ##   0.1906429  0.5321848  0.1476922
     ## 
     ## Tuning parameter 'intercept' was held constant at a value of TRUE
 
@@ -342,7 +357,7 @@ kable(data.frame('RMSE'=res$RMSE,
 
 |      RMSE | CV.Press | Adjused.R.Squared |
 | --------: | -------: | ----------------: |
-| 0.1910566 | 12.51675 |         0.5084024 |
+| 0.1906429 |  12.4626 |         0.5321848 |
 
 ## Model Assumptions Assessment
 
@@ -355,7 +370,8 @@ kable(data.frame('RMSE'=res$RMSE,
     scatter plot of residuals and studentized residuals plotted vs
     predicted value.
   - **Independence**: It is not clear how the data was sampled. We will
-    assume this is true and continue.
+    assume this is true and
+continue.
 
 <!-- end list -->
 
@@ -363,13 +379,13 @@ kable(data.frame('RMSE'=res$RMSE,
 basic.fit.plots(train.mod, model)
 ```
 
-![](question1_files/figure-gfm/diag-plots-1.png)<!-- -->
+![](question_1_sm_original_scale_files/figure-gfm/diag-plots-1.png)<!-- -->
 
 ``` r
 ols_plot_resid_lev(model)
 ```
 
-![](question1_files/figure-gfm/diag-plots-2.png)<!-- -->
+![](question_1_sm_original_scale_files/figure-gfm/diag-plots-2.png)<!-- -->
 
 ``` r
 #ols_plot_cooksd_bar(model)
@@ -391,3 +407,105 @@ multiplicative increase in median price
 
 Since the sampling procedure is not known and this is an observational
 study, the results only apply to this data.
+
+#### Edwards
+
+• each additional 100 sq. ft. of the living area added to a property in
+the Edwards neighborhood, holding all other variables constant, would
+result in a 5.53% multiplicative increase in the median sales price.
+With a 95% confidence interval between \[4.42, 6.66\] percent.
+
+``` r
+edwards_estimate <- (exp(5.387e-04 * 100) - 1) * 100
+edwards_estimate
+```
+
+    ## [1] 5.53474
+
+``` r
+edwards_low <- (exp(4.323815e-04 * 100) - 1) * 100
+edwards_low
+```
+
+    ## [1] 4.418654
+
+``` r
+edwards_high <- (exp(6.449277e-04 * 100) - 1) * 100
+edwards_high
+```
+
+    ## [1] 6.661787
+
+#### Brookside
+
+• each additional 100 sq. ft. of the living area added to a property in
+the Brookside neighborhood, holding all other variables constant, would
+result in a 7.66% increase in the median sales price. With a 95%
+confidence interval of betwee \[6.30, 9.04\] percent.
+
+``` r
+brkside_estimate <- (exp(0.0007382 * 100) - 1) * 100
+brkside_estimate
+```
+
+    ## [1] 7.6613
+
+``` r
+brkside_low <- (exp(0.0006107 * 100) - 1) * 100
+brkside_low
+```
+
+    ## [1] 6.297332
+
+``` r
+brkside_high <- (exp(0.0008658 * 100) - 1) * 100
+brkside_high
+```
+
+    ## [1] 9.04386
+
+#### Northwest Ames
+
+• each additional 100 sq. ft. of the living area added to a property in
+the Northwest Ames neighborhood, holding all other variables constant,
+would result in a 3.29% increase in the median sales price. With a 95%
+confidence interval of betwee \[2.68, 3.92\] percent.
+
+``` r
+names_estimate = (exp((0.0003241) * 100) - 1) * 100
+names_estimate
+```
+
+    ## [1] 3.294092
+
+``` r
+names_lower = (exp((0.0002640) * 100) - 1) * 100
+names_lower
+```
+
+    ## [1] 2.675157
+
+``` r
+names_upper = (exp((0.0003843) * 100) - 1) * 100
+names_upper
+```
+
+    ## [1] 3.917798
+
+``` r
+# exp(0.0003241)
+# exp(0.0002640)
+# exp(0.0003843)
+
+# my.pred <- predict(model, data.frame(Neighborhood = 'Names', GrLivArea = 1500))
+# my.pred.exp <- exp(my.pred)
+# my.pred.exp
+```
+
+### Linear Regression Lines for all three neighborhoods (Log Scale of Sale Price)
+
+``` r
+ggplot(train.mod,aes(y=log(SalePrice),x=GrLivArea,color=factor(Neighborhood)))+geom_point()+stat_smooth(method="lm",se=FALSE)
+```
+
+![](question_1_sm_original_scale_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->

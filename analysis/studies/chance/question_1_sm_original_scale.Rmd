@@ -27,7 +27,7 @@ library(multcomp)
 
 # set a random seed for repodicibility
 set.seed(123)
-
+getwd()
 # helper code
 source('../../helper/visual.R')
 source('../../helper/data_munging.R')
@@ -266,12 +266,78 @@ We estimate that for increase in 100 sq. ft., there is associated multiplicative
  * 1.077 for the Brookside neighorhood with a 95% confidence interval of [1.063 , 1.090]
  
 Since the sampling procedure is not known and this is an observational study, the results only apply to this data.
+
+
+#### Edwards
+
+ • each additional 100 sq. ft. of the living area added to a property in the Edwards neighborhood, holding all other variables constant, would result in a 5.53% multiplicative increase in the median sales price.  With a 95% confidence interval between [4.42, 6.66] percent.
+
+```{r}
+edwards_estimate <- (exp(5.387e-04 * 100) - 1) * 100
+edwards_estimate
+
+edwards_low <- (exp(4.323815e-04 * 100) - 1) * 100
+edwards_low
+
+edwards_high <- (exp(6.449277e-04 * 100) - 1) * 100
+edwards_high
+
+
+
+```
+
+
+#### Brookside
+
+•	each additional 100 sq. ft. of the living area added to a property in the Brookside neighborhood, holding all other variables constant, would result in a 7.66% increase in the median sales price.  With a 95% confidence interval of betwee [6.30, 9.04] percent.
+
+```{r}
+
   
+brkside_estimate <- (exp(0.0007382 * 100) - 1) * 100
+brkside_estimate
+
+brkside_low <- (exp(0.0006107 * 100) - 1) * 100
+brkside_low
+
+brkside_high <- (exp(0.0008658 * 100) - 1) * 100
+brkside_high
+
+
+```
+
+
+#### Northwest Ames
+
+•	each additional 100 sq. ft. of the living area added to a property in the Northwest Ames neighborhood, holding all other variables constant, would result in a 3.29% increase in the median sales price.  With a 95% confidence interval of betwee [2.68, 3.92] percent.
+
+```{r}
+names_estimate = (exp((0.0003241) * 100) - 1) * 100
+names_estimate
+
+
+names_lower = (exp((0.0002640) * 100) - 1) * 100
+names_lower
+
+names_upper = (exp((0.0003843) * 100) - 1) * 100
+names_upper
+
+# exp(0.0003241)
+# exp(0.0002640)
+# exp(0.0003843)
+
+# my.pred <- predict(model, data.frame(Neighborhood = 'Names', GrLivArea = 1500))
+# my.pred.exp <- exp(my.pred)
+# my.pred.exp
+```
 
 
 
+### Linear Regression Lines for all three neighborhoods (Log Scale of Sale Price)
 
-
+```{r}
+ggplot(train.mod,aes(y=log(SalePrice),x=GrLivArea,color=factor(Neighborhood)))+geom_point()+stat_smooth(method="lm",se=FALSE)
+```
 
 
 
