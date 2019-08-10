@@ -498,7 +498,7 @@ submit <- test %>%
 
 # head(submit)
 
-write.csv(submit, file = "./kaggle_submission.csv", row.names = FALSE)
+# write.csv(submit, file = "./kaggle_submission.csv", row.names = FALSE)
 
 summary(base.model)
 ```

@@ -11,7 +11,8 @@ August 4, 2019
             variables](#handle-null-values-for-continuous-variables)
           - [Handle null values for categorical
             variables](#handle-null-values-for-categorical-variables)
-          - [Set ordered factor values](#set-ordered-factor-values)
+          - [set ordinal factors](#set-ordinal-factors)
+          - [Set normal factor variables](#set-normal-factor-variables)
 
 # Setup
 
@@ -77,79 +78,33 @@ test$MasVnrArea[is.na(test$MasVnrArea)] <- 0
 
 ``` r
 # Reduce Neighborhood into 3 categories
-# train %>% 
-#   group_by(Neighborhood) %>%
-#   summarise(mean = mean(log(SalePrice)), n = n()) %>%
-#   arrange(desc(mean))
-# 
-# neighborhood_high <- c('NoRidge', 'NridgHt', 'StoneBr', 'Timber', 'Veenker', 'Somerst', 'ClearCr', 'Crawfor', 'Blmngtn', 'CollgCr')
-# 
-# neighborhood_medium <- c('Gilbert', 'NWAmes', 'SawyerW', 'Mitchel', 'NAmes', 'NPkVill', 'SWISU', 'Blueste', 'Sawyer', 'Edwards')
-# 
-# neighborhood_low <- c('OldTown', 'BrkSide', 'BrDale', 'MeadowV', 'IDOTRR')
-# 
-# train$Neighborhood <- case_when(train$Neighborhood %in% c('NoRidge', 'NridgHt', 'StoneBr', 'Timber', 'Veenker', 'Somerst', 'ClearCr', 'Crawfor', 'Blmngtn', 'CollgCr') ~ 'High',
-#                train$Neighborhood %in% c('Gilbert', 'NWAmes', 'SawyerW', 'Mitchel', 'NAmes', 'NPkVill', 'SWISU', 'Blueste', 'Sawyer', 'Edwards') ~ 'Medium',
-#                train$Neighborhood %in% c('OldTown', 'BrkSide', 'BrDale', 'MeadowV', 'IDOTRR') ~ 'Low')
-# 
-# 
-# test$Neighborhood <- case_when(test$Neighborhood %in% c('NoRidge', 'NridgHt', 'StoneBr', 'Timber', 'Veenker', 'Somerst', 'ClearCr', 'Crawfor', 'Blmngtn', 'CollgCr') ~ 'High',
-#                test$Neighborhood %in% c('Gilbert', 'NWAmes', 'SawyerW', 'Mitchel', 'NAmes', 'NPkVill', 'SWISU', 'Blueste', 'Sawyer', 'Edwards') ~ 'Medium',
-#                test$Neighborhood %in% c('OldTown', 'BrkSide', 'BrDale', 'MeadowV', 'IDOTRR') ~ 'Low')
-
-
-table(train$Neighborhood)
-```
-
-    ## 
-    ## Blmngtn Blueste  BrDale BrkSide ClearCr CollgCr Crawfor Edwards Gilbert 
-    ##      17       2      16      58      28     150      51     100      79 
-    ##  IDOTRR MeadowV Mitchel   NAmes NoRidge NPkVill NridgHt  NWAmes OldTown 
-    ##      37      17      49     225      41       9      77      73     113 
-    ##  Sawyer SawyerW Somerst StoneBr   SWISU  Timber Veenker 
-    ##      74      59      86      25      25      38      11
-
-``` r
-# Reduce Neighborhood into 3 categories
-train %>% 
-  group_by(MSSubClass) %>%
+train %>%
+  group_by(Neighborhood) %>%
   summarise(mean = mean(log(SalePrice)), n = n()) %>%
   arrange(desc(mean))
 ```
 
-    ## # A tibble: 15 x 3
-    ##    MSSubClass  mean     n
-    ##         <dbl> <dbl> <int>
-    ##  1         60  12.3   299
-    ##  2        120  12.2    87
-    ##  3         75  12.1    16
-    ##  4         20  12.1   536
-    ##  5         80  12.0    58
-    ##  6         70  12.0    60
-    ##  7         85  11.9    20
-    ##  8         40  11.9     4
-    ##  9         50  11.8   144
-    ## 10        160  11.8    63
-    ## 11         90  11.8    52
-    ## 12        190  11.7    30
-    ## 13         45  11.6    12
-    ## 14        180  11.5    10
-    ## 15         30  11.4    69
-
-``` r
-table(train$mean)
-```
-
-    ## Warning: Unknown or uninitialised column: 'mean'.
-
-    ## < table of extent 0 >
+    ## # A tibble: 25 x 3
+    ##    Neighborhood  mean     n
+    ##    <chr>        <dbl> <int>
+    ##  1 NoRidge       12.7    41
+    ##  2 NridgHt       12.6    77
+    ##  3 StoneBr       12.6    25
+    ##  4 Timber        12.4    38
+    ##  5 Veenker       12.3    11
+    ##  6 Somerst       12.3    86
+    ##  7 ClearCr       12.2    28
+    ##  8 Crawfor       12.2    51
+    ##  9 Blmngtn       12.2    17
+    ## 10 CollgCr       12.2   150
+    ## # ... with 15 more rows
 
 ### Handle null values for categorical variables
 
   - Alley
   - MasVnrType
   - BsmtQual
-  - BsmtCond
+  - BsmtCond (Removed)
   - BsmtExposure
   - BsmtFinType1
   - BsmtFinType2
@@ -161,15 +116,76 @@ table(train$mean)
   - PoolQC
   - Fence
   - MiscFeature
-  - Electrical (SBrkr Standard Circuit Breakers &
-Romex)
+  - Electrical (SBrkr Standard Circuit Breakers & Romex)
 
-### Set ordered factor values
+### set ordinal factors
 
 ``` r
-# train$Neighborhood <- ordered(train$Neighborhood, levels = c("Low", "Medium", "High"))
-# test$Neighborhood <- ordered(test$Neighborhood, levels = c("Low", "Medium", "High"))
+# Reduce Neighborhood into 3 categories
+# train %>%
+#   group_by(MSSubClass) %>%
+#   summarise(mean = mean(log(SalePrice)), n = n()) %>%
+#   arrange(mean)
 
+# Remove utilities from dataframe as it doesn't have enough observations in the 2 levels
+# Remove Basement Condition as it is highly correlated to Basement Quality
+train = subset(train, select = -c(Utilities, BsmtCond, GarageCond) )
+test = subset(test, select = -c(Utilities, BsmtCond, GarageCond) )
+
+# train$MSSubClass <- dplyr::recode(train$MSSubClass, `30` = 1L, `180` = 2L, `45` = 3L, `190` = 4L, `90` = 5L, `160` = 6L, `50` = 7L, `40` = 8L, `85` = 9L, `70` = 10L,
+#                                  `80` = 11L, `20` = 12L, `75` = 13L, `120` = 14L, `60` = 15L, `150` = 7L)
+#  
+# test$MSSubClass <- dplyr::recode(test$MSSubClass, `30` = 1L, `180` = 2L, `45` = 3L, `190` = 4L, `90` = 5L, `160` = 6L, `50` = 7L, `40` = 8L, `85` = 9L, `70` = 10L,
+#                                   `80` = 11L, `20` = 12L, `75` = 13L, `120` = 14L, `60` = 15L, `150` = 7L)
+
+
+train$MSSubClass <- dplyr::recode(train$MSSubClass, `30` = "30F", `180` = "180F", `45` = "45F", `190` = "190F",
+                                  `90` = "190F", `160` = "160F", `50` = "50F", `40` = "40F", `85` = "85F", `70` = "70F",
+                                 `80` = "80F", `20` = "20F", `75` = "75F", `120` = "120F", `60` = "60F", `150` = "75F")
+
+test$MSSubClass <- dplyr::recode(test$MSSubClass, `30` = "30F", `180` = "180F", `45` = "45F", `190` = "190F",
+                                  `90` = "190F", `160` = "160F", `50` = "50F", `40` = "40F", `85` = "85F", `70` = "70F",
+                                 `80` = "80F", `20` = "20F", `75` = "75F", `120` = "120F", `60` = "60F", `150` = "75F")
+
+
+train$MSSubClass <- as.factor(train$MSSubClass)
+test$MSSubClass <- as.factor(test$MSSubClass)
+
+
+train$BsmtQual <- dplyr::recode(train$BsmtQual, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+test$BsmtQual <- dplyr::recode(test$BsmtQual, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+
+# train$BsmtCond <- dplyr::recode(train$BsmtCond, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+# test$BsmtCond <- dplyr::recode(test$BsmtCond, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+
+
+train$GarageQual <- dplyr::recode(train$GarageQual, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+test$GarageQual <- dplyr::recode(test$GarageQual, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+
+
+# train$GarageCond <- dplyr::recode(train$GarageCond, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+# test$GarageCond <- dplyr::recode(test$GarageCond, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+
+
+train$PoolQC <- dplyr::recode(train$PoolQC, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+test$PoolQC <- dplyr::recode(test$PoolQC, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+
+
+train$FireplaceQu <- dplyr::recode(train$FireplaceQu, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+test$FireplaceQu <- dplyr::recode(test$FireplaceQu, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+
+
+train$BsmtFinType1 <- dplyr::recode(train$BsmtFinType1, 'None' = 0, 'Unf' = 1, 'LwQ' = 2, 'Rec' = 3, 'BLQ' = 4, 'ALQ' = 5, 'GLQ' = 6)
+test$BsmtFinType1 <- dplyr::recode(test$BsmtFinType1, 'None' = 0, 'Unf' = 1, 'LwQ' = 2, 'Rec' = 3, 'BLQ' = 4, 'ALQ' = 5, 'GLQ' = 6)
+
+
+train$BsmtFinType2 <- dplyr::recode(train$BsmtFinType2, 'None' = 0, 'Unf' = 1, 'LwQ' = 2, 'Rec' = 3, 'BLQ' = 4, 'ALQ' = 5, 'GLQ' = 6)
+test$BsmtFinType2 <- dplyr::recode(test$BsmtFinType2, 'None' = 0, 'Unf' = 1, 'LwQ' = 2, 'Rec' = 3, 'BLQ' = 4, 'ALQ' = 5, 'GLQ' = 6)
+```
+
+### Set normal factor variables
+
+``` r
 train$MSZoning <- ordered(train$MSZoning, levels = c("C (all)", "RM", "RH", "RL", "FV"))
 test$MSZoning <- ordered(test$MSZoning, levels = c("C (all)", "RM", "RH", "RL", "FV"))
 
@@ -179,7 +195,6 @@ test$Street <- ordered(test$Street, levels = c("Grvl", "Pave"))
 train$LotShape <- ordered(train$LotShape, levels = c("Reg", "IR1", "IR2", "IR3"))
 test$LotShape <- ordered(test$LotShape, levels = c("Reg", "IR1", "IR2", "IR3"))
 
-
 train$LandContour <- ordered(train$LandContour, levels = c("Bnk", "Lvl", "Low", "HLS"))
 test$LandContour <- ordered(test$LandContour, levels = c("Bnk", "Lvl", "Low", "HLS"))
 
@@ -188,7 +203,6 @@ test$LotConfig <- ordered(test$LotConfig, levels = c("Inside", "Corner", "CulDSa
 
 train$LandSlope <- ordered(train$LandSlope, levels = c("Gtl", "Mod", "Sev"))
 test$LandSlope <- ordered(test$LandSlope, levels = c("Gtl", "Mod", "Sev"))
-
 
 train$Condition1 <- ordered(train$Condition1, levels = c("Artery", "Feedr", "RRAe", "Norm", "RRAn", "RRNe", "RRNn", "PosA", "PosN"))
 test$Condition1 <- ordered(test$Condition1, levels = c("Artery", "Feedr", "RRAe", "Norm", "RRAn", "RRNe", "RRNn", "PosA", "PosN"))
@@ -202,38 +216,15 @@ test$Alley <- ordered(test$Alley, levels = c("None", "Grvl", "Pave"))
 train$MasVnrType <- ordered(train$MasVnrType, levels = c("None", "CBlock", "BrkFace", "BrkCmn", "Stone"))
 test$MasVnrType <- ordered(test$MasVnrType, levels = c("None", "CBlock", "BrkFace", "BrkCmn", "Stone"))
 
-train$BsmtQual <- ordered(train$BsmtQual, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
-test$BsmtQual <- ordered(test$BsmtQual, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
-
-train$BsmtCond <- ordered(train$BsmtCond, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
-test$BsmtCond <- ordered(test$BsmtCond, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
-
 # train$BsmtExposure <- ordered(train$BsmtExposure, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
 # test$BsmtExposure <- ordered(test$BsmtExposure, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
 
-train$BsmtFinType1 <- ordered(train$BsmtFinType1, levels = c("None", "Unf", "LwQ", "Rec", "BLQ", "ALQ", "GLQ"))
-test$BsmtFinType1 <- ordered(test$BsmtFinType1, levels = c("None", "Unf", "LwQ", "Rec", "BLQ", "ALQ", "GLQ"))
-
-train$BsmtFinType2 <- ordered(train$BsmtFinType2, levels = c("None", "Unf", "LwQ", "Rec", "BLQ", "ALQ", "GLQ"))
-test$BsmtFinType2 <- ordered(test$BsmtFinType2, levels = c("None", "Unf", "LwQ", "Rec", "BLQ", "ALQ", "GLQ"))
-
-train$FireplaceQu <- ordered(train$FireplaceQu, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
-test$FireplaceQu <- ordered(test$FireplaceQu, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
 
 train$GarageType <- ordered(train$GarageType, levels = c("None", "CarPort", "2Types", "Basment", "Detchd", "Attchd", "BuiltIn"))
 test$GarageType <- ordered(test$GarageType, levels = c("None", "CarPort", "2Types", "Basment", "Detchd", "Attchd", "BuiltIn"))
 
 train$GarageFinish <- ordered(train$GarageFinish, levels = c("None", "Unf", "RFn", "Fin"))
 test$GarageFinish <- ordered(test$GarageFinish, levels = c("None", "Unf", "RFn", "Fin"))
-
-train$GarageQual <- ordered(train$GarageQual, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
-test$GarageQual <- ordered(test$GarageQual, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
-
-train$GarageCond <- ordered(train$GarageCond, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
-test$GarageCond <- ordered(test$GarageCond, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
-
-train$PoolQC <- ordered(train$PoolQC, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
-test$PoolQC <- ordered(test$PoolQC, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
 
 train$Fence <- ordered(train$Fence, levels = c("None", "MnWw", "GdWo", "MnPrv", "GdPrv"))
 test$Fence <- ordered(test$Fence, levels = c("None", "MnWw", "GdWo", "MnPrv", "GdPrv"))
@@ -323,7 +314,7 @@ sales.price.cor %>%
   arrange(desc(SalePrice))
 ```
 
-    ## # A tibble: 37 x 2
+    ## # A tibble: 42 x 2
     ##    rowname      SalePrice
     ##    <chr>            <dbl>
     ##  1 OverallQual      0.791
@@ -332,16 +323,26 @@ sales.price.cor %>%
     ##  4 GarageArea       0.623
     ##  5 TotalBsmtSF      0.614
     ##  6 1stFlrSF         0.606
-    ##  7 FullBath         0.561
-    ##  8 TotRmsAbvGrd     0.534
-    ##  9 YearBuilt        0.523
-    ## 10 YearRemodAdd     0.507
-    ## # ... with 27 more rows
+    ##  7 BsmtQual         0.585
+    ##  8 FullBath         0.561
+    ##  9 TotRmsAbvGrd     0.534
+    ## 10 YearBuilt        0.523
+    ## # ... with 32 more rows
 
 #### base model
 
 ``` r
-# model.formula <- log(SalePrice) ~ OverallQual + GrLivArea + GarageCars + TotalBsmtSF + YearBuilt +YearRemodAdd + Fireplaces + GrLivArea:Neighborhood + as.factor(BldgType)
+model.formula <- log(SalePrice) ~ MSSubClass + MSZoning + LotFrontage + 
+    LotArea + Street + LotConfig + LandSlope + Neighborhood + 
+    Condition1 + Condition2 + OverallQual + OverallCond + YearBuilt + 
+    YearRemodAdd + RoofMatl + Exterior1st + MasVnrArea + ExterCond + 
+    Foundation + BsmtExposure + BsmtFinType1 + BsmtFinSF1 + BsmtFinSF2 + 
+    BsmtUnfSF + Heating + HeatingQC + CentralAir + `1stFlrSF` + 
+    `2ndFlrSF` + LowQualFinSF + BsmtFullBath + FullBath + HalfBath + 
+    KitchenAbvGr + KitchenQual + Functional + Fireplaces + GarageYrBlt + 
+    GarageCars + GarageArea + GarageQual + WoodDeckSF + OpenPorchSF + 
+    EnclosedPorch + `3SsnPorch` + ScreenPorch + PoolArea + SaleType + 
+    SaleCondition
 
 # model.formula <- log(SalePrice) ~ MSZoning + LotFrontage + LotArea +
 #     Street + LotConfig + LandSlope + 
@@ -369,29 +370,19 @@ sales.price.cor %>%
 
 ## backward model ##
 
-# model.formula <- log(SalePrice) ~ MSZoning + LotFrontage + LotArea +
-#     Street + LotConfig + LandSlope + Neighborhood + Condition1 +
-#     Condition2 + BldgType + OverallQual + OverallCond + YearBuilt +
-#     YearRemodAdd + RoofMatl + Exterior1st + ExterCond + Foundation +
-#     BsmtQual + BsmtExposure + BsmtFinSF1 + BsmtFinSF2 + BsmtUnfSF +
-#     Heating + HeatingQC + CentralAir + `1stFlrSF` + `2ndFlrSF` +
-#     LowQualFinSF + BsmtFullBath + FullBath + HalfBath + KitchenAbvGr +
-#     KitchenQual + TotRmsAbvGrd + Functional + Fireplaces + GarageYrBlt +
-#     GarageCars + GarageArea + GarageQual + GarageCond + WoodDeckSF +
-#     EnclosedPorch + `3SsnPorch` + ScreenPorch + PoolArea + PoolQC +
-#     SaleType + SaleCondition
+# model.formula <- log(SalePrice) ~ MSSubClass + MSZoning + LotFrontage + 
+#     LotArea + Street + LotConfig + LandSlope + Neighborhood + 
+#     Condition1 + Condition2 + OverallQual + OverallCond + YearBuilt + 
+#     YearRemodAdd + RoofMatl + Exterior1st + MasVnrArea + ExterCond + 
+#     Foundation + BsmtExposure + BsmtFinType1 + BsmtFinSF1 + BsmtFinSF2 + 
+#     BsmtUnfSF + Heating + HeatingQC + CentralAir + `1stFlrSF` + 
+#     `2ndFlrSF` + LowQualFinSF + BsmtFullBath + FullBath + HalfBath + 
+#     KitchenAbvGr + KitchenQual + Functional + Fireplaces + GarageYrBlt + 
+#     GarageCars + GarageArea + GarageQual + WoodDeckSF + OpenPorchSF + 
+#     EnclosedPorch + `3SsnPorch` + ScreenPorch + PoolArea + SaleType + 
+#     SaleCondition
 
 
-model.formula <- log(SalePrice) ~ MSZoning + LotFrontage + LotArea + 
-    Street + LotConfig + LandSlope + Neighborhood + Condition1 + 
-    Condition2 + BldgType + OverallQual + OverallCond + YearBuilt + 
-    YearRemodAdd + RoofMatl + Exterior1st + Foundation + BsmtQual + 
-    BsmtExposure + BsmtFinSF1 + BsmtFinSF2 + BsmtUnfSF + Heating + 
-    HeatingQC + CentralAir + `1stFlrSF` + `2ndFlrSF` + LowQualFinSF + 
-    BsmtFullBath + FullBath + HalfBath + KitchenAbvGr + KitchenQual + 
-    Functional + Fireplaces + GarageCars + GarageArea + GarageCond + 
-    WoodDeckSF + EnclosedPorch + `3SsnPorch` + ScreenPorch + 
-    PoolArea + PoolQC + SaleType + SaleCondition
 
 ## stepwise model ##
 
@@ -408,16 +399,15 @@ model.formula <- log(SalePrice) ~ MSZoning + LotFrontage + LotArea +
 
 
 # Remove utilities from dataframe as it doesn't have enough observations in the 2 levels
-dat <- subset(train, select = -c(Utilities, Id) )
+# dat <- subset(train, select = -c(Utilities, Id) )
 
-# dat <- na.omit(dat)
 
 base.model <- lm(model.formula,
                data = train)
 
-fit1 <- lm(log(SalePrice) ~ ., data=dat)
+fit1 <- lm(log(SalePrice) ~ ., data=train)
 
-fit2 <- lm(log(SalePrice) ~ 1, data=dat)
+fit2 <- lm(log(SalePrice) ~ 1, data=train)
 
 # summary(fit1)
 ```
@@ -442,27 +432,18 @@ fit2 <- lm(log(SalePrice) ~ 1, data=dat)
     
     ## Warning in predict.lm(modelFit, newdata): prediction from a rank-deficient
     ## fit may be misleading
-    
-    ## Warning in predict.lm(modelFit, newdata): prediction from a rank-deficient
-    ## fit may be misleading
-    
-    ## Warning in predict.lm(modelFit, newdata): prediction from a rank-deficient
-    ## fit may be misleading
-    
-    ## Warning in predict.lm(modelFit, newdata): prediction from a rank-deficient
-    ## fit may be misleading
 
     ## Linear Regression 
     ## 
     ## 1460 samples
-    ##   46 predictor
+    ##   49 predictor
     ## 
     ## No pre-processing
     ## Resampling: Cross-Validated (10 fold) 
-    ## Summary of sample sizes: 1315, 1314, 1315, 1314, 1314, 1314, ... 
+    ## Summary of sample sizes: 1315, 1312, 1314, 1314, 1314, 1315, ... 
     ## Resampling results:
     ## 
     ##   RMSE       Rsquared   MAE       
-    ##   0.1783295  0.8177431  0.09065102
+    ##   0.1865735  0.7926647  0.08984226
     ## 
     ## Tuning parameter 'intercept' was held constant at a value of TRUE
