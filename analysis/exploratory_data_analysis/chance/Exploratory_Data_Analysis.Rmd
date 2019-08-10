@@ -32,6 +32,26 @@ library(caret)
 source('../../helper/data_munging.R')
 ```
 
+```{r cv}
+' Calculates PRESS from `caret` CV model
+#'
+#' @param model.cv Calculates press from a model 
+#' produced by `caret`
+#'
+PRESS.cv <- function(model.cv) {
+  meanN <- 0
+  folds <- model.cv$control$index
+  for (i in seq(1:length(folds))){
+    meanN <- meanN + length(folds[[i]])
+  }
+  meanN <- meanN / length(folds)
+  meanN * ((model.cv$results$RMSE)^2)
+}
+
+```
+
+
+
 # Exploratory Analysis
 
 ### Load the data into R
@@ -41,8 +61,6 @@ train <- read_csv('../../data/train.csv')
 test <- read_csv('../../data/test.csv')
 
 ```
-
-
 
 
 ## Data Cleaning
@@ -77,84 +95,6 @@ train %>%
   summarise(mean = mean(log(SalePrice)), n = n()) %>%
   arrange(desc(mean))
 
-# neighborhood_high <- c('NoRidge', 'NridgHt', 'StoneBr', 'Timber', 'Veenker', 'Somerst', 'ClearCr', 'Crawfor', 'Blmngtn', 'CollgCr')
-# 
-# neighborhood_medium <- c('Gilbert', 'NWAmes', 'SawyerW', 'Mitchel', 'NAmes', 'NPkVill', 'SWISU', 'Blueste', 'Sawyer', 'Edwards')
-# 
-# neighborhood_low <- c('OldTown', 'BrkSide', 'BrDale', 'MeadowV', 'IDOTRR')
-# 
-# train$Neighborhood <- case_when(train$Neighborhood %in% c('NoRidge', 'NridgHt', 'StoneBr', 'Timber', 'Veenker', 'Somerst', 'ClearCr', 'Crawfor', 'Blmngtn', 'CollgCr') ~ 'High',
-#                train$Neighborhood %in% c('Gilbert', 'NWAmes', 'SawyerW', 'Mitchel', 'NAmes', 'NPkVill', 'SWISU', 'Blueste', 'Sawyer', 'Edwards') ~ 'Medium',
-#                train$Neighborhood %in% c('OldTown', 'BrkSide', 'BrDale', 'MeadowV', 'IDOTRR') ~ 'Low')
-# 
-# 
-# test$Neighborhood <- case_when(test$Neighborhood %in% c('NoRidge', 'NridgHt', 'StoneBr', 'Timber', 'Veenker', 'Somerst', 'ClearCr', 'Crawfor', 'Blmngtn', 'CollgCr') ~ 'High',
-#                test$Neighborhood %in% c('Gilbert', 'NWAmes', 'SawyerW', 'Mitchel', 'NAmes', 'NPkVill', 'SWISU', 'Blueste', 'Sawyer', 'Edwards') ~ 'Medium',
-#                test$Neighborhood %in% c('OldTown', 'BrkSide', 'BrDale', 'MeadowV', 'IDOTRR') ~ 'Low')
-
-
-
-# modelMatrix <- model.matrix(~Neighborhood - 1, data = train)
-# modelData <- data.frame(train, modelMatrix)
-
-
-
-# class(train$Neighborhood)
-# 
-# table(train$Neighborhood)
-# 
-# levels(train$Neighborhood)
-
-
-```
-
-
-```{r MSSubClass}
-# Reduce Neighborhood into 3 categories
-# train %>% 
-#   group_by(MSSubClass) %>%
-#   summarise(mean = mean(log(SalePrice)), n = n()) %>%
-#   arrange(mean)
-# 
-# 
-# 
-# train$MSSubClass <- dplyr::recode(train$MSSubClass, `30` = 1L, `180` = 2L, `45` = 3L, `190` = 4L, `90` = 5L, `160` = 6L, `50` = 7L, `40` = 8L, `85` = 9L, `70` = 10L,
-#                                 `80` = 11L, `20` = 12L, `75` = 13L, `120` = 14L, `60` = 15L, `150` = 7L)
-# 
-# 
-# test$MSSubClass <- dplyr::recode(test$MSSubClass, `30` = 1L, `180` = 2L, `45` = 3L, `190` = 4L, `90` = 5L, `160` = 6L, `50` = 7L, `40` = 8L, `85` = 9L, `70` = 10L,
-#                                 `80` = 11L, `20` = 12L, `75` = 13L, `120` = 14L, `60` = 15L, `150` = 7L)
-# 
-# test %>% 
-#   group_by(MSSubClass) %>%
-#   summarise(n = n()) %>%
-#   arrange(n)
-# 
-# 
-# train$MSSubClass <- as.factor(train$MSSubClass)
-# levels(train$MSSubClass)
-# 
-# test$MSSubClass <- as.factor(test$MSSubClass)
-# levels(test$MSSubClass)
-
-# 
-# train %>% 
-#   group_by(MSSubClass) %>%
-#   summarise(mean = mean(log(SalePrice)), n = n()) %>%
-#   arrange(mean)
-# 
-# 
-# test$MSSubClass <- plyr::mapvalues(test$MSSubClass, from = c(30, 180, 45, 190, 90, 160, 50, 40, 85, 70, 80, 20, 75, 120, 60), 
-#                                                   to = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15))
-# 
-# 
-# # train$MSSubClass <- ordered(train$MSSubClass, c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15))
-# 
-# 
-# # 
-# class(train$MSSubClass)
-
-
 
 ```
 
@@ -164,7 +104,7 @@ train %>%
 - Alley 
 - MasVnrType
 - BsmtQual 
-- BsmtCond
+- BsmtCond      (Removed)
 - BsmtExposure
 - BsmtFinType1
 - BsmtFinType2
@@ -172,7 +112,7 @@ train %>%
 - GarageType
 - GarageFinish
 - GarageQual
-- GarageCond
+- GarageCond    (Removed)
 - PoolQC 
 - Fence
 - MiscFeature
@@ -232,17 +172,8 @@ test$Electrical[is.na(test$Electrical)] <- 'SBrkr'
 train$BsmtExposure[is.na(train$BsmtExposure)] <- 'None'
 test$BsmtExposure[is.na(test$BsmtExposure)] <- 'None'
 
-
-train$Utilities <- as.factor(train$Utilities)
-test$Utilities <- as.factor(test$Utilities)
-
-
 train$Neighborhood <- as.factor(train$Neighborhood)
 test$Neighborhood <- as.factor(test$Neighborhood)
-
-
-
-
 
 train$BldgType <- as.factor(train$BldgType)
 test$BldgType <- as.factor(test$BldgType)
@@ -292,21 +223,114 @@ test$PavedDrive <- as.factor(test$PavedDrive)
 train$SaleType <- as.factor(train$SaleType)
 test$SaleType <- as.factor(test$SaleType)
 
-train$BsmtExposure <- as.factor(train$BsmtExposure)
-test$BsmtExposure <- as.factor(test$BsmtExposure)
 
+train$Utilities <- as.factor(train$Utilities)
+test$Utilities <- as.factor(test$Utilities)
 
 ```
 
-### Set ordered factor values
+
+### set ordinal factors
+
+```{r MSSubClass}
+# Reduce Neighborhood into 3 categories
+# train %>%
+#   group_by(MSSubClass) %>%
+#   summarise(mean = mean(log(SalePrice)), n = n()) %>%
+#   arrange(mean)
+
+
+# Remove Basement Condition as it is highly correlated to Basement Quality
+# train = subset(train, select = -c(Utilities, BsmtCond, GarageCond) )
+# test = subset(test, select = -c(Utilities, BsmtCond, GarageCond) )
+
+# Remove utilities from dataframe as it doesn't have enough observations in the 2 levels
+train = subset(train, select = -c(Utilities ) )
+test = subset(test, select = -c(Utilities ) )
+
+########################################################################################################################################################################
+
+# train$MSSubClass <- dplyr::recode(train$MSSubClass, `30` = 1L, `180` = 2L, `45` = 3L, `190` = 4L, `90` = 5L, `160` = 6L, `50` = 7L, `40` = 8L, `85` = 9L, `70` = 10L,
+#                                  `80` = 11L, `20` = 12L, `75` = 13L, `120` = 14L, `60` = 15L, `150` = 7L)
+#  
+# test$MSSubClass <- dplyr::recode(test$MSSubClass, `30` = 1L, `180` = 2L, `45` = 3L, `190` = 4L, `90` = 5L, `160` = 6L, `50` = 7L, `40` = 8L, `85` = 9L, `70` = 10L,
+#                                   `80` = 11L, `20` = 12L, `75` = 13L, `120` = 14L, `60` = 15L, `150` = 7L)
+
+
+train$MSSubClass <- dplyr::recode(train$MSSubClass, `30` = "30F", `180` = "180F", `45` = "45F", `190` = "190F",
+                                  `90` = "190F", `160` = "160F", `50` = "50F", `40` = "40F", `85` = "85F", `70` = "70F",
+                                 `80` = "80F", `20` = "20F", `75` = "75F", `120` = "120F", `60` = "60F", `150` = "75F")
+
+test$MSSubClass <- dplyr::recode(test$MSSubClass, `30` = "30F", `180` = "180F", `45` = "45F", `190` = "190F",
+                                  `90` = "190F", `160` = "160F", `50` = "50F", `40` = "40F", `85` = "85F", `70` = "70F",
+                                 `80` = "80F", `20` = "20F", `75` = "75F", `120` = "120F", `60` = "60F", `150` = "75F")
+
+
+train$MSSubClass <- as.factor(train$MSSubClass)
+test$MSSubClass <- as.factor(test$MSSubClass)
+
+
+########################################################################################################################################################################
+train$GarageQual <- dplyr::recode(train$GarageQual, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+test$GarageQual <- dplyr::recode(test$GarageQual, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+
+train$GarageFinish <- dplyr::recode(train$GarageFinish, 'None' = 0, 'Unf' = 1, 'RFn' = 2, 'Fin' = 3)
+test$GarageFinish <- dplyr::recode(test$GarageFinish, 'None' = 0, 'Unf' = 1, 'RFn' = 2, 'Fin' = 3)
+
+train$GarageType <- dplyr::recode(train$GarageType, 'None' = 0, 'CarPort' = 1, '2Types' = 2, 'Basment' = 3, 'Detchd' = 4, 'Attchd' = 5, 'BuiltIn' = 6)
+test$GarageType <- dplyr::recode(test$GarageType, 'None' = 0, 'CarPort' = 1, '2Types' = 2, 'Basment' = 3, 'Detchd' = 4, 'Attchd' = 5, 'BuiltIn' = 6)
+
+
+train$GarageCond <- dplyr::recode(train$GarageCond, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+test$GarageCond <- dplyr::recode(test$GarageCond, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+
+########################################################################################################################################################################
+
+
+train$BsmtQual <- dplyr::recode(train$BsmtQual, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+test$BsmtQual <- dplyr::recode(test$BsmtQual, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+
+train$BsmtCond <- dplyr::recode(train$BsmtCond, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+test$BsmtCond <- dplyr::recode(test$BsmtCond, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+
+
+train$BsmtFinType1 <- dplyr::recode(train$BsmtFinType1, 'None' = 0, 'Unf' = 1, 'LwQ' = 2, 'Rec' = 3, 'BLQ' = 4, 'ALQ' = 5, 'GLQ' = 6)
+test$BsmtFinType1 <- dplyr::recode(test$BsmtFinType1, 'None' = 0, 'Unf' = 1, 'LwQ' = 2, 'Rec' = 3, 'BLQ' = 4, 'ALQ' = 5, 'GLQ' = 6)
+
+
+train$BsmtFinType2 <- dplyr::recode(train$BsmtFinType2, 'None' = 0, 'Unf' = 1, 'LwQ' = 2, 'Rec' = 3, 'BLQ' = 4, 'ALQ' = 5, 'GLQ' = 6)
+test$BsmtFinType2 <- dplyr::recode(test$BsmtFinType2, 'None' = 0, 'Unf' = 1, 'LwQ' = 2, 'Rec' = 3, 'BLQ' = 4, 'ALQ' = 5, 'GLQ' = 6)
+
+
+train$BsmtExposure <- dplyr::recode(train$BsmtExposure, 'None' = 0, 'No' = 1, 'Mn' = 2, 'Av' = 3, 'Gd' = 4)
+test$BsmtExposure <- dplyr::recode(test$BsmtExposure, 'None' = 0, 'No' = 1, 'Mn' = 2, 'Av' = 3, 'Gd' = 4)
+########################################################################################################################################################################
+
+train$LandSlope <- dplyr::recode(train$LandSlope, 'Sev' = 0, 'Mod' = 1, 'Gtl' = 2)
+test$LandSlope <- dplyr::recode(test$LandSlope, 'Sev' = 0, 'Mod' = 1, 'Gtl' = 2)
+
+
+train$MSZoning <- dplyr::recode(train$MSZoning, 'C (all)' = 0, 'RM' = 1, 'RH' = 2, 'RL' = 3, 'FV' = 4)
+test$MSZoning <- dplyr::recode(test$MSZoning, 'C (all)' = 0, 'RM' = 1, 'RH' = 2, 'RL' = 3, 'FV' = 4)
+
+
+train$PoolQC <- dplyr::recode(train$PoolQC, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+test$PoolQC <- dplyr::recode(test$PoolQC, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+
+
+train$FireplaceQu <- dplyr::recode(train$FireplaceQu, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+test$FireplaceQu <- dplyr::recode(test$FireplaceQu, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+
+########################################################################################################################################################################
+
+```
+
+
+
+
+### Set normal factor variables
 ```{r non_numeric_factors}
 
-
-# train$Neighborhood <- ordered(train$Neighborhood, levels = c("Low", "Medium", "High"))
-# test$Neighborhood <- ordered(test$Neighborhood, levels = c("Low", "Medium", "High"))
-
-train$MSZoning <- ordered(train$MSZoning, levels = c("C (all)", "RM", "RH", "RL", "FV"))
-test$MSZoning <- ordered(test$MSZoning, levels = c("C (all)", "RM", "RH", "RL", "FV"))
 
 train$Street <- ordered(train$Street, levels = c("Grvl", "Pave"))
 test$Street <- ordered(test$Street, levels = c("Grvl", "Pave"))
@@ -314,16 +338,11 @@ test$Street <- ordered(test$Street, levels = c("Grvl", "Pave"))
 train$LotShape <- ordered(train$LotShape, levels = c("Reg", "IR1", "IR2", "IR3"))
 test$LotShape <- ordered(test$LotShape, levels = c("Reg", "IR1", "IR2", "IR3"))
 
-
 train$LandContour <- ordered(train$LandContour, levels = c("Bnk", "Lvl", "Low", "HLS"))
 test$LandContour <- ordered(test$LandContour, levels = c("Bnk", "Lvl", "Low", "HLS"))
 
 train$LotConfig <- ordered(train$LotConfig, levels = c("Inside", "Corner", "CulDSac", "FR2", "FR3"))
 test$LotConfig <- ordered(test$LotConfig, levels = c("Inside", "Corner", "CulDSac", "FR2", "FR3"))
-
-train$LandSlope <- ordered(train$LandSlope, levels = c("Gtl", "Mod", "Sev"))
-test$LandSlope <- ordered(test$LandSlope, levels = c("Gtl", "Mod", "Sev"))
-
 
 train$Condition1 <- ordered(train$Condition1, levels = c("Artery", "Feedr", "RRAe", "Norm", "RRAn", "RRNe", "RRNn", "PosA", "PosN"))
 test$Condition1 <- ordered(test$Condition1, levels = c("Artery", "Feedr", "RRAe", "Norm", "RRAn", "RRNe", "RRNn", "PosA", "PosN"))
@@ -338,40 +357,6 @@ train$MasVnrType <- ordered(train$MasVnrType, levels = c("None", "CBlock", "BrkF
 test$MasVnrType <- ordered(test$MasVnrType, levels = c("None", "CBlock", "BrkFace", "BrkCmn", "Stone"))
 
 
-train$BsmtQual <- ordered(train$BsmtQual, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
-test$BsmtQual <- ordered(test$BsmtQual, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
-
-train$BsmtCond <- ordered(train$BsmtCond, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
-test$BsmtCond <- ordered(test$BsmtCond, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
-
-# train$BsmtExposure <- ordered(train$BsmtExposure, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
-# test$BsmtExposure <- ordered(test$BsmtExposure, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
-
-
-train$BsmtFinType1 <- ordered(train$BsmtFinType1, levels = c("None", "Unf", "LwQ", "Rec", "BLQ", "ALQ", "GLQ"))
-test$BsmtFinType1 <- ordered(test$BsmtFinType1, levels = c("None", "Unf", "LwQ", "Rec", "BLQ", "ALQ", "GLQ"))
-
-train$BsmtFinType2 <- ordered(train$BsmtFinType2, levels = c("None", "Unf", "LwQ", "Rec", "BLQ", "ALQ", "GLQ"))
-test$BsmtFinType2 <- ordered(test$BsmtFinType2, levels = c("None", "Unf", "LwQ", "Rec", "BLQ", "ALQ", "GLQ"))
-
-train$FireplaceQu <- ordered(train$FireplaceQu, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
-test$FireplaceQu <- ordered(test$FireplaceQu, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
-
-train$GarageType <- ordered(train$GarageType, levels = c("None", "CarPort", "2Types", "Basment", "Detchd", "Attchd", "BuiltIn"))
-test$GarageType <- ordered(test$GarageType, levels = c("None", "CarPort", "2Types", "Basment", "Detchd", "Attchd", "BuiltIn"))
-
-train$GarageFinish <- ordered(train$GarageFinish, levels = c("None", "Unf", "RFn", "Fin"))
-test$GarageFinish <- ordered(test$GarageFinish, levels = c("None", "Unf", "RFn", "Fin"))
-
-train$GarageQual <- ordered(train$GarageQual, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
-test$GarageQual <- ordered(test$GarageQual, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
-
-train$GarageCond <- ordered(train$GarageCond, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
-test$GarageCond <- ordered(test$GarageCond, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
-
-train$PoolQC <- ordered(train$PoolQC, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
-test$PoolQC <- ordered(test$PoolQC, levels = c("None", "Po", "Fa", "TA", "Gd", "Ex"))
-
 train$Fence <- ordered(train$Fence, levels = c("None", "MnWw", "GdWo", "MnPrv", "GdPrv"))
 test$Fence <- ordered(test$Fence, levels = c("None", "MnWw", "GdWo", "MnPrv", "GdPrv"))
 
@@ -380,7 +365,6 @@ test$Electrical <- ordered(test$Electrical, levels = c("Mix", "FuseP", "FuseF", 
 
 train$MiscFeature <- ordered(train$MiscFeature, levels = c("None", "Othr", "Shed", "Gar2", "TenC"))
 test$MiscFeature <- ordered(test$MiscFeature, levels = c("None", "Othr", "Shed", "Gar2", "TenC"))
-
 
 train$SaleCondition <- factor(train$SaleCondition, levels = c("Abnorml", "AdjLand", "Alloca", "Partial", "Family", "Normal"))
 test$SaleCondition <- factor(test$SaleCondition, levels = c("Abnorml", "AdjLand", "Alloca", "Partial", "Family", "Normal"))
@@ -394,10 +378,25 @@ test$BldgType[is.na(test$BldgType)] <- '1Fam'
 ```
 
 
+
+
+```{r}
+# EDA for categorical varialbes
+train %>% ggplot(aes(x = Condition1, y = log(SalePrice))) +
+  geom_point() + geom_smooth(method = 'lm')
+```
+
+
+```{r}
+# remove suspect points from training data
+train <- train %>% filter(GrLivArea < 4000)
+```
+
+
+
 ```{r}
 
 # describe(train)
-
 
 ```
 
@@ -410,15 +409,15 @@ test$BldgType[is.na(test$BldgType)] <- '1Fam'
 
 
 # Bar Chart of Categorical Variable
-ggplot(test) + geom_bar(aes(x = Neighborhood))
+# ggplot(test) + geom_bar(aes(x = Neighborhood))
 
 # Scatterplot of Categroical Variable
-train %>% ggplot(aes(x = Condition2, y = log(SalePrice))) +
-  geom_point() + geom_smooth(method = 'lm')
+# train %>% ggplot(aes(x = Condition2, y = log(SalePrice))) +
+#   geom_point() + geom_smooth(method = 'lm')
 
 # Scatterplot of Categroical Variable
-train %>% ggplot(aes(x = Condition2, y = log(SalePrice))) +
-  geom_boxplot()
+# train %>% ggplot(aes(x = Condition2, y = log(SalePrice))) +
+#   geom_boxplot()
 # 
 # ggplot(train,aes(y=log(SalePrice),x=GrLivArea,color=factor(Neighborhood)))+geom_point()+stat_smooth(method="lm",se=FALSE)
 
@@ -447,145 +446,260 @@ sales.price.cor %>%
 ```
 
 
-#### base model
-```{r model, results='hide', message=FALSE}
+### Model Definitions
 
-model.formula <- log(SalePrice) ~ MSSubClass + MSZoning + LotFrontage + 
-    LotArea + Street + LotConfig + LandSlope + Neighborhood + 
-    Condition1 + Condition2 + OverallQual + 
-    OverallCond + YearBuilt + YearRemodAdd + RoofStyle + RoofMatl + 
-    Foundation + BsmtQual + BsmtCond + 
-    BsmtExposure + BsmtFinSF1 + BsmtFinSF2 + BsmtUnfSF + Heating + 
-    HeatingQC + CentralAir + `1stFlrSF` + `2ndFlrSF` + LowQualFinSF + 
-    BsmtFullBath + FullBath + HalfBath + KitchenAbvGr + KitchenQual + 
-    TotRmsAbvGrd + Functional + Fireplaces + GarageCars + 
-    GarageArea + GarageQual + GarageCond + WoodDeckSF + EnclosedPorch + 
-    ScreenPorch + PoolArea + PoolQC + SaleType + 
-    SaleCondition
+```{r model}
 
-# model.formula <- log(SalePrice) ~ MSZoning + LotFrontage + LotArea +
-#     Street + LotConfig + LandSlope + 
-#     Condition2 + BldgType + OverallQual + OverallCond + YearBuilt +
-#     YearRemodAdd + RoofMatl + Foundation +
-#     BsmtFinSF1 + BsmtFinSF2 + BsmtUnfSF +
-#     HeatingQC + CentralAir + `1stFlrSF` + `2ndFlrSF` +
-#     LowQualFinSF + BsmtFullBath + FullBath + HalfBath + KitchenAbvGr +
-#     KitchenQual + TotRmsAbvGrd + Functional + Fireplaces + GarageYrBlt +
-#     GarageCars + GarageArea + WoodDeckSF +
-#     EnclosedPorch + `3SsnPorch` + ScreenPorch + PoolArea + PoolQC +
-#     SaleType + OverallQual:Neighborhood
+custom.model.formula <- log(SalePrice) ~  OverallQual + GrLivArea + Neighborhood + 
+    BsmtFinSF1 + MSSubClass + OverallCond + YearBuilt + GarageCars + 
+    TotalBsmtSF + SaleCondition + LotArea + MSZoning + Functional + 
+    CentralAir + KitchenQual + Condition1 + FireplaceQu + BsmtExposure + 
+    BsmtFullBath + ScreenPorch + Exterior1st + YearRemodAdd + 
+    GarageQual + WoodDeckSF + OpenPorchSF + Street + LotConfig + 
+    LotFrontage + Foundation + Heating + KitchenAbvGr + EnclosedPorch + 
+    HalfBath + FullBath + MasVnrType + BsmtFinSF2 + HeatingQC + 
+    GarageArea + SaleType + ExterCond + PoolArea + BsmtFinType1 + 
+    GarageYrBlt + Electrical + `3SsnPorch` + LowQualFinSF + MSZoning:Neighborhood + OverallQual:Neighborhood + YearBuilt:Neighborhood 
 
-## forward model ##
-# model.formula <- log(SalePrice) ~ OverallQual + Neighborhood + GrLivArea + 
-#     BsmtFinType1 + GarageCars + OverallCond + RoofMatl + TotalBsmtSF + 
-#     YearBuilt + Condition2 + MSZoning + BsmtUnfSF + SaleCondition + 
-#     Functional + BldgType + CentralAir + LotArea + KitchenQual + 
-#     ScreenPorch + Condition1 + Fireplaces + Heating + BsmtExposure + 
-#     Exterior1st + YearRemodAdd + LandSlope + GarageArea + WoodDeckSF + 
-#     LotConfig + Foundation + LotFrontage + HeatingQC + PoolQC + 
-#     BsmtFullBath + EnclosedPorch + PoolArea + SaleType + HalfBath + 
-#     GarageCond + BsmtQual + FullBath + Street + KitchenAbvGr + 
-#     `3SsnPorch` + GarageQual + ExterCond + GarageYrBlt + TotRmsAbvGrd
+### forward model ###
+fwd.model.formula <- log(SalePrice) ~ OverallQual + GrLivArea + Neighborhood + 
+    BsmtFinSF1 + MSSubClass + OverallCond + YearBuilt + GarageCars + 
+    TotalBsmtSF + SaleCondition + LotArea + MSZoning + Functional + 
+    CentralAir + KitchenQual + Condition1 + FireplaceQu + BsmtExposure + 
+    BsmtFullBath + ScreenPorch + Exterior1st + YearRemodAdd + 
+    GarageQual + WoodDeckSF + OpenPorchSF + Street + LotConfig + 
+    LotFrontage + Foundation + Heating + KitchenAbvGr + EnclosedPorch + 
+    HalfBath + FullBath + MasVnrType + BsmtFinSF2 + HeatingQC + 
+    GarageArea + SaleType + ExterCond + PoolArea + BsmtFinType1 + 
+    GarageYrBlt + Electrical + `3SsnPorch` + LowQualFinSF
 
-## backward model ##
+### backward model ###
 
-# model.formula <- log(SalePrice) ~ MSSubClass + MSZoning + LotFrontage + 
-#     LotArea + Street + LotConfig + LandSlope + Neighborhood + 
-#     Condition1 + Condition2 + BldgType + HouseStyle + OverallQual + 
-#     OverallCond + YearBuilt + YearRemodAdd + RoofStyle + RoofMatl + 
-#     Exterior1st + ExterCond + Foundation + BsmtQual + BsmtCond + 
-#     BsmtExposure + BsmtFinSF1 + BsmtFinSF2 + BsmtUnfSF + Heating + 
-#     HeatingQC + CentralAir + `1stFlrSF` + `2ndFlrSF` + LowQualFinSF + 
-#     BsmtFullBath + FullBath + HalfBath + KitchenAbvGr + KitchenQual + 
-#     TotRmsAbvGrd + Functional + Fireplaces + GarageYrBlt + GarageCars + 
-#     GarageArea + GarageQual + GarageCond + WoodDeckSF + EnclosedPorch + 
-#     `3SsnPorch` + ScreenPorch + PoolArea + PoolQC + SaleType + 
-#     SaleCondition
+bkw.model.formula <- log(SalePrice) ~ MSSubClass + MSZoning + LotFrontage +
+    LotArea + Street + LotConfig + LandSlope + Neighborhood +
+    Condition1 + OverallQual + OverallCond + YearBuilt + YearRemodAdd +
+    RoofMatl + Exterior1st + MasVnrType + ExterCond + Foundation +
+    BsmtExposure + BsmtFinType1 + BsmtFinSF1 + BsmtFinSF2 + BsmtUnfSF +
+    Heating + HeatingQC + CentralAir + Electrical + `1stFlrSF` +
+    `2ndFlrSF` + LowQualFinSF + BsmtFullBath + FullBath + HalfBath +
+    KitchenAbvGr + KitchenQual + Functional + FireplaceQu + GarageYrBlt +
+    GarageCars + GarageArea + GarageQual + WoodDeckSF + OpenPorchSF +
+    EnclosedPorch + ScreenPorch + PoolArea + SaleType + SaleCondition
 
 
-## stepwise model ##
+### stepwise model ###
 
-# model.formula <- log(SalePrice) ~ OverallQual + Neighborhood + GrLivArea + 
-#     GarageCars + OverallCond + RoofMatl + TotalBsmtSF + YearBuilt + 
-#     Condition2 + MSZoning + BsmtUnfSF + SaleCondition + Functional + 
-#     BldgType + CentralAir + LotArea + KitchenQual + ScreenPorch + 
-#     Condition1 + Fireplaces + Heating + BsmtExposure + Exterior1st + 
-#     YearRemodAdd + LandSlope + GarageArea + WoodDeckSF + LotConfig + 
-#     Foundation + LotFrontage + HeatingQC + PoolQC + BsmtFullBath + 
-#     EnclosedPorch + PoolArea + SaleType + BsmtFinSF1 + GarageCond + 
-#     HalfBath + Street + KitchenAbvGr + FullBath + `3SsnPorch` + 
-#     ExterCond + GarageQual
+stw.model.formula <- log(SalePrice) ~ OverallQual + GrLivArea + Neighborhood + 
+    BsmtFinSF1 + MSSubClass + OverallCond + YearBuilt + GarageCars + 
+    TotalBsmtSF + SaleCondition + LotArea + MSZoning + Functional + 
+    CentralAir + KitchenQual + Condition1 + FireplaceQu + BsmtExposure + 
+    BsmtFullBath + ScreenPorch + Exterior1st + YearRemodAdd + 
+    GarageQual + WoodDeckSF + OpenPorchSF + Street + LotConfig + 
+    LotFrontage + Foundation + Heating + KitchenAbvGr + EnclosedPorch + 
+    HalfBath + FullBath + MasVnrType + BsmtFinSF2 + HeatingQC + 
+    GarageArea + SaleType + ExterCond + PoolArea + BsmtFinType1 + 
+    GarageYrBlt + Electrical + `3SsnPorch` + LowQualFinSF
 
 
-# Remove utilities from dataframe as it doesn't have enough observations in the 2 levels
-dat <- subset(train, select = -c(Utilities, Id) )
-
-# dat <- na.omit(dat)
-
-base.model <- lm(model.formula,
+custom.model <- lm(custom.model.formula,
                data = train)
 
-fit1 <- lm(log(SalePrice) ~ ., data=dat)
 
-fit2 <- lm(log(SalePrice) ~ 1, data=dat)
+fwd.model <- lm(fwd.model.formula,
+               data = train)
 
-# summary(fit1)
+bkw.model <- lm(bkw.model.formula,
+               data = train)
+
+stw.model <- lm(stw.model.formula,
+               data = train)
+
+
+# Fit the model with all parameters
+fit1 <- lm(log(SalePrice) ~ ., data=train)
+
+# Fit the model with only 1 parameter
+fit2 <- lm(log(SalePrice) ~ 1, data=train)
+
 
 ```
 
+### Base Model 
 
-```{r submit, results='hide', echo=FALSE, message=FALSE}
+```{r custom_submit, echo=FALSE, message=FALSE}
 
-test$predicted.log.price <- predict.lm(base.model, test)
+test$predicted.log.price <- predict.lm(custom.model, test)
 test$predicted.log.price[is.na(test$predicted.log.price)] <- mean(test$predicted.log.price, na.rm=TRUE)
   
-submit <- test %>%
+custom_submit <- test %>%
   mutate(SalePrice = exp(predicted.log.price)) %>%
   subset(select = c(Id, SalePrice))
 
-# head(submit)
+write.csv(custom_submit, file = "./cwr_kaggle_submission_custom_model.csv", row.names = FALSE)
 
-write.csv(submit, file = "./kaggle_submission.csv", row.names = FALSE)
-
-summary(base.model)
+summary(custom.model)
 ```
 
 
+### Forward Model
 
+```{r forward_submit, echo=FALSE, message=FALSE}
 
-```{r aic, message=FALSE, echo=FALSE, results='hide'}
-# bwd.model <- stepAIC(fit1,direction="backward")
-
-# fwd.model <- stepAIC(fit2,direction="forward",scope=list(upper=fit1,lower=fit2))
-
-# stpwise.model <- stepAIC(fit2,direction="both",scope=list(upper=fit1,lower=fit2))
-
-# 
-# fwd.model$predicted.log.price <- predict.lm(base.model, test)
-# 
-# stpwise.model$predicted.log.price[is.na(test$predicted.log.price)] <- mean(test$predicted.log.price, na.rm=TRUE)
+test$predicted.log.price <- predict.lm(fwd.model, test)
+test$predicted.log.price[is.na(test$predicted.log.price)] <- mean(test$predicted.log.price, na.rm=TRUE)
   
-# submit <- stpwise.model %>%
-#   mutate(SalePrice = exp(predicted.log.price)) %>%
-#   subset(select = c(Id, SalePrice))
+forward_submit <- test %>%
+  mutate(SalePrice = exp(predicted.log.price)) %>%
+  subset(select = c(Id, SalePrice))
 
-# write.csv(submit, file = "./kaggle_submission_forward.csv", row.names = FALSE)
+# write.csv(forward_submit, file = "./cwr_kaggle_submission_forward_model.csv", row.names = FALSE)
 
-# summary(bwd.model)
-
+summary(fwd.model)
 ```
 
-```{r cv, message=FALSE, echo=FALSE}
 
+
+### Backward Model
+
+```{r backward_submit, echo=FALSE, message=FALSE}
+
+test$predicted.log.price <- predict.lm(bkw.model, test)
+test$predicted.log.price[is.na(test$predicted.log.price)] <- mean(test$predicted.log.price, na.rm=TRUE)
+  
+backward_submit <- test %>%
+  mutate(SalePrice = exp(predicted.log.price)) %>%
+  subset(select = c(Id, SalePrice))
+
+# write.csv(backward_submit, file = "./cwr_kaggle_submission_backward_model.csv", row.names = FALSE)
+
+summary(bkw.model)
+```
+
+
+### Stepwise Model
+
+```{r stepwise_submit, echo=FALSE, message=FALSE}
+
+test$predicted.log.price <- predict.lm(stw.model, test)
+test$predicted.log.price[is.na(test$predicted.log.price)] <- mean(test$predicted.log.price, na.rm=TRUE)
+  
+stepwise_submit <- test %>%
+  mutate(SalePrice = exp(predicted.log.price)) %>%
+  subset(select = c(Id, SalePrice))
+
+# write.csv(stepwise_submit, file = "./cwr_kaggle_submission_stepwise_model.csv", row.names = FALSE)
+
+summary(stw.model)
+```
+
+
+## Cross Validation
+
+### Custom Model CV
+
+```{r custom_model_cv, message=FALSE, echo=FALSE, warning=FALSE}
 
 # Set up repeated k-fold cross-validation
 train.control <- trainControl(method = "cv", number = 10)
+
 # Train the model
-model.cv <- train(model.formula, 
+custom.model.cv <- train(custom.model.formula, 
                     data = train,
                     method = 'lm',
                     trControl = train.control)
 
-model.cv
+custom.model.cv
+
+
+# get cross-validated PRESS statistic
+PCV <- PRESS.cv(custom.model.cv)
+PCV
+
 ```
+
+
+### Forward Model CV
+```{r fwd_model_cv, message=FALSE, echo=FALSE, warning=FALSE}
+
+
+# Set up repeated k-fold cross-validation
+train.control <- trainControl(method = "cv", number = 10)
+
+# Train the model
+fwd.model.cv <- train(fwd.model.formula, 
+                    data = train,
+                    method = 'lm',
+                    trControl = train.control)
+
+fwd.model.cv
+
+
+# get cross-validated PRESS statistic
+PCV <- PRESS.cv(fwd.model.cv)
+PCV
+
+```
+
+
+### Backward Model CV
+```{r bkw_model_cv, message=FALSE, echo=FALSE, warning=FALSE}
+
+
+# Set up repeated k-fold cross-validation
+train.control <- trainControl(method = "cv", number = 10)
+
+# Train the model
+bkw.model.cv <- train(bkw.model.formula, 
+                    data = train,
+                    method = 'lm',
+                    trControl = train.control)
+
+bkw.model.cv
+
+# get cross-validated PRESS statistic
+PCV <- PRESS.cv(bkw.model.cv)
+PCV
+
+```
+
+### Stepwise Model CV
+```{r stw_model_cv, message=FALSE, echo=FALSE, warning=FALSE}
+
+
+# Set up repeated k-fold cross-validation
+train.control <- trainControl(method = "cv", number = 10)
+
+# Train the model
+stw.model.cv <- train(stw.model.formula, 
+                    data = train,
+                    method = 'lm',
+                    trControl = train.control)
+
+stw.model.cv
+
+
+# get cross-validated PRESS statistic
+PCV <- PRESS.cv(stw.model.cv)
+PCV
+
+
+```
+
+
+
+
+```{r aic, message=F, echo=F, results='hide'}
+
+### AIC functions for different model types
+
+# bwd.model <- stepAIC(fit1,direction="backward")
+
+# fwd.model <- stepAIC(fit2,direction="forward",scope=list(upper=fit1,lower=fit2))
+
+# stw.model <- stepAIC(fit2,direction="both",scope=list(upper=fit1,lower=fit2))
+
+# summary(stw.model)
+
+```
+
 
