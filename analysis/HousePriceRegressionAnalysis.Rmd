@@ -42,11 +42,7 @@ library(Hmisc)
 
 # set a random seed for repodicibility
 set.seed(123)
-<<<<<<< HEAD
-getwd()
-=======
 
->>>>>>> c9f187e92155c3f398d0d6fd31c68d2d413e7352
 # helper code
 source('./helper/visual.R')
 source('./helper/data_munging.R')
@@ -54,6 +50,8 @@ source('./helper/performance.R')
 
 # load data
 train <- read_csv('./data/train.csv')
+
+# data for analysis 2
 train2 <- read_csv('./data/train.csv')
 test <- read_csv('./data/test.csv')
 
@@ -66,11 +64,10 @@ train <- get.dummies(train, "Neighborhood", reference = 'Edwards')
 
 # remove suspect points from training data
 train.mod <- train %>% filter(GrLivArea < 4000)
+
+# data for analysis 2
 train2 <- train2 %>% filter(GrLivArea < 4000)
 ```
-
-
-
 
 # Introduction
 
@@ -78,7 +75,7 @@ What is the price of a home in Ames, Iowa?  Our inaugural project in the program
 
 # Ames, Iowa Data Set
 
-The Ames, Iowa Data Set describes the sale of individual residential properities from 2006-2010 in Ames, Iowa \cite{Cock}. The data was retreved from the dataset hosting site Kaggle, where it is listed under a machine learning competition named \href{https://www.kaggle.com/c/house-prices-advanced-regression-techniques/overview}{\textit{House Prices: Advanced Regression Techniques}} \cite{Kaggle2016}. The data is comprised of 37 numeric features, 43 non-numeric features and an observation index split between a training set and a testing set, which contain 1460 and 1459 observations, respectively. The response variable (`SalePrice`) is only provided for the training set. The output of a model on the test set can be submitted to the Kaggle competition for scoring the performance of the model in terms of RMSE. The first analysis models property sale prices (`SalePrice`) as the response of living room area (`GrLivArea`) of the property and neighborhood (`Neighborhood`) where it is located. **Add some details on the question 2 variables?**
+The Ames, Iowa Data Set describes the sale of individual residential properities from 2006-2010 in Ames, Iowa \cite{Cock}. The data was retreved from the dataset hosting site Kaggle, where it is listed under a machine learning competition named \href{https://www.kaggle.com/c/house-prices-advanced-regression-techniques/overview}{\textit{House Prices: Advanced Regression Techniques}} \cite{Kaggle2016}. The data is comprised of 37 numeric features, 43 non-numeric features and an observation index split between a training set and a testing set, which contain 1460 and 1459 observations, respectively. The response variable (`SalePrice`) is only provided for the training set. The output of a model on the test set can be submitted to the Kaggle competition for scoring the performance of the model in terms of RMSE. The first analysis models property sale prices (`SalePrice`) as the response of living room area (`GrLivArea`) of the property and neighborhood (`Neighborhood`) where it is located. In the second analysis variable selection techniques are used to determine which explanatory varaibles are associated with `SalePrice`.
 
 # Analysis Question I
 
@@ -253,7 +250,6 @@ In response to the analysis commissioned by Century 21, the log transform of pro
 Century 21 has commissioned a second analysis using the same data set, expanded to include as many of the 80 total features, plus the index split, as required to determine the sale price of residential properties across all neighborhoods of Ames, Iowa, beyond only the three - Edwards, Northwest Ames, and Brookside - previously commissioned for analysis.
 
 ## Modeling
-Restatement of Problem
 
 Through analyzing our variable selection and cross-validation processes - along with our nascant domain knowledge of residential real estate - we ultimately arrived at a multiple linear regression model featuring 11 linear predictor variables and two interaction terms. Specifically, our variable selection process included direct analysis of a correlation plot and a correlation matrix as well as performing forward selection, backward elimination, and stepwise regression. 
 
@@ -286,14 +282,12 @@ na_count <- sapply(train2, function(cnt) sum(length(which(is.na(cnt)))))
 
 ```
 
-Type of selection
+**Forward Selection**
 
-Forward Selection
-
-Forward selection is a variable selection methodology that begins with a constant mean and adds explanatory variables one-by-one until no further additonal predictor variables significantly improve the model's fit. This employess the "F-to-enter" method from the extra-sum-of-squares F-statistic. This was the first method we employed. For this process, we provided the test a starting model with no predictor variables and a model from which terms can be selected, which included all predictor variables available. The process worked forward with selecting one parameter. The suggested model is output below.
+Forward selection is a variable selection methodology that begins with a constant mean and adds explanatory variables one-by-one until no further additonal predictor variables significantly improve the model's fit. This employess the "F-to-enter" method from the extra-sum-of-squares F-statistic. This was the first method we employed. For this process, we provided the test a starting model with no predictor variables and a model from which terms can be selected, which included all predictor variables available. The process worked forward with selecting one parameter. The suggested model shown in section \ref{appendix:forSelection}.
 
 
-```{r, echo=T}
+```{r, echo=F, results='hide'}
 # Initial Model - Forward Selection
 model2.forward.Start <- lm(log(SalePrice)~1,data = train2)
 
@@ -341,10 +335,10 @@ final.Forward.Model <- lm(log(SalePrice) ~ OverallQual + GrLivArea + Neighborhoo
 ```
 
 
-Backward Elimination
+**Backward Elimination**
 
-Backward elimination is a variable selection methodology that begins with all possible predictor variables and works backward, eliminating variables using all possible combinations until only the best for the fit are provided. This employess the "F-to-remove" method from the extra-sum-of-squares F-statistic. For this process, we provided the test a model with all available predictor variables from which insignificant variables were eliminated. The output is as follows below.
-```{r, echo=F}
+Backward elimination is a variable selection methodology that begins with all possible predictor variables and works backward, eliminating variables using all possible combinations until only the best for the fit are provided. This employess the "F-to-remove" method from the extra-sum-of-squares F-statistic. For this process, we provided the test a model with all available predictor variables from which insignificant variables were eliminated. The suggested model shown in section \ref{appendix:backSelection}.
+```{r, echo=F, results='hide'}
 # Backward Elimination
 model2.Backward <- stepAIC(model2.Allvar, direction = "backward", trace = F, scope = formula(model2.forward.Start))
 
@@ -371,11 +365,11 @@ final.Backward.Model <- lm(log(SalePrice) ~ MSZoning + LotArea + Street + LotCon
 # model2.final.Backward$anova
 ```
 
-Stepwise Regression
+**Stepwise Regression**
 
-Stepwise regression is a variable selection methodology that performs one step of forward selection for each step of backward elimination. The steps are repeated, concurrently, until no further predictor variables can be added or removed. This is the third model approach we used. The suggested model is output below.
+Stepwise regression is a variable selection methodology that performs one step of forward selection for each step of backward elimination. The steps are repeated, concurrently, until no further predictor variables can be added or removed. This is the third model approach we used. The suggested model shown in section \ref{appendix:stepWSelection}.
 
-```{r, echo=F}
+```{r, echo=F, results='hide'}
 # Stepwise Selection
 model2.Stepwise <- stepAIC(model2.Allvar, direction = "both", trace = F)
 
@@ -397,36 +391,36 @@ final.Stepwise.Model <- lm(log(SalePrice) ~ MSZoning + LotArea + Street + LotCon
                            )
 
 # If needed for display, this is the final model, final validation with Stepwise Regression
-stepwise.final.model4 <- stepAIC(fitFull.all4.Final, direction = "both", trace = F)
+#stepwise.final.model4 <- stepAIC(fitFull.all4.Final, direction = "both", trace = F)
 #summary(stepwise.final.model4)
 #stepwise.final.model4$anova
 ```
 
-Custom Variable Selection 
+**Custom Variable Selection** 
 
-To develop the custom model, we employed a combination of a correlation matrix for quantitative data, analysis of the summarization of the suggested model from stepwise selection, and through direct analysis of the pairs plots. As previously mentioned, our final model included 11 linear terms and two interaction terms. We removed all variables suggested to be removed by the stepwise regression and backward elimination tests, then reprocessed the updated models until forward selection, backward elimination, and stepwise regression were in agreeance with respect to the linear terms. Once this trial-and-error process was completed, we added interaction terms based on domain knowledge and re-applied the forward selection, backward elimination, and stepwise regression methods until only significant terms - both linear and interactive - remained. We then used graphical analysis to visually confirm interaction between the interactive terms remaining.
+To develop the custom model, we employed a combination of a correlation matrix for quantitative data, analysis of the summarization of the suggested model from stepwise selection, and through direct analysis of the pairs plots. As previously mentioned, our final model included 11 linear terms and two interaction terms. We removed all variables suggested to be removed by the stepwise regression and backward elimination tests, then reprocessed the updated models until forward selection, backward elimination, and stepwise regression were in agreeance with respect to the linear terms. Once this trial-and-error process was completed, we added interaction terms based on domain knowledge and re-applied the forward selection, backward elimination, and stepwise regression methods until only significant terms - both linear and interactive - remained. We then used graphical analysis to visually confirm interaction between the interactive terms remaining. The custom model shown in section \ref{appendix:customSelection}.
 
-```{r, echo=F}
+```{r, echo=F, results='hide'}
 
-train2.numeric <- dplyr::select_if(train2, is.numeric) %>% data.frame()
+#train2.numeric <- dplyr::select_if(train2, is.numeric) %>% data.frame()
 
-flattenCorrMatrix <- function(cormatrix, pmatrix) {
-  ut <- upper.tri(cormatrix)
-  data.frame(
-    row = rownames(cormatrix)[row(cormatrix)[ut]],
-    column = rownames(cormatrix)[col(cormatrix)[ut]],
-    cor  =(cormatrix)[ut],
-    p = pmat[ut]
-    )
-}
+#flattenCorrMatrix <- function(cormatrix, pmatrix) {
+#  ut <- upper.tri(cormatrix)
+# data.frame(
+#    row = rownames(cormatrix)[row(cormatrix)[ut]],
+#    column = rownames(cormatrix)[col(cormatrix)[ut]],
+#    cor  =(cormatrix)[ut],
+#    p = pmat[ut]
+#    )
+#}
 
 #See what variables are correlated with eachother, p-values
-correlation.matrix <- rcorr(as.matrix(train2.numeric))
-corDF <- data.frame(flattenCorrMatrix(correlation.matrix$r, correlation.matrix$P))
+#correlation.matrix <- rcorr(as.matrix(train2.numeric))
+#corDF <- data.frame(flattenCorrMatrix(correlation.matrix$r, correlation.matrix$P))
 
 #Order the correlation matrix to show the highest correlated
-data.frame(corDF[order(-corDF$cor),])
-quantDataModel <- corDF[which(corDF$cor >= 0.5),]
+#data.frame(corDF[order(-corDF$cor),])
+#quantDataModel <- corDF[which(corDF$cor >= 0.5),]
 
 fitFull.all4.Final <- lm(log(SalePrice) ~ BsmtUnfSF + CentralAir + HalfBath + KitchenQual + Neighborhood + OverallCond + OverallQual + RoofMatl + `1stFlrSF` + `2ndFlrSF` + YearBuilt + MSZoning:Neighborhood + YearBuilt:Neighborhood, data = train2)
 
@@ -437,10 +431,8 @@ fitFull.all4.Final <- lm(log(SalePrice) ~ BsmtUnfSF + CentralAir + HalfBath + Ki
 
 ## Model Assumption Assessment
 
-Address each assumption
 
-
-Custom Model Assumptions
+**Custom Model Assumptions**
 
 Based on the below residuals vs. fitted plot, there seems to be strong linearity in the custom model, along with constant variance. Furthermore, while there is one outlier, there is not an egregious violation of any other residuals. The red line very closely approximates the gray dashed line, which furthermore supports the arguement of a well-fit model.
 
@@ -449,77 +441,82 @@ Based on the QQ plot, there is a small level of deviation on the ends of the dis
 In analyzing the standardized residuals scale-location plot, the line has a slight curve, but for the most part is linear, indicating constant variance, or homoscedasticity.
 
 Based on the residuals vs. leverage plot, only two values have high leverage and only one point has a high Cook's distance. However, these are only three data points of over a 1,400 so this is not cause for concern.
-```{r, echo=F}
-par(mfrow=c(2,2))
-plot(fitFull.all4.Final, main = "Custom Model")
+```{r, custom-assumptions, echo=F, warning=F, fig.width=5, fig.height=5, fig.align='center', fig.cap='Custom Assumption Plots', out.width = '45%', fig.pos="htbp", fig.show = 'hold'}
+#par(mfrow=c(2,2))
+#plot(fitFull.all4.Final, main = "Custom Model")
+
+# create plots of residuals
+basic.fit.plots(train2, fitFull.all4.Final)
+# create leverage / outlier plot
+ols_plot_resid_lev(fitFull.all4.Final)
 ```
 
 
-Forward Selection Model Assumptions
+**Forward Selection Model Assumptions**
 
 Based on the below residuals vs. fitted plot, there seems to be reasonable linearity in the custom model, along with constant variance. Furthermore, while there are some outliers, there is not an egregious violation of any other residuals. The red line very closely approximates the gray dashed line, which furthermore supports the arguement for a well-fit model.
 
-Based on the QQ plot, there is a some deviation towards the tails of the distribution of the errors, but as with teh custom plots, the large majority of errors adhere to normality.
+Based on the QQ plot, there is a some deviation towards the tails of the distribution of the errors, but as with the custom plots, the large majority of errors adhere to normality.
 
 In analyzing the standardized residuals scale-location plot, the line has a moderate curve, indicating some violation of homoscedasticity. However, this is due to a few outliers and as more data is added, the line should straighten out more.
 
 Based on the residuals vs. leverage plot, there are a few more values than the custom model that have high leverage or a moderately large Cook's distance. However, since these are only a few data points, there is not a large cause for concern with this model.
-```{r, echo=F}
+
+```{r, forward-assumptions, echo=F, warning=F, fig.width=5, fig.height=5, fig.align='center', fig.cap='Forward Selection Assumption PLots', out.width = '50%', fig.pos="htbp"}
 par(mfrow=c(2,2))
 plot(model2.Forward, main = "Forward Selection Model")
 ```
 
 
-Backward Elimination Model Assumptions
+**Backward Elimination Model Assumptions**
 
 The backward elimination and stepwise regression models comprised the same parameters. Therefore, they shared the same plots. Compared to the forward selection model, all plots are very similar. Thus, model assumptions are roughly the same.
 
-Undisputedly, the custom model outperformed the model built strictly on the output of the forward selection, backward elimination, and stepwise regression variable selection procedures.
-```{r, echo=F}
+
+```{r, backward-selection, echo=F, warning=F, fig.width=5, fig.height=5, fig.align='center', fig.cap='Backward Selection Assumption PLots', out.width = '50%', fig.pos="htbp"}
 par(mfrow=c(2,2))
 plot(model2.Backward, main = "Backward Elimination Model")
 ```
 
-Stepwise Regression model plots
-```{r, echo=F}
+**Stepwise Regression model plots**
+
+
+
+```{r, stepwise-assimptions, echo=F, warning=F, fig.width=5, fig.height=5, fig.align='center', fig.cap='Stepwise Selection Assumption Plots', out.width = '50%', fig.pos="htbp"}
 par(mfrow=c(2,2))
 plot(model2.Stepwise, main = "Stepwise Regression Model")
 ```
 
 
-
 ## Comparing Competing Models
 
+While the models from forward, backward, and stepwise selection produce higher adjusted $R^2$ values on the training data, the yield much higher errors when applied to the Kaggle test set. These selection methods appear to be overfitting to the training data, thus fail to generalize to the Kaggle test set. Undisputedly, the custom model outperformed the model built strictly on the output of the forward selection, backward elimination, and stepwise regression variable selection procedures when applied to a new dataset.
 
-
-* Adjusted $R^2$
-
-The final adjusted $R^2$ of our custom model is 0.8867:
-```{r, echo=F}
-summary(fitFull.all4.Final)$adj.r.squared ##Custom Model
+```{r, echo=F, results='hide', warning=F}
+#The final adjusted $R^2$ of our custom model is 0.8867:
+R2.custom <- summary(fitFull.all4.Final)$adj.r.squared ##Custom Model
 ```
 
-The final adjusted $R^2$ of our Forward Selection model is 0.9364:
-```{r, echo=F}
-summary(model2.Forward)$adj.r.squared
-```
-
-The final adjusted $R^2$ of our Backward Elimination model is 0.9367:
-```{r, echo=F}
-summary(model2.Backward)$adj.r.squared
-```
-
-The final adjusted $R^2$ of our Stepwise Regression model is 0.9367:
-```{r, echo=F}
-summary(model2.Stepwise)$adj.r.squared
+```{r, echo=F, results='hide', warning=F}
+#The final adjusted $R^2$ of our Forward Selection model is 0.9364:
+R2.forward <- summary(model2.Forward)$adj.r.squared
 ```
 
 
+```{r, echo=F, results='hide', warning=F}
+#The final adjusted $R^2$ of our Backward Elimination model is 0.9367:
+R2.backward <- summary(model2.Backward)$adj.r.squared
+```
 
-* CV PRESS
 
-Our cross-validated PRESS statistic output for our custom model is below.
-```{r, echo=F}
+```{r, echo=F, results='hide', warning=F}
+#The final adjusted $R^2$ of our Stepwise Regression model is 0.9367:
+R2.step <- summary(model2.Stepwise)$adj.r.squared
+```
+
+```{r, echo=F, results='hide', warning=F}
+#Our cross-validated PRESS statistic output for our custom model is below.
+
 # Set up repeated k-fold cross-validation
 train.control2 <- trainControl(method = "cv", number = 10)
 # Train the model
@@ -537,12 +534,12 @@ model.cv2
 res <- model.cv2$results
 
 # get cross-validated PRESS statistic
-PCV <- PRESS.cv(model.cv2)
-PCV
+PCV.custom <- PRESS.cv(model.cv2)
 ```
 
-Our cross-validated PRESS statistic output for our Forward Selection model is below.
-```{r, echo=F}
+```{r, echo=F, results='hide', warning=F}
+#Our cross-validated PRESS statistic output for our Forward Selection model is below.
+
 # Set up repeated k-fold cross-validation
 train.control2 <- trainControl(method = "cv", number = 10)
 # Train the model
@@ -567,12 +564,12 @@ model.cv2
 res <- model.cv2$results
 
 # get cross-validated PRESS statistic
-PCV <- PRESS.cv(model.cv2)
-PCV
+PCV.forward <- PRESS.cv(model.cv2)
 ```
 
-Our cross-validated PRESS statistic output for our Backward Elimination model is below.
-```{r, echo=F}
+```{r, echo=F, results='hide', warning=F}
+#Our cross-validated PRESS statistic output for our Backward Elimination model is below.
+
 # Set up repeated k-fold cross-validation
 train.control2 <- trainControl(method = "cv", number = 10)
 # Train the model
@@ -598,12 +595,12 @@ model.cv2
 res <- model.cv2$results
 
 # get cross-validated PRESS statistic
-PCV <- PRESS.cv(model.cv2)
-PCV
+PCV.backward <- PRESS.cv(model.cv2)
 ```
 
-Our cross-validated PRESS statistic output for our Stepwise Regression model is below.
-```{r, echo=F}
+```{r, echo=F, results='hide', warning=F}
+
+#Our cross-validated PRESS statistic output for our Stepwise Regression model is below.
 # Set up repeated k-fold cross-validation
 train.control2 <- trainControl(method = "cv", number = 10)
 # Train the model
@@ -629,16 +626,12 @@ model.cv2
 res <- model.cv2$results
 
 # get cross-validated PRESS statistic
-PCV <- PRESS.cv(model.cv2)
-PCV
+PCV.stepwise <- PRESS.cv(model.cv2)
 ```
 
+```{r,echo=F, results='hide', warning=F}
+#Our custom model achieved a Kaggle score of 0.14494. This was our best score.
 
-
-* Kaggle score
-
-Our custom model achieved a Kaggle score of 0.14494. This was our best score.
-```{r,echo=F}
 ## To test in Kaggle, submit the produced "submit" file
 test$predicted.log.price <- predict.lm(fitFull.all4.Final, test)
 test$predicted.log.price[is.na(test$predicted.log.price)] <- mean(test$predicted.log.price, na.rm = T)
@@ -648,8 +641,9 @@ submit <- test %>% mutate(SalePrice = exp(predicted.log.price)) %>% subset(selec
 write.csv(submit, file = "./kaggle_submission.csv", row.names = F)
 ```
 
-Our Forward Selection model achieved a Kaggle score of 0.70145
-```{r,echo=F}
+```{r,echo=F, results='hide', warning=F}
+#Our Forward Selection model achieved a Kaggle score of 0.70145
+
 ## To test in Kaggle, submit the produced "submit" file
 test$predicted.log.price <- predict.lm(final.Forward.Model, test)
 test$predicted.log.price[is.na(test$predicted.log.price)] <- mean(test$predicted.log.price, na.rm = T)
@@ -659,8 +653,9 @@ submit <- test %>% mutate(SalePrice = exp(predicted.log.price)) %>% subset(selec
 write.csv(submit, file = "./kaggle_submission.csv", row.names = F)
 ```
 
-Our Backward Selection model achieved a Kaggle score of 0.73830
-```{r,echo=F}
+```{r,echo=F, results='hide', warning=F}
+#Our Backward Selection model achieved a Kaggle score of 0.73830
+
 ## To test in Kaggle, submit the produced "submit" file
 test$predicted.log.price <- predict.lm(final.Backward.Model, test)
 test$predicted.log.price[is.na(test$predicted.log.price)] <- mean(test$predicted.log.price, na.rm = T)
@@ -670,8 +665,9 @@ submit <- test %>% mutate(SalePrice = exp(predicted.log.price)) %>% subset(selec
 write.csv(submit, file = "./kaggle_submission.csv", row.names = F)
 ```
 
-Our Stepwise Regression model also achieved a Kaggle score of 0.73830
-```{r,echo=F}
+```{r,echo=F, results='hide', warning=F}
+#Our Stepwise Regression model also achieved a Kaggle score of 0.73830
+
 ## To test in Kaggle, submit the produced "submit" file
 test$predicted.log.price <- predict.lm(final.Stepwise.Model, test)
 test$predicted.log.price[is.na(test$predicted.log.price)] <- mean(test$predicted.log.price, na.rm = T)
@@ -679,6 +675,18 @@ test$predicted.log.price[is.na(test$predicted.log.price)] <- mean(test$predicted
 submit <- test %>% mutate(SalePrice = exp(predicted.log.price)) %>% subset(select=c(Id, SalePrice))
 
 write.csv(submit, file = "./kaggle_submission.csv", row.names = F)
+```
+
+
+```{r, echo=FALSE}
+# print accuracy metrics to md table
+
+kable(data.frame('Model' = c('Custom', 'Forward Selection', 'Backward Selection', 'Stepwise Regression'), 
+                 'Kaggle Score'=c(0.14494,0.70145,0.73830,0.73830),
+                 'CV Press'=c(PCV.custom, PCV.forward, PCV.backward, PCV.stepwise),
+                 'Adjused R Squared'=c(R2.custom, R2.forward, R2.backward, R2.step)),
+      "latex", booktabs = T)  %>%
+  kable_styling(position = "center")
 ```
 
 ## Conclusion
@@ -699,8 +707,8 @@ The scatter plot in Figure \@ref(fig:scatter-plot) shows relationship of `SalePr
 train %>% 
   ggplot(aes(x = (GrLivArea), y = (SalePrice))) +
   geom_point(alpha = 0.3) +
-  labs(title = 'Log of Sale Price vs Living Room Area', 
-       y = 'Log of Sale Price', x = 'Living Room Area (sq. ft.)')
+  labs(title = 'Sale Price vs Living Room Area', 
+       y = 'Sale Price', x = 'Living Room Area (sq. ft.)')
 ```
 
 The images below show the scatter plots of log sale price vs living room area (Figure \@ref(fig:scatter-plots)). In the image on the right, the scatter plot is shown for each neighborhood. In the image on the left the observations for all three neighborhoods are included. In all cases, a linear model appears to be reasonable to model this data.
@@ -769,6 +777,90 @@ train %>% ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
                                  (log(SalePrice) > 12.45),
                                SaleCondition, '')), hjust=0, vjust=0)
 ```
+
+\newpage
+
+## Models Suggested by Automated Selection
+
+### Forward Selection
+
+\label{appendix:forSelection}
+
+The model suggested by forward selection.
+
+```r
+log(SalePrice) ~ 
+              OverallQual + GrLivArea + Neighborhood + BsmtFinSF1 +
+              OverallCond + YearBuilt + TotalBsmtSF + GarageCars + MSZoning +
+              SaleCondition + BldgType + Functional + LotArea + KitchenQual +
+              BsmtExposure + CentralAir + Condition1 + ScreenPorch + BsmtFullBath +
+              Heating + Fireplaces + YearRemodAdd + Exterior1st + GarageQual +
+              WoodDeckSF + SaleType + OpenPorchSF + HeatingQC + LotConfig +
+              EnclosedPorch + ExterCond + PoolQC + Foundation + LandSlope +
+              RoofMatl + GarageArea + MasVnrType + HalfBath + PoolArea +
+              `3SsnPorch` + Street + KitchenAbvGr + GarageCond + FullBath +
+              BsmtQual + BsmtFinSF2
+```
+
+### Backward Selection
+
+\label{appendix:backSelection}
+
+```r
+log(SalePrice) ~ 
+           MSZoning + LotArea + Street + LotConfig + LandSlope +
+           Neighborhood + Condition1 + Condition2 + BldgType + OverallQual +
+           OverallCond + YearBuilt + YearRemodAdd + RoofStyle + RoofMatl +
+           Exterior1st + MasVnrType + ExterCond + Foundation + BsmtQual +
+           BsmtCond + BsmtExposure + BsmtFinSF1 + BsmtFinSF2 + BsmtUnfSF +
+           Heating + HeatingQC + CentralAir + `1stFlrSF` + `2ndFlrSF` +
+           LowQualFinSF + BsmtFullBath + FullBath + HalfBath + KitchenAbvGr +
+           KitchenQual + Functional + Fireplaces + GarageCars + GarageArea +
+           GarageQual + GarageCond + WoodDeckSF + OpenPorchSF + EnclosedPorch +
+           `3SsnPorch` + ScreenPorch + PoolArea + PoolQC + SaleType +
+           SaleCondition
+```
+
+\newpage
+
+### Stepwise Selection
+
+\label{appendix:stepWSelection}
+
+```r
+log(SalePrice) ~ 
+           MSZoning + LotArea + Street + LotConfig + LandSlope +
+           Neighborhood + Condition1 + Condition2 + BldgType + OverallQual +
+           OverallCond + YearBuilt + YearRemodAdd + RoofStyle + RoofMatl +
+           Exterior1st + MasVnrType + ExterCond + Foundation + BsmtQual +
+           BsmtCond + BsmtExposure + BsmtFinSF1 + BsmtFinSF2 + BsmtUnfSF +
+           Heating + HeatingQC + CentralAir + `1stFlrSF` + `2ndFlrSF` +
+           LowQualFinSF + BsmtFullBath + FullBath + HalfBath + KitchenAbvGr +
+           KitchenQual + Functional + Fireplaces + GarageCars + GarageArea +
+           GarageQual + GarageCond + WoodDeckSF + OpenPorchSF + EnclosedPorch +
+           `3SsnPorch` + ScreenPorch + PoolArea + PoolQC + SaleType +
+           SaleCondition
+```
+
+### Custom Model
+
+\label{appendix:customSelection}
+
+```r
+log(SalePrice) ~ 
+            BsmtUnfSF + CentralAir + HalfBath + KitchenQual + Neighborhood +
+            OverallCond + OverallQual + RoofMatl + `1stFlrSF` + `2ndFlrSF` + 
+            YearBuilt + MSZoning:Neighborhood + YearBuilt:Neighborhood
+```
+
+## Kaggle Score
+
+The following image shows the result on Kaggle for the custom model.
+
+```{r, kaggel, echo=F, out.width='90%', fig.align='center'}
+knitr::include_graphics('./Evidence for Model Score on Kaggle.PNG')
+```
+
 
 \newpage
 
@@ -1067,6 +1159,8 @@ confint(glht(model, linfct = "GrLivArea + GrLivArea:Neighborhood_BrkSide = 1"))
 
 ```
 
+\newpage
+
 ## R Code For Analysis 2
 
 Include "well commented" `code` in the appendex!
@@ -1080,5 +1174,7 @@ train %>% ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
                                  (log(SalePrice) > 12.45),
                                SaleCondition, '')), hjust=0, vjust=0)
 ```
+
+\newpage
 
 # References
