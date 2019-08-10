@@ -44,7 +44,6 @@ library(Hmisc)
 set.seed(123)
 <<<<<<< HEAD
 getwd()
-setwd("C:/users/pablo/desktop/kg6371/analysis")
 =======
 
 >>>>>>> c9f187e92155c3f398d0d6fd31c68d2d413e7352
