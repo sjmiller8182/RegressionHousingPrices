@@ -195,9 +195,10 @@ be submitted to the Kaggle competition for scoring the performance of
 the model in terms of RMSE. The first analysis models property sale
 prices (\texttt{SalePrice}) as the response of living room area
 (\texttt{GrLivArea}) of the property and neighborhood
-(\texttt{Neighborhood}) where it is located. In the second analysis
+(\texttt{Neighborhood}) where it is located. In the second analysis,
 variable selection techniques are used to determine which explanatory
-varaibles are associated with \texttt{SalePrice}.
+varaibles are associated with \texttt{SalePrice} to find a predictive
+model.
 
 \hypertarget{analysis-question-i}{%
 \section{Analysis Question I}\label{analysis-question-i}}
@@ -408,7 +409,7 @@ plot and a correlation matrix as well as performing forward selection,
 backward elimination, and stepwise regression.
 
 Regarding missing data, we imputed NA values for 19 variables using a
-combination of the Data Dictionary provided by Century 21 as well as our
+combination of the data dictionary provided by Century 21 as well as our
 domain knowledge. After building models with and without transformations
 applied to variables, we noted no significaznt difference in variable
 selection from our selection process so elected to use non-transformed
@@ -469,27 +470,27 @@ The custom model shown in section \ref{appendix:customSelection}.
 \subsection{Model Assumption
 Assessment}\label{model-assumption-assessment}}
 
-\textbf{Custom Model Assumptions}
+The assumption assessment plots were similar for all four models. The
+assumption assessment plots and discussion for the custom model are
+provided here with Figure \ref{fig:custom-assumptions}. The assumption
+assessment plots for the other three models are provided for reference
+in section \ref{appendix:assessmentPlots}.
 
-Based on the below residuals vs.~fitted plot, there seems to be strong
-linearity in the custom model, along with constant variance.
-Furthermore, while there is one outlier, there is not an egregious
-violation of any other residuals. The red line very closely approximates
-the gray dashed line, which furthermore supports the arguement of a
-well-fit model.
+Based on the residuals vs.~fitted plot, there seems to be strong
+linearity in the custom model, along with constant variance. The
+standardized residuals do not appear to exhibit a discernible pattern,
+indicating constant variance along the regression, or homoscedasticity.
+While there some outliers, this is not appear to be an egregious
+violation.
 
 Based on the QQ plot, there is a small level of deviation on the ends of
 the distribution of the errors, but for the most part, the errors adhere
-to normality.
+to normality. The sample size should be sufficient to protect against
+this non-normality.
 
-In analyzing the standardized residuals scale-location plot, the line
-has a slight curve, but for the most part is linear, indicating constant
-variance, or homoscedasticity.
-
-Based on the residuals vs.~leverage plot, only two values have high
-leverage and only one point has a high Cook's distance. However, these
-are only three data points of over a 1,400 so this is not cause for
-concern.
+Based on the standardized residuals vs.~leverage plot, only a few values
+have high leverage and are outlying. However, these violations do not
+appear to be egregious.
 
 \begin{figure}[htbp]
 
@@ -497,67 +498,10 @@ concern.
 
 }
 
-\caption{Custom Assumption Plots}\label{fig:custom-assumptions}
+\caption{Custom Assumption Assessment Plots}\label{fig:custom-assumptions}
 \end{figure}
 
-\textbf{Forward Selection Model Assumptions}
-
-Based on the below residuals vs.~fitted plot, there seems to be
-reasonable linearity in the custom model, along with constant variance.
-Furthermore, while there are some outliers, there is not an egregious
-violation of any other residuals. The red line very closely approximates
-the gray dashed line, which furthermore supports the arguement for a
-well-fit model.
-
-Based on the QQ plot, there is a some deviation towards the tails of the
-distribution of the errors, but as with the custom plots, the large
-majority of errors adhere to normality.
-
-In analyzing the standardized residuals scale-location plot, the line
-has a moderate curve, indicating some violation of homoscedasticity.
-However, this is due to a few outliers and as more data is added, the
-line should straighten out more.
-
-Based on the residuals vs.~leverage plot, there are a few more values
-than the custom model that have high leverage or a moderately large
-Cook's distance. However, since these are only a few data points, there
-is not a large cause for concern with this model.
-
-\begin{figure}[htbp]
-
-{\centering \includegraphics[width=0.5\linewidth]{HousePriceRegressionAnalysis_files/figure-latex/forward-assumptions-1} 
-
-}
-
-\caption{Forward Selection Assumption PLots}\label{fig:forward-assumptions}
-\end{figure}
-
-\textbf{Backward Elimination Model Assumptions}
-
-The backward elimination and stepwise regression models comprised the
-same parameters. Therefore, they shared the same plots. Compared to the
-forward selection model, all plots are very similar. Thus, model
-assumptions are roughly the same.
-
-\begin{figure}[htbp]
-
-{\centering \includegraphics[width=0.5\linewidth]{HousePriceRegressionAnalysis_files/figure-latex/backward-selection-1} 
-
-}
-
-\caption{Backward Selection Assumption PLots}\label{fig:backward-selection}
-\end{figure}
-
-\textbf{Stepwise Regression model plots}
-
-\begin{figure}[htbp]
-
-{\centering \includegraphics[width=0.5\linewidth]{HousePriceRegressionAnalysis_files/figure-latex/stepwise-assimptions-1} 
-
-}
-
-\caption{Stepwise Selection Assumption Plots}\label{fig:stepwise-assimptions}
-\end{figure}
+\newpage
 
 \hypertarget{comparing-competing-models-1}{%
 \subsection{Comparing Competing
@@ -589,7 +533,24 @@ Stepwise Regression & 0.73830 & 17.66686 & 0.9367208\\
 \hypertarget{conclusion-1}{%
 \subsection{Conclusion}\label{conclusion-1}}
 
-A short summary of the analysis
+In an effort to produce very predictive model with linear regression,
+all explanatory variables were considered with three types of varaible
+selection techniques: forward selection, backward selection, stepwise
+selection. A custom model was initially produced by eleminating
+variables suggested for elimination by the automatic selection
+processes, exploring the data with pairwise scatter plots, and adding
+interaction terms based on graphical analysis and domain knowledge.
+Automated selection was reapplied to suggest terms from the initial
+custom model. The final models suggested by automated techniques
+produced high \(R^2\) values, but performed poorly on the Kaggle test
+set. This suggests the automated techniques were overfitting to the
+training data. The final custom model, produced a high \(R^2\) value and
+perfromed well on the Kaggle test set (see section
+\ref{appendix:kaggle}). This suggests that the custom model is not
+overfitting to the traing data and generalizes well to an unseen
+dataset.
+
+\newpage
 
 \hypertarget{appendix}{%
 \section{Appendix}\label{appendix}}
@@ -746,9 +707,66 @@ The model suggested by forward selection.
 \hypertarget{kaggle-score}{%
 \subsection{Kaggle Score}\label{kaggle-score}}
 
+\label{appendix:kaggle}
+
 The following image shows the result on Kaggle for the custom model.
 
-\begin{center}\includegraphics[width=0.75\linewidth]{./Evidence for Model Score on Kaggle} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{./Evidence for Model Score on Kaggle} \end{center}
+
+\newpage
+
+\hypertarget{assumption-assessment-plots-for-automatic-selection-models}{%
+\subsection{Assumption Assessment Plots for Automatic Selection
+Models}\label{assumption-assessment-plots-for-automatic-selection-models}}
+
+\label{appendix:assessmentPlots}
+
+The following discussion applies to the assumption assessment for the
+three models produced by automatic selection.
+
+Based on the residuals vs.~fitted plot, there seems to be strong
+linearity in the custom model, along with constant variance. The
+standardized residuals do not appear to exhibit a discernible pattern,
+indicating constant variance along the regression, or homoscedasticity.
+However, there are three observations with unusually high residuals.
+
+Based on the QQ plot, there is a small level of deviation on the ends of
+the distribution of the errors, but for the most part, the errors adhere
+to normality. The sample size should be sufficient to protect against
+this non-normality.
+
+Based on the standardized residuals vs.~leverage plot, only a few values
+have high leverage and are outlying. Compared to the custom model
+(Figure \ref{fig:custom-assumptions}), these diagnostic plots for these
+models show a few more influential observations with high leverage.
+However, these observations cannot be excluded from the model.
+
+\begin{figure}[htbp]
+
+{\centering \includegraphics[width=0.45\linewidth]{HousePriceRegressionAnalysis_files/figure-latex/forward-assumptions-1} \includegraphics[width=0.45\linewidth]{HousePriceRegressionAnalysis_files/figure-latex/forward-assumptions-2} 
+
+}
+
+\caption{Forward Selection Assumption Assessment Plots}\label{fig:forward-assumptions}
+\end{figure}
+
+\begin{figure}[htbp]
+
+{\centering \includegraphics[width=0.45\linewidth]{HousePriceRegressionAnalysis_files/figure-latex/backward-selection-1} \includegraphics[width=0.45\linewidth]{HousePriceRegressionAnalysis_files/figure-latex/backward-selection-2} 
+
+}
+
+\caption{Backward Selection Assumption Assessment Plots}\label{fig:backward-selection}
+\end{figure}
+
+\begin{figure}[htbp]
+
+{\centering \includegraphics[width=0.45\linewidth]{HousePriceRegressionAnalysis_files/figure-latex/stepwise-assimptions-1} \includegraphics[width=0.45\linewidth]{HousePriceRegressionAnalysis_files/figure-latex/stepwise-assimptions-2} 
+
+}
+
+\caption{Stepwise Selection Assumption Assessment Plots}\label{fig:stepwise-assimptions}
+\end{figure}
 
 \newpage
 
@@ -1054,17 +1072,9 @@ The following image shows the result on Kaggle for the custom model.
 \hypertarget{r-code-for-analysis-2}{%
 \subsection{R Code For Analysis 2}\label{r-code-for-analysis-2}}
 
-Include ``well commented'' \texttt{code} in the appendex!
-
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{train }\OperatorTok{%>%}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =}\NormalTok{ (GrLivArea), }\DataTypeTok{y =} \KeywordTok{log}\NormalTok{(SalePrice))) }\OperatorTok{+}
-\StringTok{  }\KeywordTok{geom_point}\NormalTok{(}\DataTypeTok{alpha =} \FloatTok{0.3}\NormalTok{) }\OperatorTok{+}
-\StringTok{  }\KeywordTok{labs}\NormalTok{(}\DataTypeTok{title =} \StringTok{'Log of Sale Price vs Living Room Area'}\NormalTok{, }
-       \DataTypeTok{y =} \StringTok{'Log of Sale Price'}\NormalTok{, }\DataTypeTok{x =} \StringTok{'Living Room Area'}\NormalTok{) }\OperatorTok{+}
-\StringTok{  }\KeywordTok{geom_text}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{label =} \KeywordTok{ifelse}\NormalTok{((}\KeywordTok{log}\NormalTok{(GrLivArea) }\OperatorTok{>}\StringTok{ }\FloatTok{7.75} \OperatorTok{&}\StringTok{ }\KeywordTok{log}\NormalTok{(SalePrice) }\OperatorTok{>}\StringTok{ }\DecValTok{11}\NormalTok{) }\OperatorTok{|}
-\StringTok{                                 }\NormalTok{(}\KeywordTok{log}\NormalTok{(SalePrice) }\OperatorTok{>}\StringTok{ }\FloatTok{12.45}\NormalTok{),}
-\NormalTok{                               SaleCondition, }\StringTok{''}\NormalTok{)), }\DataTypeTok{hjust=}\DecValTok{0}\NormalTok{, }\DataTypeTok{vjust=}\DecValTok{0}\NormalTok{)}
+
 \end{Highlighting}
 \end{Shaded}
 
