@@ -1,4 +1,4 @@
-# RegressionHousingPrices
+# Regression Housing Prices
 
 Created by [Stuart Miller](https://github.com/sjmiller8182), [Paul Adams](https://github.com/PaulAdams4361), and [Chance Robinson](https://github.com/RobinsonCW).
 
