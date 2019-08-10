@@ -112,6 +112,9 @@ dfTrain$MiscFeature[is.na(dfTrain$MiscFeature)] <- "None"
 
 # create dataframe for numeric data
 dfTrainTest.numeric <- dplyr::select_if(dfTrain, is.numeric) %>% data.frame()
+dfTrain$LotArea <- log(dfTrain$LotArea)
+dfTrain$MSSubClass <- log(dfTrain$MSSubClass)
+dfTrain$LotFrontage <- log(dfTrain$LotFrontage)
 
 # hist(dfTrain$MSSubClass)
 # hist(log(dfTrain$MSSubClass))
@@ -152,20 +155,22 @@ summary(lm(log(SalePrice) ~ log(LotArea), data = dfTrain))
 # hist(dfTrain$BsmtFinSF2)
 # hist(log(dfTrain$BsmtFinSF2))
 # dfTrain$BsmtFinSF2 <- log(dfTrain$BsmtFinSF2)
-# 
+# dfTrain$MasVnrArea <- log(dfTrain$MasVnrArea)
 # hist(dfTrain$BsmtUnfSF)
 # hist(log(dfTrain$BsmtUnfSF))
 
 
 # dfTrain$BsmtUnfSF[dfTrain$BsmtUnfSF == 0] <- 1.5
-# dfTrain$BsmtUnfSF <- log(dfTrain$BsmtUnfSF)
-# 
+dfTrain$BsmtUnfSF <- log(dfTrain$BsmtUnfSF)
+dfTrain$BsmtFinSF2 <- log(dfTrain$BsmtFinSF2)
+dfTrain$MasVnrArea <- log(dfTrain$MasVnrArea)
 # hist(dfTrain$TotalBsmtSF)
 # 
 # hist(dfTrain$X1stFlrSF)
 # hist(log(dfTrain$X1stFlrSF))
 # dfTrain$X1stFlrSF <- log(dfTrain$X1stFlrSF)
-# 
+
+
 # hist(dfTrain$X2ndFlrSF)
 # hist(log(dfTrain$X2ndFlrSF))
 # dfTrain$X2ndFlrSF <- log(dfTrain$X2ndFlrSF)
@@ -180,7 +185,7 @@ summary(lm(log(SalePrice) ~ log(LotArea), data = dfTrain))
 # hist(dfTrain$WoodDeckSF)
 # hist(log(dfTrain$WoodDeckSF))
 # dfTrain$WoodDeckSF <- log(dfTrain$WoodDeckSF)
-# 
+
 # hist(dfTrain$OpenPorchSF)
 # hist(log(dfTrain$OpenPorchSF))
 # dfTrain$OpenPorchSF <- log(dfTrain$OpenPorchSF)
@@ -192,7 +197,18 @@ summary(lm(log(SalePrice) ~ log(LotArea), data = dfTrain))
 # hist(dfTrain$X3SsnPorch)
 # hist(log(dfTrain$X3SsnPorch))
 # dfTrain$X3SsnPorch <- log(dfTrain$X3SsnPorch)
-# 
+dfTrain$BsmtUnfSF <- log(dfTrain$BsmtUnfSF)
+dfTrain$BsmtFinSF2 <- log(dfTrain$BsmtFinSF2)
+dfTrain$MasVnrArea <- log(dfTrain$MasVnrArea)
+dfTrain$X1stFlrSF <- log(dfTrain$X1stFlrSF)
+dfTrain$X2ndFlrSF <- log(dfTrain$X2ndFlrSF)
+dfTrain$WoodDeckSF <- log(dfTrain$WoodDeckSF)
+dfTrain$OpenPorchSF <- log(dfTrain$OpenPorchSF)
+dfTrain$EnclosedPorch <- log(dfTrain$EnclosedPorch)
+dfTrain$X3SsnPorch <- log(dfTrain$X3SsnPorch)
+dfTrain$ScreenPorch <- log(dfTrain$ScreenPorch)
+dfTrain$MiscVal <- log(dfTrain$MiscVal)
+
 # hist(dfTrain$ScreenPorch)
 # hist(log(dfTrain$ScreenPorch))
 # dfTrain$ScreenPorch <- log(dfTrain$ScreenPorch)
