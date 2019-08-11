@@ -103,6 +103,8 @@ We will consider two models: the logarithm of sale price as the response of livi
 \beta_3(Brookside)(LivingRoomArea) + \beta_4(NorthwestAmes)(LivingRoomArea) (\#eq:full)
 \end{align}
 
+\newpage
+
 The ESS test provides convincing evidence that the interaction terms are useful for the model (p-value < 0.0001); thus, we will continue with the full model.
 
 ```{r, ESS, echo=FALSE}
@@ -145,6 +147,8 @@ basic.fit.plots(train.mod, model)
 # create leverage / outlier plot
 ols_plot_resid_lev(model)
 ```
+
+\newpage
 
 ## Comparing Competing Models
 
@@ -621,6 +625,8 @@ final.Stepwise.Model <- lm(log(SalePrice) ~ OverallQual + GrLivArea + Neighborho
 #stepwise.final.model4$anova
 ```
 
+\newpage
+
 **Custom Variable Selection** 
 
 To develop the custom model, we employed a combination of a correlation matrix for quantitative data, analysis of the summarization of the suggested model from stepwise selection, and through direct analysis of the pairs plots. As previously mentioned, our final model included 11 linear terms and two interaction terms. We removed all variables suggested to be removed by the stepwise regression and backward elimination tests, then reprocessed the updated models until forward selection, backward elimination, and stepwise regression were in agreeance with respect to the linear terms. Once this trial-and-error process was completed, we added interaction terms based on domain knowledge and re-applied the forward selection, backward elimination, and stepwise regression methods until only significant terms - both linear and interactive - remained. We then used graphical analysis to visually confirm interaction between the interactive terms remaining. The custom model shown in section \ref{appendix:customSelection}.
@@ -679,8 +685,6 @@ basic.fit.plots(train2, fitFull.all4.Final)
 # create leverage / outlier plot
 ols_plot_resid_lev(fitFull.all4.Final)
 ```
-
-\newpage
 
 ## Comparing Competing Models
 
