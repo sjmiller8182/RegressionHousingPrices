@@ -666,11 +666,7 @@ fitFull.all4.Final <- lm(log(SalePrice) ~ MSSubClass + MSZoning + LotFrontage +
 
 The assumption assessment plots were similar for all four models. The assumption assessment plots and discussion for the custom model are provided here with Figure \@ref(fig:custom-assumptions). The assumption assessment plots for the other three models are provided for reference in section \ref{appendix:assessmentPlots}.
 
-Based on the residuals vs. fitted plot, there seems to be strong linearity in the custom model, along with constant variance. The standardized residuals do not appear to exhibit a discernible pattern, indicating constant variance along the regression, or homoscedasticity. While there some outliers, this is not appear to be an egregious violation. 
-
-Based on the QQ plot, there is a small level of deviation on the ends of the distribution of the errors, but for the most part, the errors adhere to normality. The sample size should be sufficient to protect against this non-normality.
-
-Based on the standardized residuals vs. leverage plot, only a few values have high leverage and are outlying. However, these violations do not appear to be egregious.
+Based on the diagnostic plots below, the custom model appears to reasonably meet the assumptions of linear regression. The standardized residuals do not appear to exhibit a discernible pattern, indicating constant variance along the regression, or homoscedasticity. While there some outliers, this is not appear to be an egregious violation. Based on the QQ plot, there is a small level of deviation on the ends of the distribution of the errors, but for the most part, the errors adhere to normality. The sample size should be sufficient to protect against this non-normality. Based on the standardized residuals vs. leverage plot, only a few values have high leverage and are outlying. However, these violations do not appear to be egregious.
 
 
 ```{r, custom-assumptions, echo=F, warning=F, fig.width=5, fig.height=5, fig.align='center', fig.cap='Custom Assumption Assessment Plots', out.width = '45%', fig.pos="htbp", fig.show = 'hold'}
