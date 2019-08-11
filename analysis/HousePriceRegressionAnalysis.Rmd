@@ -1071,11 +1071,7 @@ knitr::include_graphics('./Evidence for Model Score on Kaggle.PNG')
 
 The following discussion applies to the assumption assessment for the three models produced by automatic selection.
 
-Based on the residuals vs. fitted plot, there seems to be strong linearity in the custom model, along with constant variance. The standardized residuals do not appear to exhibit a discernible pattern, indicating constant variance along the regression, or homoscedasticity. However, there are three observations with unusually high residuals.
-
-Based on the QQ plot, there is a small level of deviation on the ends of the distribution of the errors, but for the most part, the errors adhere to normality. The sample size should be sufficient to protect against this non-normality.
-
-Based on the standardized residuals vs. leverage plot, only a few values have high leverage and are outlying. Compared to the custom model (Figure \@ref(fig:custom-assumptions)), these diagnostic plots for these models show a few more influential observations with high leverage. However, these observations cannot be excluded from the model.
+Generally, based on the diagonstic plots, these models appear to reasonably meet the assumptions for linear regression. The standardized residuals do not appear to exhibit a discernible pattern, indicating constant variance along the regression, or homoscedasticity. However, there are three observations with unusually high residuals. Based on the QQ plot, there is a small level of deviation on the ends of the distribution of the errors, but for the most part, the errors adhere to normality. The sample size should be sufficient to protect against this non-normality. Based on the standardized residuals vs. leverage plot, only a few values have high leverage and are outlying. Compared to the custom model (Figure \@ref(fig:custom-assumptions)), these diagnostic plots for these models show a few more influential observations with high leverage. However, these observations cannot be excluded from the model.
 
 ```{r, forward-assumptions, echo=F, warning=F, fig.width=5, fig.height=5, fig.align='center', fig.cap='Forward Selection Assumption Assessment Plots', out.width = '45%', fig.pos="htbp", fig.show='hold'}
 # create plots of residuals
