@@ -240,13 +240,12 @@ test$Utilities <- as.factor(test$Utilities)
 #   arrange(mean)
 
 
-# Remove Basement Condition as it is highly correlated to Basement Quality
-# train = subset(train, select = -c(Utilities, BsmtCond, GarageCond) )
-# test = subset(test, select = -c(Utilities, BsmtCond, GarageCond) )
+# 1)  Remove Basement Condition as it is highly correlated to Basement Quality
+# 2)  Remove Garage Condition as it is highly correlated to Garage Quality
+# 3)  Remove utilities from dataframe as it doesn't have enough observations in the 2 levels
+train = subset(train, select = -c(Utilities, BsmtCond, GarageCond) )
+test = subset(test, select = -c(Utilities, BsmtCond, GarageCond) )
 
-# Remove utilities from dataframe as it doesn't have enough observations in the 2 levels
-train = subset(train, select = -c(Utilities ) )
-test = subset(test, select = -c(Utilities ) )
 
 ########################################################################################################################################################################
 
@@ -281,8 +280,8 @@ train$GarageType <- dplyr::recode(train$GarageType, 'None' = 0, 'CarPort' = 1, '
 test$GarageType <- dplyr::recode(test$GarageType, 'None' = 0, 'CarPort' = 1, '2Types' = 2, 'Basment' = 3, 'Detchd' = 4, 'Attchd' = 5, 'BuiltIn' = 6)
 
 
-train$GarageCond <- dplyr::recode(train$GarageCond, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
-test$GarageCond <- dplyr::recode(test$GarageCond, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+# train$GarageCond <- dplyr::recode(train$GarageCond, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+# test$GarageCond <- dplyr::recode(test$GarageCond, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
 
 ########################################################################################################################################################################
 
@@ -290,8 +289,8 @@ test$GarageCond <- dplyr::recode(test$GarageCond, 'None' = 0, 'Po' = 1, 'Fa' = 2
 train$BsmtQual <- dplyr::recode(train$BsmtQual, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
 test$BsmtQual <- dplyr::recode(test$BsmtQual, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
 
-train$BsmtCond <- dplyr::recode(train$BsmtCond, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
-test$BsmtCond <- dplyr::recode(test$BsmtCond, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+# train$BsmtCond <- dplyr::recode(train$BsmtCond, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+# test$BsmtCond <- dplyr::recode(test$BsmtCond, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
 
 
 train$BsmtFinType1 <- dplyr::recode(train$BsmtFinType1, 'None' = 0, 'Unf' = 1, 'LwQ' = 2, 'Rec' = 3, 'BLQ' = 4, 'ALQ' = 5, 'GLQ' = 6)
@@ -382,7 +381,7 @@ test$BldgType[is.na(test$BldgType)] <- '1Fam'
 
 ```{r}
 # EDA for categorical varialbes
-train %>% ggplot(aes(x = Condition1, y = log(SalePrice))) +
+train %>% ggplot(aes(x = MSSubClass, y = log(SalePrice))) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
@@ -450,16 +449,18 @@ sales.price.cor %>%
 
 ```{r model}
 
-custom.model.formula <- log(SalePrice) ~  OverallQual + GrLivArea + Neighborhood + 
-    BsmtFinSF1 + MSSubClass + OverallCond + YearBuilt + GarageCars + 
-    TotalBsmtSF + SaleCondition + LotArea + MSZoning + Functional + 
-    CentralAir + KitchenQual + Condition1 + FireplaceQu + BsmtExposure + 
-    BsmtFullBath + ScreenPorch + Exterior1st + YearRemodAdd + 
-    GarageQual + WoodDeckSF + OpenPorchSF + Street + LotConfig + 
-    LotFrontage + Foundation + Heating + KitchenAbvGr + EnclosedPorch + 
-    HalfBath + FullBath + MasVnrType + BsmtFinSF2 + HeatingQC + 
-    GarageArea + SaleType + ExterCond + PoolArea + BsmtFinType1 + 
-    GarageYrBlt + Electrical + `3SsnPorch` + LowQualFinSF + MSZoning:Neighborhood + OverallQual:Neighborhood + YearBuilt:Neighborhood 
+# Removals <- c(LotConfig, RoofMat, Heating, PoolArea, MasVnrType, Exterior1st)
+
+custom.model.formula <- log(SalePrice) ~ MSSubClass + MSZoning + LotFrontage + 
+    LotArea + Street + Neighborhood + 
+    Condition1 + OverallQual + OverallCond + YearBuilt + YearRemodAdd + 
+    ExterCond + Foundation + 
+    BsmtExposure + BsmtFinType1 + BsmtFinSF1 + BsmtFinSF2 + BsmtUnfSF + 
+    HeatingQC + CentralAir + Electrical + `1stFlrSF` + 
+    `2ndFlrSF` + LowQualFinSF + BsmtFullBath + FullBath + HalfBath + 
+    KitchenAbvGr + KitchenQual + Functional + FireplaceQu + GarageYrBlt + 
+    GarageCars + GarageArea + GarageQual + WoodDeckSF + OpenPorchSF + 
+    EnclosedPorch + ScreenPorch + SaleType + SaleCondition
 
 ### forward model ###
 fwd.model.formula <- log(SalePrice) ~ OverallQual + GrLivArea + Neighborhood + 
@@ -524,7 +525,7 @@ fit2 <- lm(log(SalePrice) ~ 1, data=train)
 
 ```
 
-### Base Model 
+### Custom Model 
 
 ```{r custom_submit, echo=FALSE, message=FALSE}
 
@@ -698,7 +699,7 @@ PCV
 
 # stw.model <- stepAIC(fit2,direction="both",scope=list(upper=fit1,lower=fit2))
 
-# summary(stw.model)
+# summary(bwd.model)
 
 ```
 
