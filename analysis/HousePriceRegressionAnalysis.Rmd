@@ -1418,10 +1418,6 @@ library(MASS)
 library(caret)
 
 
-# helper files
-# source('../../helper/data_munging.R')
-
-
 #' Calculates PRESS from `caret` CV model
 #'
 #' @param model.cv Calculates press from a model 
@@ -1441,6 +1437,10 @@ PRESS.cv <- function(model.cv) {
 
 train <- read_csv('../../data/train.csv')
 test <- read_csv('../../data/test.csv')
+
+
+## remove suspect points from training data
+train <- train %>% filter(GrLivArea < 4000)
 
 
 ## Data Cleaning
@@ -1780,7 +1780,7 @@ test$SaleCondition <- factor(test$SaleCondition,
 
 ### Model Definitions
 
-### custom model ###
+### custom model
 custom.model.formula <- log(SalePrice) ~ MSSubClass + MSZoning + LotFrontage + 
     LotArea + Street + Neighborhood + 
     Condition1 + OverallQual + OverallCond + YearBuilt + YearRemodAdd + 
@@ -1793,7 +1793,7 @@ custom.model.formula <- log(SalePrice) ~ MSSubClass + MSZoning + LotFrontage +
     EnclosedPorch + ScreenPorch + SaleType + SaleCondition
 
 
-### forward model ###
+### forward model
 fwd.model.formula <- log(SalePrice) ~ OverallQual + GrLivArea + Neighborhood + 
     BsmtFinSF1 + MSSubClass + OverallCond + YearBuilt + GarageCars + 
     TotalBsmtSF + SaleCondition + LotArea + MSZoning + Functional + 
@@ -1806,7 +1806,7 @@ fwd.model.formula <- log(SalePrice) ~ OverallQual + GrLivArea + Neighborhood +
     GarageYrBlt + Electrical + `3SsnPorch` + LowQualFinSF
 
 
-### backward model ###
+### backward model
 bkw.model.formula <- log(SalePrice) ~ MSSubClass + MSZoning + LotFrontage +
     LotArea + Street + LotConfig + LandSlope + Neighborhood +
     Condition1 + OverallQual + OverallCond + YearBuilt + YearRemodAdd +
@@ -1819,7 +1819,7 @@ bkw.model.formula <- log(SalePrice) ~ MSSubClass + MSZoning + LotFrontage +
     EnclosedPorch + ScreenPorch + PoolArea + SaleType + SaleCondition
 
 
-### stepwise model ###
+### stepwise model
 stw.model.formula <- log(SalePrice) ~ OverallQual + GrLivArea + Neighborhood + 
     BsmtFinSF1 + MSSubClass + OverallCond + YearBuilt + GarageCars + 
     TotalBsmtSF + SaleCondition + LotArea + MSZoning + Functional + 
