@@ -14,26 +14,23 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Setup
 
-```{r message=FALSE}
+```{r libraries, message=FALSE}
 # libraries
 library(knitr)
 library(tidyverse)
 library(naniar)
 library(Hmisc)
 library(GGally)
-# Correlation
 library(corrr)
-# Forward, Backward and Stepwise Regression
 library(MASS)
-
 library(caret)
 
 # helper files
 source('../../helper/data_munging.R')
 ```
 
-```{r cv}
-' Calculates PRESS from `caret` CV model
+```{r, cv}
+#' Calculates PRESS from `caret` CV model
 #'
 #' @param model.cv Calculates press from a model 
 #' produced by `caret`
@@ -56,7 +53,7 @@ PRESS.cv <- function(model.cv) {
 
 ### Load the data into R
 
-```{r results='hide', message=FALSE}
+```{r, load, results='hide', message=FALSE}
 train <- read_csv('../../data/train.csv')
 test <- read_csv('../../data/test.csv')
 
@@ -70,7 +67,7 @@ test <- read_csv('../../data/test.csv')
 - The `LotFrontage` used an impute strategry with the mean value from each data set, as we assumed all houses should have some value for this data point.
 - For `MasVnrArea`, we assumed that these properties had no masonry veneer and replaced the NAs with 0.
 
-```{r numeric_data_cleaning}
+```{r, numeric_data_cleaning}
 # Garage Year Built {"train": 81, "test": 78}
 
 train$GarageYrBlt[is.na(train$GarageYrBlt)] <- 0
@@ -81,14 +78,13 @@ test$GarageYrBlt[is.na(test$GarageYrBlt)] <- 0
 train$LotFrontage[is.na(train$LotFrontage)] <- mean(train$LotFrontage, na.rm=TRUE)
 test$LotFrontage[is.na(test$LotFrontage)] <- mean(test$LotFrontage, na.rm=TRUE)
 
-
 # MasVnrArea {"train": 8, "test": 15}
 train$MasVnrArea[is.na(train$MasVnrArea)] <- 0
 test$MasVnrArea[is.na(test$MasVnrArea)] <- 0
 
 ```
 
-```{r neighborhood}
+```{r, neighborhood}
 # Reduce Neighborhood into 3 categories
 train %>%
   group_by(Neighborhood) %>%
@@ -104,7 +100,7 @@ train %>%
 - Alley 
 - MasVnrType
 - BsmtQual 
-- BsmtCond      (Removed)
+- BsmtCond     
 - BsmtExposure
 - BsmtFinType1
 - BsmtFinType2
@@ -112,13 +108,13 @@ train %>%
 - GarageType
 - GarageFinish
 - GarageQual
-- GarageCond    (Removed)
+- GarageCond   
 - PoolQC 
 - Fence
 - MiscFeature
 - Electrical (SBrkr	Standard Circuit Breakers & Romex)
 
-```{r non_numeric_clean_data, results='hide', echo=FALSE, message=FALSE}
+```{r, non_numeric_data_cleaning, results='hide', echo=FALSE, message=FALSE}
 
 
 train$Alley[is.na(train$Alley)] <- 'None'
@@ -249,12 +245,6 @@ test = subset(test, select = -c(Utilities, BsmtCond, GarageCond) )
 
 ########################################################################################################################################################################
 
-# train$MSSubClass <- dplyr::recode(train$MSSubClass, `30` = 1L, `180` = 2L, `45` = 3L, `190` = 4L, `90` = 5L, `160` = 6L, `50` = 7L, `40` = 8L, `85` = 9L, `70` = 10L,
-#                                  `80` = 11L, `20` = 12L, `75` = 13L, `120` = 14L, `60` = 15L, `150` = 7L)
-#  
-# test$MSSubClass <- dplyr::recode(test$MSSubClass, `30` = 1L, `180` = 2L, `45` = 3L, `190` = 4L, `90` = 5L, `160` = 6L, `50` = 7L, `40` = 8L, `85` = 9L, `70` = 10L,
-#                                   `80` = 11L, `20` = 12L, `75` = 13L, `120` = 14L, `60` = 15L, `150` = 7L)
-
 
 train$MSSubClass <- dplyr::recode(train$MSSubClass, `30` = "30F", `180` = "180F", `45` = "45F", `190` = "190F",
                                   `90` = "190F", `160` = "160F", `50` = "50F", `40` = "40F", `85` = "85F", `70` = "70F",
@@ -303,6 +293,7 @@ test$BsmtFinType2 <- dplyr::recode(test$BsmtFinType2, 'None' = 0, 'Unf' = 1, 'Lw
 
 train$BsmtExposure <- dplyr::recode(train$BsmtExposure, 'None' = 0, 'No' = 1, 'Mn' = 2, 'Av' = 3, 'Gd' = 4)
 test$BsmtExposure <- dplyr::recode(test$BsmtExposure, 'None' = 0, 'No' = 1, 'Mn' = 2, 'Av' = 3, 'Gd' = 4)
+
 ########################################################################################################################################################################
 
 train$LandSlope <- dplyr::recode(train$LandSlope, 'Sev' = 0, 'Mod' = 1, 'Gtl' = 2)
@@ -327,7 +318,7 @@ test$FireplaceQu <- dplyr::recode(test$FireplaceQu, 'None' = 0, 'Po' = 1, 'Fa' =
 
 
 
-### Set normal factor variables
+### Set categorical factor variables
 ```{r non_numeric_factors}
 
 
@@ -379,21 +370,21 @@ test$BldgType[is.na(test$BldgType)] <- '1Fam'
 
 
 
-```{r}
+```{r, mssublass_plot}
 # EDA for categorical varialbes
 train %>% ggplot(aes(x = MSSubClass, y = log(SalePrice))) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
 
-```{r}
+```{r, grlarea_filter}
 # remove suspect points from training data
 train <- train %>% filter(GrLivArea < 4000)
 ```
 
 
 
-```{r}
+```{r, desribe_training_data}
 
 # describe(train)
 
@@ -434,7 +425,7 @@ train <- train %>% filter(GrLivArea < 4000)
 ```
 
 #### Correlation Table
-```{r}
+```{r, salesprice_correlation}
 sales.price.cor <- train %>%
   select_if(is.numeric) %>%
   correlate() %>%
@@ -447,7 +438,7 @@ sales.price.cor %>%
 
 ### Model Definitions
 
-```{r model}
+```{r, model_definition}
 
 # Removals <- c(LotConfig, RoofMat, Heating, PoolArea, MasVnrType, Exterior1st)
 
@@ -527,7 +518,7 @@ fit2 <- lm(log(SalePrice) ~ 1, data=train)
 
 ### Custom Model 
 
-```{r custom_submit, echo=FALSE, message=FALSE}
+```{r, custom_submit, echo=FALSE, message=FALSE}
 
 test$predicted.log.price <- predict.lm(custom.model, test)
 test$predicted.log.price[is.na(test$predicted.log.price)] <- mean(test$predicted.log.price, na.rm=TRUE)
@@ -536,7 +527,7 @@ custom_submit <- test %>%
   mutate(SalePrice = exp(predicted.log.price)) %>%
   subset(select = c(Id, SalePrice))
 
-write.csv(custom_submit, file = "./cwr_kaggle_submission_custom_model.csv", row.names = FALSE)
+# write.csv(custom_submit, file = "./cwr_kaggle_submission_custom_model.csv", row.names = FALSE)
 
 summary(custom.model)
 ```
@@ -544,7 +535,7 @@ summary(custom.model)
 
 ### Forward Model
 
-```{r forward_submit, echo=FALSE, message=FALSE}
+```{r, forward_submit, echo=FALSE, message=FALSE}
 
 test$predicted.log.price <- predict.lm(fwd.model, test)
 test$predicted.log.price[is.na(test$predicted.log.price)] <- mean(test$predicted.log.price, na.rm=TRUE)
@@ -562,7 +553,7 @@ summary(fwd.model)
 
 ### Backward Model
 
-```{r backward_submit, echo=FALSE, message=FALSE}
+```{r, backward_submit, echo=FALSE, message=FALSE}
 
 test$predicted.log.price <- predict.lm(bkw.model, test)
 test$predicted.log.price[is.na(test$predicted.log.price)] <- mean(test$predicted.log.price, na.rm=TRUE)
@@ -579,7 +570,7 @@ summary(bkw.model)
 
 ### Stepwise Model
 
-```{r stepwise_submit, echo=FALSE, message=FALSE}
+```{r, stepwise_submit, echo=FALSE, message=FALSE}
 
 test$predicted.log.price <- predict.lm(stw.model, test)
 test$predicted.log.price[is.na(test$predicted.log.price)] <- mean(test$predicted.log.price, na.rm=TRUE)
@@ -598,7 +589,7 @@ summary(stw.model)
 
 ### Custom Model CV
 
-```{r custom_model_cv, message=FALSE, echo=FALSE, warning=FALSE}
+```{r, custom_model_cv, message=FALSE, echo=FALSE, warning=FALSE}
 
 # Set up repeated k-fold cross-validation
 train.control <- trainControl(method = "cv", number = 10)
@@ -620,7 +611,7 @@ PCV
 
 
 ### Forward Model CV
-```{r fwd_model_cv, message=FALSE, echo=FALSE, warning=FALSE}
+```{r, fwd_model_cv, message=FALSE, echo=FALSE, warning=FALSE}
 
 
 # Set up repeated k-fold cross-validation
@@ -643,7 +634,7 @@ PCV
 
 
 ### Backward Model CV
-```{r bkw_model_cv, message=FALSE, echo=FALSE, warning=FALSE}
+```{r, bkw_model_cv, message=FALSE, echo=FALSE, warning=FALSE}
 
 
 # Set up repeated k-fold cross-validation
@@ -664,7 +655,7 @@ PCV
 ```
 
 ### Stepwise Model CV
-```{r stw_model_cv, message=FALSE, echo=FALSE, warning=FALSE}
+```{r, stw_model_cv, message=FALSE, echo=FALSE, warning=FALSE}
 
 
 # Set up repeated k-fold cross-validation
@@ -689,7 +680,7 @@ PCV
 
 
 
-```{r aic, message=F, echo=F, results='hide'}
+```{r, aic_functions, message=F, echo=F, results='hide'}
 
 ### AIC functions for different model types
 
@@ -700,6 +691,8 @@ PCV
 # stw.model <- stepAIC(fit2,direction="both",scope=list(upper=fit1,lower=fit2))
 
 # summary(bwd.model)
+# summary(fwd.model)
+# summary(stw.model)
 
 ```
 

@@ -12,7 +12,8 @@ August 4, 2019
           - [Handle null values for categorical
             variables](#handle-null-values-for-categorical-variables)
           - [set ordinal factors](#set-ordinal-factors)
-          - [Set normal factor variables](#set-normal-factor-variables)
+          - [Set categorical factor
+            variables](#set-categorical-factor-variables)
           - [Model Definitions](#model-definitions)
           - [Custom Model](#custom-model)
           - [Forward Model](#forward-model)
@@ -33,11 +34,8 @@ library(tidyverse)
 library(naniar)
 library(Hmisc)
 library(GGally)
-# Correlation
 library(corrr)
-# Forward, Backward and Stepwise Regression
 library(MASS)
-
 library(caret)
 
 # helper files
@@ -45,13 +43,8 @@ source('../../helper/data_munging.R')
 ```
 
 ``` r
-' Calculates PRESS from `caret` CV model
+#' Calculates PRESS from `caret` CV model
 #'
-```
-
-    ## [1] " Calculates PRESS from `caret` CV model\n#"
-
-``` r
 #' @param model.cv Calculates press from a model 
 #' produced by `caret`
 #'
@@ -102,7 +95,6 @@ test$GarageYrBlt[is.na(test$GarageYrBlt)] <- 0
 train$LotFrontage[is.na(train$LotFrontage)] <- mean(train$LotFrontage, na.rm=TRUE)
 test$LotFrontage[is.na(test$LotFrontage)] <- mean(test$LotFrontage, na.rm=TRUE)
 
-
 # MasVnrArea {"train": 8, "test": 15}
 train$MasVnrArea[is.na(train$MasVnrArea)] <- 0
 test$MasVnrArea[is.na(test$MasVnrArea)] <- 0
@@ -136,7 +128,7 @@ train %>%
   - Alley
   - MasVnrType
   - BsmtQual
-  - BsmtCond (Removed)
+  - BsmtCond  
   - BsmtExposure
   - BsmtFinType1
   - BsmtFinType2
@@ -144,7 +136,7 @@ train %>%
   - GarageType
   - GarageFinish
   - GarageQual
-  - GarageCond (Removed)
+  - GarageCond  
   - PoolQC
   - Fence
   - MiscFeature
@@ -168,12 +160,6 @@ test = subset(test, select = -c(Utilities, BsmtCond, GarageCond) )
 
 
 ########################################################################################################################################################################
-
-# train$MSSubClass <- dplyr::recode(train$MSSubClass, `30` = 1L, `180` = 2L, `45` = 3L, `190` = 4L, `90` = 5L, `160` = 6L, `50` = 7L, `40` = 8L, `85` = 9L, `70` = 10L,
-#                                  `80` = 11L, `20` = 12L, `75` = 13L, `120` = 14L, `60` = 15L, `150` = 7L)
-#  
-# test$MSSubClass <- dplyr::recode(test$MSSubClass, `30` = 1L, `180` = 2L, `45` = 3L, `190` = 4L, `90` = 5L, `160` = 6L, `50` = 7L, `40` = 8L, `85` = 9L, `70` = 10L,
-#                                   `80` = 11L, `20` = 12L, `75` = 13L, `120` = 14L, `60` = 15L, `150` = 7L)
 
 
 train$MSSubClass <- dplyr::recode(train$MSSubClass, `30` = "30F", `180` = "180F", `45` = "45F", `190` = "190F",
@@ -223,6 +209,7 @@ test$BsmtFinType2 <- dplyr::recode(test$BsmtFinType2, 'None' = 0, 'Unf' = 1, 'Lw
 
 train$BsmtExposure <- dplyr::recode(train$BsmtExposure, 'None' = 0, 'No' = 1, 'Mn' = 2, 'Av' = 3, 'Gd' = 4)
 test$BsmtExposure <- dplyr::recode(test$BsmtExposure, 'None' = 0, 'No' = 1, 'Mn' = 2, 'Av' = 3, 'Gd' = 4)
+
 ########################################################################################################################################################################
 
 train$LandSlope <- dplyr::recode(train$LandSlope, 'Sev' = 0, 'Mod' = 1, 'Gtl' = 2)
@@ -243,7 +230,7 @@ test$FireplaceQu <- dplyr::recode(test$FireplaceQu, 'None' = 0, 'Po' = 1, 'Fa' =
 ########################################################################################################################################################################
 ```
 
-### Set normal factor variables
+### Set categorical factor variables
 
 ``` r
 train$Street <- ordered(train$Street, levels = c("Grvl", "Pave"))
@@ -296,7 +283,7 @@ train %>% ggplot(aes(x = MSSubClass, y = log(SalePrice))) +
   geom_point() + geom_smooth(method = 'lm')
 ```
 
-![](Exploratory_Data_Analysis_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+![](Exploratory_Data_Analysis_files/figure-gfm/mssublass_plot-1.png)<!-- -->
 
 ``` r
 # remove suspect points from training data
@@ -1085,15 +1072,15 @@ fit2 <- lm(log(SalePrice) ~ 1, data=train)
     ## 
     ## No pre-processing
     ## Resampling: Cross-Validated (10 fold) 
-    ## Summary of sample sizes: 1310, 1311, 1311, 1311, 1312, 1309, ... 
+    ## Summary of sample sizes: 1310, 1310, 1309, 1311, 1310, 1311, ... 
     ## Resampling results:
     ## 
-    ##   RMSE       Rsquared   MAE       
-    ##   0.1134419  0.9177112  0.07933577
+    ##   RMSE      Rsquared   MAE       
+    ##   0.113257  0.9193706  0.07901954
     ## 
     ## Tuning parameter 'intercept' was held constant at a value of TRUE
 
-    ## [1] 16.86361
+    ## [1] 16.8087
 
 ### Forward Model CV
 
@@ -1104,15 +1091,15 @@ fit2 <- lm(log(SalePrice) ~ 1, data=train)
     ## 
     ## No pre-processing
     ## Resampling: Cross-Validated (10 fold) 
-    ## Summary of sample sizes: 1311, 1311, 1311, 1310, 1310, 1311, ... 
+    ## Summary of sample sizes: 1310, 1309, 1309, 1311, 1310, 1310, ... 
     ## Resampling results:
     ## 
     ##   RMSE       Rsquared   MAE       
-    ##   0.1155952  0.9156012  0.07969089
+    ##   0.1147659  0.9157536  0.07954914
     ## 
     ## Tuning parameter 'intercept' was held constant at a value of TRUE
 
-    ## [1] 17.5099
+    ## [1] 17.25956
 
 ### Backward Model CV
 
@@ -1123,15 +1110,15 @@ fit2 <- lm(log(SalePrice) ~ 1, data=train)
     ## 
     ## No pre-processing
     ## Resampling: Cross-Validated (10 fold) 
-    ## Summary of sample sizes: 1311, 1310, 1309, 1312, 1311, 1309, ... 
+    ## Summary of sample sizes: 1311, 1309, 1310, 1311, 1310, 1309, ... 
     ## Resampling results:
     ## 
-    ##   RMSE      Rsquared  MAE       
-    ##   0.116575  0.913795  0.07969853
+    ##   RMSE       Rsquared   MAE       
+    ##   0.1149547  0.9163927  0.07925598
     ## 
     ## Tuning parameter 'intercept' was held constant at a value of TRUE
 
-    ## [1] 17.80799
+    ## [1] 17.31639
 
 ### Stepwise Model CV
 
@@ -1142,12 +1129,12 @@ fit2 <- lm(log(SalePrice) ~ 1, data=train)
     ## 
     ## No pre-processing
     ## Resampling: Cross-Validated (10 fold) 
-    ## Summary of sample sizes: 1310, 1310, 1309, 1311, 1312, 1312, ... 
+    ## Summary of sample sizes: 1311, 1311, 1310, 1310, 1311, 1310, ... 
     ## Resampling results:
     ## 
-    ##   RMSE      Rsquared   MAE      
-    ##   0.115198  0.9158504  0.0797088
+    ##   RMSE       Rsquared   MAE       
+    ##   0.1141396  0.9180153  0.07894362
     ## 
     ## Tuning parameter 'intercept' was held constant at a value of TRUE
 
-    ## [1] 17.38978
+    ## [1] 17.0717
