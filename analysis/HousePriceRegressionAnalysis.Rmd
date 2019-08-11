@@ -42,11 +42,7 @@ library(Hmisc)
 
 # set a random seed for repodicibility
 set.seed(123)
-<<<<<<< HEAD
-getwd()
-=======
 
->>>>>>> c9f187e92155c3f398d0d6fd31c68d2d413e7352
 # helper code
 source('./helper/visual.R')
 source('./helper/data_munging.R')
@@ -54,6 +50,8 @@ source('./helper/performance.R')
 
 # load data
 train <- read_csv('./data/train.csv')
+
+# data for analysis 2
 train2 <- read_csv('./data/train.csv')
 test <- read_csv('./data/test.csv')
 
@@ -66,11 +64,10 @@ train <- get.dummies(train, "Neighborhood", reference = 'Edwards')
 
 # remove suspect points from training data
 train.mod <- train %>% filter(GrLivArea < 4000)
+
+# data for analysis 2
 train2 <- train2 %>% filter(GrLivArea < 4000)
 ```
-
-
-
 
 # Introduction
 
@@ -78,7 +75,7 @@ What is the price of a home in Ames, Iowa?  Our inaugural project in the program
 
 # Ames, Iowa Data Set
 
-The Ames, Iowa Data Set describes the sale of individual residential properities from 2006-2010 in Ames, Iowa \cite{Cock}. The data was retreved from the dataset hosting site Kaggle, where it is listed under a machine learning competition named \href{https://www.kaggle.com/c/house-prices-advanced-regression-techniques/overview}{\textit{House Prices: Advanced Regression Techniques}} \cite{Kaggle2016}. The data is comprised of 37 numeric features, 43 non-numeric features and an observation index split between a training set and a testing set, which contain 1460 and 1459 observations, respectively. The response variable (`SalePrice`) is only provided for the training set. The output of a model on the test set can be submitted to the Kaggle competition for scoring the performance of the model in terms of RMSE. The first analysis models property sale prices (`SalePrice`) as the response of living room area (`GrLivArea`) of the property and neighborhood (`Neighborhood`) where it is located. **Add some details on the question 2 variables?**
+The Ames, Iowa Data Set describes the sale of individual residential properities from 2006-2010 in Ames, Iowa \cite{Cock}. The data was retreved from the dataset hosting site Kaggle, where it is listed under a machine learning competition named \href{https://www.kaggle.com/c/house-prices-advanced-regression-techniques/overview}{\textit{House Prices: Advanced Regression Techniques}} \cite{Kaggle2016}. The data is comprised of 37 numeric features, 43 non-numeric features and an observation index split between a training set and a testing set, which contain 1460 and 1459 observations, respectively. The response variable (`SalePrice`) is only provided for the training set. The output of a model on the test set can be submitted to the Kaggle competition for scoring the performance of the model in terms of RMSE. The first analysis models property sale prices (`SalePrice`) as the response of living room area (`GrLivArea`) of the property and neighborhood (`Neighborhood`) where it is located. In the second analysis, variable selection techniques are used to determine which explanatory varaibles are associated with `SalePrice` to find a predictive model.
 
 # Analysis Question I
 
@@ -250,68 +247,290 @@ In response to the analysis commissioned by Century 21, the log transform of pro
 
 ## Question of Interest
 
-Century 21 has commissioned a second analysis using the same data set, expanded to include as many of the 80 total features, plus the index split, as required to determine the sale price of residential properties across all neighborhoods of Ames, Iowa, beyond only the three - Edwards, Northwest Ames, and Brookside - previously commissioned for analysis.
+Century 21 has commissioned a second analysis using the same dataset for the creation of a very predictive model of `SalePrice`. The analysis will be expanded to include as many of the 80 total features as required to determine the sale price of residential properties across all neighborhoods of Ames, Iowa, beyond only the three - Edwards, Northwest Ames, and Brookside - previously commissioned for analysis.
 
 ## Modeling
-Restatement of Problem
 
 Through analyzing our variable selection and cross-validation processes - along with our nascant domain knowledge of residential real estate - we ultimately arrived at a multiple linear regression model featuring 11 linear predictor variables and two interaction terms. Specifically, our variable selection process included direct analysis of a correlation plot and a correlation matrix as well as performing forward selection, backward elimination, and stepwise regression. 
 
-Regarding missing data, we imputed NA values for 19 variables using a combination of the Data Dictionary provided by Century 21 as well as our domain knowledge. After building models with and without transformations applied to variables, we noted no significaznt difference in variable selection from our selection process so elected to use non-transformed predictor variables. We did, however, use the log-transformed `SalePrice` applied in the first analysis.
+Regarding missing data, we imputed NA values for 19 variables using a combination of the data dictionary provided by Century 21 as well as our domain knowledge. After building models with and without transformations applied to variables, we noted no significaznt difference in variable selection from our selection process so elected to use non-transformed predictor variables. We did, however, use the log-transformed `SalePrice` applied in the first analysis.
 
 
-```{r, echo=F}
+```{r, replace_na, echo=F, results='hide'}
 # Count NAs, impute where needed
 na_count <- sapply(train2, function(cnt) sum(length(which(is.na(cnt)))))
-train2$LotFrontage[is.na(train2$LotFrontage)] <- 0
-train2$Alley[is.na(train2$Alley)] <- "None"
-train2$MasVnrType[is.na(train2$MasVnrType)] <- "None"
+
+
+train2$GarageYrBlt[is.na(train2$GarageYrBlt)] <- 0
+test$GarageYrBlt[is.na(test$GarageYrBlt)] <- 0
+
+train2$LotFrontage[is.na(train2$LotFrontage)] <- mean(train2$LotFrontage, na.rm=TRUE)
+test$LotFrontage[is.na(test$LotFrontage)] <- mean(test$LotFrontage, na.rm=TRUE)
+
 train2$MasVnrArea[is.na(train2$MasVnrArea)] <- 0
-train2$BsmtQual[is.na(train2$BsmtQual)] <- 0
-train2$BsmtCond[is.na(train2$BsmtCond)] <- 0
-train2$BsmtExposure[is.na(train2$BsmtExposure)] <- 0
-train2$BsmtFinType1[is.na(train2$BsmtFinType1)] <- 0
-train2$BsmtFinType2[is.na(train2$BsmtFinType2)] <- 0
-train2$Electrical[is.na(train2$Electrical)] <- "SBrkr"
-train2$FireplaceQu[is.na(train2$FireplaceQu)] <- "None"
-train2$GarageType[is.na(train2$GarageType)] <- "None"
-train2$GarageYrBlt[is.na(train2$GarageYrBlt)] <- mean(train2$YearBuilt)
-train2$GarageFinish[is.na(train2$GarageFinish)] <- "None"
-train2$GarageQual[is.na(train2$GarageQual)] <- "None"
-train2$GarageCond[is.na(train2$GarageCond)] <- "None"
-train2$PoolQC[is.na(train2$PoolQC)] <- "None"
-train2$Fence[is.na(train2$Fence)] <- "None"
-train2$MiscFeature[is.na(train2$MiscFeature)] <- "None"
+test$MasVnrArea[is.na(test$MasVnrArea)] <- 0
+
+train2$Alley[is.na(train2$Alley)] <- 'None'
+test$Alley[is.na(test$Alley)] <- 'None'
+
+train2$MasVnrType[is.na(train2$MasVnrType)] <- 'None'
+test$MasVnrType[is.na(test$MasVnrType)] <- 'None'
+
+train2$BsmtQual[is.na(train2$BsmtQual)] <- 'None'
+test$BsmtQual[is.na(test$BsmtQual)] <- 'None'
+
+train2$BsmtCond[is.na(train2$BsmtCond)] <- 'None'
+test$BsmtCond[is.na(test$BsmtCond)] <- 'None'
+
+train2$BsmtExposure[is.na(train2$BsmtExposure)] <- 'None'
+test$BsmtExposure[is.na(test$BsmtExposure)] <- 'None'
+
+train2$BsmtFinType1[is.na(train2$BsmtFinType1)] <- 'None'
+test$BsmtFinType1[is.na(test$BsmtFinType1)] <- 'None'
+
+train2$BsmtFinType2[is.na(train2$BsmtFinType2)] <- 'None'
+test$BsmtFinType2[is.na(test$BsmtFinType2)] <- 'None'
+
+train2$FireplaceQu[is.na(train2$FireplaceQu)] <- 'None'
+test$FireplaceQu[is.na(test$FireplaceQu)] <- 'None'
+
+train2$GarageType[is.na(train2$GarageType)] <- 'None'
+test$GarageType[is.na(test$GarageType)] <- 'None'
+
+train2$GarageFinish[is.na(train2$GarageFinish)] <- 'None'
+test$GarageFinish[is.na(test$GarageFinish)] <- 'None'
+
+train2$GarageQual[is.na(train2$GarageQual)] <- 'None'
+test$GarageQual[is.na(test$GarageQual)] <- 'None'
+
+train2$GarageCond[is.na(train2$GarageCond)] <- 'None'
+test$GarageCond[is.na(test$GarageCond)] <- 'None'
+
+train2$PoolQC[is.na(train2$PoolQC)] <- 'None'
+test$PoolQC[is.na(test$PoolQC)] <- 'None'
+
+train2$Fence[is.na(train2$Fence)] <- 'None'
+test$Fence[is.na(test$Fence)] <- 'None'
+
+train2$MiscFeature[is.na(train2$MiscFeature)] <- 'None'
+test$MiscFeature[is.na(test$MiscFeature)] <- 'None'
+
+train2$Electrical[is.na(train2$Electrical)] <- 'SBrkr'
+test$Electrical[is.na(test$Electrical)] <- 'SBrkr'
+
+train2$BldgType[is.na(train2$BldgType)] <- '1Fam'
+test$BldgType[is.na(test$BldgType)] <- '1Fam'
+
+train2$BsmtExposure[is.na(train2$BsmtExposure)] <- 'None'
+test$BsmtExposure[is.na(test$BsmtExposure)] <- 'None'
+
+train2$Neighborhood <- as.factor(train2$Neighborhood)
+test$Neighborhood <- as.factor(test$Neighborhood)
+
+train2$BldgType <- as.factor(train2$BldgType)
+test$BldgType <- as.factor(test$BldgType)
+
+train2$HouseStyle <- as.factor(train2$HouseStyle)
+test$HouseStyle <- as.factor(test$HouseStyle)
+
+train2$RoofStyle <- as.factor(train2$RoofStyle)
+test$RoofStyle <- as.factor(test$RoofStyle)
+
+train2$RoofMatl <- as.factor(train2$RoofMatl)
+test$RoofMatl <- as.factor(test$RoofMatl)
+
+train2$Exterior1st <- as.factor(train2$Exterior1st)
+test$Exterior1st <- as.factor(test$Exterior1st)
+
+train2$Exterior2nd <- as.factor(train2$Exterior2nd)
+test$Exterior2nd <- as.factor(test$Exterior2nd)
+
+train2$ExterQual <- as.factor(train2$ExterQual)
+test$ExterQual <- as.factor(test$ExterQual)
+
+train2$ExterCond <- as.factor(train2$ExterCond)
+test$ExterCond <- as.factor(test$ExterCond)
+
+train2$Foundation <- as.factor(train2$Foundation)
+test$Foundation <- as.factor(test$Foundation)
+
+train2$Heating <- as.factor(train2$Heating)
+test$Heating <- as.factor(test$Heating)
+
+train2$HeatingQC <- as.factor(train2$HeatingQC)
+test$HeatingQC <- as.factor(test$HeatingQC)
+
+train2$CentralAir <- as.factor(train2$CentralAir)
+test$CentralAir <- as.factor(test$CentralAir)
+
+train2$KitchenQual <- as.factor(train2$KitchenQual)
+test$KitchenQual <- as.factor(test$KitchenQual)
+
+train2$Functional <- as.factor(train2$Functional)
+test$Functional <- as.factor(test$Functional)
+
+train2$PavedDrive <- as.factor(train2$PavedDrive)
+test$PavedDrive <- as.factor(test$PavedDrive)
+
+train2$SaleType <- as.factor(train2$SaleType)
+test$SaleType <- as.factor(test$SaleType)
+
+
+train2$Utilities <- as.factor(train2$Utilities)
+test$Utilities <- as.factor(test$Utilities)
+
 na_count <- sapply(train2, function(cnt) sum(length(which(is.na(cnt)))))
 
 ```
 
-Type of selection
+```{r, recode, echo=F, results='hide'}
 
-Forward Selection
+# 1)  Remove Basement Condition as it is too correlated with Basement Quality
+# 2)  Remove Garage Condition as it is too correlated with Garage Quality
+# 3)  Remove utilities from the train/test data sets as it doesn't have enough observations in each the 2 levels
+train2 = subset(train2, select = -c(Utilities, BsmtCond, GarageCond) )
+test = subset(test, select = -c(Utilities, BsmtCond, GarageCond) )
 
-Forward selection is a variable selection methodology that begins with a constant mean and adds explanatory variables one-by-one until no further additonal predictor variables significantly improve the model's fit. This employess the "F-to-enter" method from the extra-sum-of-squares F-statistic. This was the first method we employed. For this process, we provided the test a starting model with no predictor variables and a model from which terms can be selected, which included all predictor variables available. The process worked forward with selecting one parameter. The suggested model is output below.
 
 
-```{r, echo=T}
+#####################################################################################################################
+
+# The MSSubClass variable appears numeric but should be treated as a factor
+# 150 forced to another choice as this wasn't found in the training data set
+train2$MSSubClass <- dplyr::recode(train2$MSSubClass, `30` = "30F", `180` = "180F", `45` = "45F", `190` = "190F",
+                                  `90` = "190F", `160` = "160F", `50` = "50F", `40` = "40F", `85` = "85F", `70` = "70F",
+                                 `80` = "80F", `20` = "20F", `75` = "75F", `120` = "120F", `60` = "60F", `150` = "75F")
+
+test$MSSubClass <- dplyr::recode(test$MSSubClass, `30` = "30F", `180` = "180F", `45` = "45F", `190` = "190F",
+                                  `90` = "190F", `160` = "160F", `50` = "50F", `40` = "40F", `85` = "85F", `70` = "70F",
+                                 `80` = "80F", `20` = "20F", `75` = "75F", `120` = "120F", `60` = "60F", `150` = "75F")
+
+
+train2$MSSubClass <- as.factor(train2$MSSubClass)
+test$MSSubClass <- as.factor(test$MSSubClass)
+
+
+#####################################################################################################################
+train2$GarageQual <- dplyr::recode(train2$GarageQual, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+test$GarageQual <- dplyr::recode(test$GarageQual, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+
+train2$GarageFinish <- dplyr::recode(train2$GarageFinish, 'None' = 0, 'Unf' = 1, 'RFn' = 2, 'Fin' = 3)
+test$GarageFinish <- dplyr::recode(test$GarageFinish, 'None' = 0, 'Unf' = 1, 'RFn' = 2, 'Fin' = 3)
+
+train2$GarageType <- dplyr::recode(train2$GarageType, 'None' = 0, 'CarPort' = 1, '2Types' = 2, 
+                                  'Basment' = 3, 'Detchd' = 4, 'Attchd' = 5, 'BuiltIn' = 6)
+test$GarageType <- dplyr::recode(test$GarageType, 'None' = 0, 'CarPort' = 1, '2Types' = 2, 
+                                 'Basment' = 3, 'Detchd' = 4, 'Attchd' = 5, 'BuiltIn' = 6)
+
+# train2$GarageCond <- dplyr::recode(train2$GarageCond, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+# test$GarageCond <- dplyr::recode(test$GarageCond, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+
+#####################################################################################################################
+
+train2$BsmtQual <- dplyr::recode(train2$BsmtQual, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+test$BsmtQual <- dplyr::recode(test$BsmtQual, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+
+# train2$BsmtCond <- dplyr::recode(train2$BsmtCond, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+# test$BsmtCond <- dplyr::recode(test$BsmtCond, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+
+train2$BsmtFinType1 <- dplyr::recode(train2$BsmtFinType1, 'None' = 0, 'Unf' = 1, 'LwQ' = 2, 'Rec' = 3, 
+                                    'BLQ' = 4, 'ALQ' = 5, 'GLQ' = 6)
+test$BsmtFinType1 <- dplyr::recode(test$BsmtFinType1, 'None' = 0, 'Unf' = 1, 'LwQ' = 2, 'Rec' = 3, 
+                                   'BLQ' = 4, 'ALQ' = 5, 'GLQ' = 6)
+
+
+train2$BsmtFinType2 <- dplyr::recode(train2$BsmtFinType2, 'None' = 0, 'Unf' = 1, 'LwQ' = 2, 'Rec' = 3, 
+                                    'BLQ' = 4, 'ALQ' = 5, 'GLQ' = 6)
+test$BsmtFinType2 <- dplyr::recode(test$BsmtFinType2, 'None' = 0, 'Unf' = 1, 'LwQ' = 2, 'Rec' = 3, 
+                                   'BLQ' = 4, 'ALQ' = 5, 'GLQ' = 6)
+
+
+train2$BsmtExposure <- dplyr::recode(train2$BsmtExposure, 'None' = 0, 'No' = 1, 'Mn' = 2, 'Av' = 3, 'Gd' = 4)
+test$BsmtExposure <- dplyr::recode(test$BsmtExposure, 'None' = 0, 'No' = 1, 'Mn' = 2, 'Av' = 3, 'Gd' = 4)
+
+#####################################################################################################################
+
+train2$LandSlope <- dplyr::recode(train2$LandSlope, 'Sev' = 0, 'Mod' = 1, 'Gtl' = 2)
+test$LandSlope <- dplyr::recode(test$LandSlope, 'Sev' = 0, 'Mod' = 1, 'Gtl' = 2)
+
+
+train2$MSZoning <- dplyr::recode(train2$MSZoning, 'C (all)' = 0, 'RM' = 1, 'RH' = 2, 'RL' = 3, 'FV' = 4)
+test$MSZoning <- dplyr::recode(test$MSZoning, 'C (all)' = 0, 'RM' = 1, 'RH' = 2, 'RL' = 3, 'FV' = 4)
+
+
+train2$PoolQC <- dplyr::recode(train2$PoolQC, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+test$PoolQC <- dplyr::recode(test$PoolQC, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+
+
+train2$FireplaceQu <- dplyr::recode(train2$FireplaceQu, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+test$FireplaceQu <- dplyr::recode(test$FireplaceQu, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+
+#####################################################################################################################
+
+```
+
+
+```{r, convert_to_factor, echo=F, results='hide'}
+
+train$Street <- ordered(train$Street, levels = c("Grvl", "Pave"))
+test$Street <- ordered(test$Street, levels = c("Grvl", "Pave"))
+
+train$LotShape <- ordered(train$LotShape, levels = c("Reg", "IR1", "IR2", "IR3"))
+test$LotShape <- ordered(test$LotShape, levels = c("Reg", "IR1", "IR2", "IR3"))
+
+train$LandContour <- ordered(train$LandContour, levels = c("Bnk", "Lvl", "Low", "HLS"))
+test$LandContour <- ordered(test$LandContour, levels = c("Bnk", "Lvl", "Low", "HLS"))
+
+train$LotConfig <- ordered(train$LotConfig, levels = c("Inside", "Corner", "CulDSac", "FR2", "FR3"))
+test$LotConfig <- ordered(test$LotConfig, levels = c("Inside", "Corner", "CulDSac", "FR2", "FR3"))
+
+train$Condition1 <- ordered(train$Condition1, levels = c("Artery", "Feedr", "RRAe", "Norm", "RRAn", "RRNe", "RRNn", "PosA", "PosN"))
+test$Condition1 <- ordered(test$Condition1, levels = c("Artery", "Feedr", "RRAe", "Norm", "RRAn", "RRNe", "RRNn", "PosA", "PosN"))
+
+train$Condition2 <- ordered(train$Condition2, levels = c("Artery", "RRNn","RRAn","Feedr", "Norm", "RRAe", "PosN", "PosA"))
+test$Condition2 <- ordered(test$Condition2, levels = c("Artery", "RRNn","RRAn","Feedr", "Norm", "RRAe", "PosN", "PosA"))
+
+train$Alley <- ordered(train$Alley, levels = c("None", "Grvl", "Pave"))
+test$Alley <- ordered(test$Alley, levels = c("None", "Grvl", "Pave"))
+
+train$MasVnrType <- ordered(train$MasVnrType, levels = c("None", "CBlock", "BrkFace", "BrkCmn", "Stone"))
+test$MasVnrType <- ordered(test$MasVnrType, levels = c("None", "CBlock", "BrkFace", "BrkCmn", "Stone"))
+
+train$Fence <- ordered(train$Fence, levels = c("None", "MnWw", "GdWo", "MnPrv", "GdPrv"))
+test$Fence <- ordered(test$Fence, levels = c("None", "MnWw", "GdWo", "MnPrv", "GdPrv"))
+
+train$Electrical <- ordered(train$Electrical, levels = c("Mix", "FuseP", "FuseF", "FuseA", "SBrkr"))
+test$Electrical <- ordered(test$Electrical, levels = c("Mix", "FuseP", "FuseF", "FuseA", "SBrkr"))
+
+train$MiscFeature <- ordered(train$MiscFeature, levels = c("None", "Othr", "Shed", "Gar2", "TenC"))
+test$MiscFeature <- ordered(test$MiscFeature, levels = c("None", "Othr", "Shed", "Gar2", "TenC"))
+
+train$SaleCondition <- factor(train$SaleCondition, levels = c("Abnorml", "AdjLand", "Alloca", "Partial", "Family", "Normal"))
+test$SaleCondition <- factor(test$SaleCondition, levels = c("Abnorml", "AdjLand", "Alloca", "Partial", "Family", "Normal"))
+
+```
+
+
+**Forward Selection**
+
+Forward selection is a variable selection methodology that begins with a constant mean and adds explanatory variables one-by-one until no further additonal predictor variables significantly improve the model's fit. This employess the "F-to-enter" method from the extra-sum-of-squares F-statistic. This was the first method we employed. For this process, we provided the test a starting model with no predictor variables and a model from which terms can be selected, which included all predictor variables available. The process worked forward with selecting one parameter. The suggested model shown in section \ref{appendix:forSelection}.
+
+
+```{r, echo=F, results='hide'}
 # Initial Model - Forward Selection
 model2.forward.Start <- lm(log(SalePrice)~1,data = train2)
 
 # All Variables Model - Forward Selection
-model2.Allvar <- lm(log(SalePrice) ~ Id + MSSubClass + MSZoning + LotFrontage + LotArea + Street + 
-                      Alley + LotShape + LandContour + Utilities + LotConfig + LandSlope +
-                      Neighborhood + Condition1 + Condition2 + BldgType + HouseStyle + OverallQual +
-                      OverallCond + YearBuilt + YearRemodAdd + RoofStyle + RoofMatl + Exterior1st +
-                      Exterior2nd + MasVnrType + MasVnrArea + ExterQual + ExterCond + Foundation +
-                      BsmtQual + BsmtCond + BsmtExposure + BsmtFinType1 + BsmtFinSF1 + BsmtFinType2 
-                    + BsmtFinSF2 + BsmtUnfSF + TotalBsmtSF + Heating + HeatingQC + CentralAir + 
-                      Electrical + `1stFlrSF` + `2ndFlrSF` + LowQualFinSF + GrLivArea + BsmtFullBath
-                    + BsmtHalfBath + FullBath + HalfBath + BedroomAbvGr + KitchenAbvGr + KitchenQual
-                    + TotRmsAbvGrd + Functional + Fireplaces + FireplaceQu + GarageType +
-                      GarageYrBlt + GarageFinish + GarageCars + GarageArea + GarageQual + GarageCond
-                    + PavedDrive + WoodDeckSF + OpenPorchSF + EnclosedPorch + `3SsnPorch` +
-                      ScreenPorch + PoolArea + PoolQC + Fence + MiscFeature + MiscVal + MoSold +
-                      YrSold + SaleType + SaleCondition, data = train2
+model2.Allvar <- lm(log(SalePrice) ~ OverallQual + GrLivArea + Neighborhood + 
+                      BsmtFinSF1 + MSSubClass + OverallCond + YearBuilt + GarageCars + 
+                      TotalBsmtSF + SaleCondition + LotArea + MSZoning + Functional + 
+                      CentralAir + KitchenQual + Condition1 + FireplaceQu + BsmtExposure + 
+                      BsmtFullBath + ScreenPorch + Exterior1st + YearRemodAdd + 
+                      GarageQual + WoodDeckSF + OpenPorchSF + Street + LotConfig + 
+                      LotFrontage + Foundation + Heating + KitchenAbvGr + EnclosedPorch + 
+                      HalfBath + FullBath + MasVnrType + BsmtFinSF2 + HeatingQC + 
+                      GarageArea + SaleType + ExterCond + PoolArea + BsmtFinType1 + 
+                      GarageYrBlt + Electrical + `3SsnPorch` + LowQualFinSF, data = train2
                     )
 
 #### Forward Selection, first pass
@@ -327,24 +546,25 @@ model2.Forward$anova
 # model2.final.Forward$anova
 
 ############################## First-pass suggested output from Forward Selection:
-final.Forward.Model <- lm(log(SalePrice) ~ OverallQual + GrLivArea + Neighborhood + BsmtFinSF1 +
-                            OverallCond + YearBuilt + TotalBsmtSF + GarageCars + MSZoning +
-                            SaleCondition + BldgType + Functional + LotArea + KitchenQual +
-                            BsmtExposure + CentralAir + Condition1 + ScreenPorch + BsmtFullBath +
-                            Heating + Fireplaces + YearRemodAdd + Exterior1st + GarageQual +
-                            WoodDeckSF + SaleType + OpenPorchSF + HeatingQC + LotConfig +
-                            EnclosedPorch + ExterCond + PoolQC + Foundation + LandSlope +
-                            RoofMatl + GarageArea + MasVnrType + HalfBath + PoolArea +
-                            `3SsnPorch` + Street + KitchenAbvGr + GarageCond + FullBath +
-                            BsmtQual + BsmtFinSF2, data = train2
+final.Forward.Model <- lm(log(SalePrice) ~ OverallQual + GrLivArea + Neighborhood + 
+                            BsmtFinSF1 + MSSubClass + OverallCond + YearBuilt + GarageCars + 
+                            TotalBsmtSF + SaleCondition + LotArea + MSZoning + Functional + 
+                            CentralAir + KitchenQual + Condition1 + FireplaceQu + BsmtExposure + 
+                            BsmtFullBath + ScreenPorch + Exterior1st + YearRemodAdd + 
+                            GarageQual + WoodDeckSF + OpenPorchSF + Street + LotConfig + 
+                            LotFrontage + Foundation + Heating + KitchenAbvGr + EnclosedPorch + 
+                            HalfBath + FullBath + MasVnrType + BsmtFinSF2 + HeatingQC + 
+                            GarageArea + SaleType + ExterCond + PoolArea + BsmtFinType1 + 
+                            GarageYrBlt + Electrical + `3SsnPorch` + LowQualFinSF, data = train2
                           )
 ```
 
 
-Backward Elimination
+**Backward Elimination**
 
-Backward elimination is a variable selection methodology that begins with all possible predictor variables and works backward, eliminating variables using all possible combinations until only the best for the fit are provided. This employess the "F-to-remove" method from the extra-sum-of-squares F-statistic. For this process, we provided the test a model with all available predictor variables from which insignificant variables were eliminated. The output is as follows below.
-```{r, echo=F}
+Backward elimination is a variable selection methodology that begins with all possible predictor variables and works backward, eliminating variables using all possible combinations until only the best for the fit are provided. This employess the "F-to-remove" method from the extra-sum-of-squares F-statistic. For this process, we provided the test a model with all available predictor variables from which insignificant variables were eliminated. The suggested model shown in section \ref{appendix:backSelection}.
+
+```{r, echo=F, results='hide'}
 # Backward Elimination
 model2.Backward <- stepAIC(model2.Allvar, direction = "backward", trace = F, scope = formula(model2.forward.Start))
 
@@ -352,17 +572,16 @@ summary(model2.Backward)
 model2.Backward$anova
 
 ############################## First-pass suggested output from Backward Elimination:
-final.Backward.Model <- lm(log(SalePrice) ~ MSZoning + LotArea + Street + LotConfig + LandSlope +
-                             Neighborhood + Condition1 + Condition2 + BldgType + OverallQual +
-                             OverallCond + YearBuilt + YearRemodAdd + RoofStyle + RoofMatl +
-                             Exterior1st + MasVnrType + ExterCond + Foundation + BsmtQual +
-                             BsmtCond + BsmtExposure + BsmtFinSF1 + BsmtFinSF2 + BsmtUnfSF +
-                             Heating + HeatingQC + CentralAir + `1stFlrSF` + `2ndFlrSF` +
-                             LowQualFinSF + BsmtFullBath + FullBath + HalfBath + KitchenAbvGr +
-                             KitchenQual + Functional + Fireplaces + GarageCars + GarageArea +
-                             GarageQual + GarageCond + WoodDeckSF + OpenPorchSF + EnclosedPorch +
-                             `3SsnPorch` + ScreenPorch + PoolArea + PoolQC + SaleType +
-                             SaleCondition, data = train2
+final.Backward.Model <- lm(log(SalePrice) ~ MSSubClass + MSZoning + LotFrontage +
+                              LotArea + Street + LotConfig + LandSlope + Neighborhood +
+                              Condition1 + OverallQual + OverallCond + YearBuilt + YearRemodAdd +
+                              RoofMatl + Exterior1st + MasVnrType + ExterCond + Foundation +
+                              BsmtExposure + BsmtFinType1 + BsmtFinSF1 + BsmtFinSF2 + BsmtUnfSF +
+                              Heating + HeatingQC + CentralAir + Electrical + `1stFlrSF` +
+                              `2ndFlrSF` + LowQualFinSF + BsmtFullBath + FullBath + HalfBath +
+                              KitchenAbvGr + KitchenQual + Functional + FireplaceQu + GarageYrBlt +
+                              GarageCars + GarageArea + GarageQual + WoodDeckSF + OpenPorchSF +
+                              EnclosedPorch + ScreenPorch + PoolArea + SaleType + SaleCondition, data = train2
                            )
 
 ##### If needed for display, this is the final model, final validation with Backward Elimination
@@ -371,11 +590,11 @@ final.Backward.Model <- lm(log(SalePrice) ~ MSZoning + LotArea + Street + LotCon
 # model2.final.Backward$anova
 ```
 
-Stepwise Regression
+**Stepwise Regression**
 
-Stepwise regression is a variable selection methodology that performs one step of forward selection for each step of backward elimination. The steps are repeated, concurrently, until no further predictor variables can be added or removed. This is the third model approach we used. The suggested model is output below.
+Stepwise regression is a variable selection methodology that performs one step of forward selection for each step of backward elimination. The steps are repeated, concurrently, until no further predictor variables can be added or removed. This is the third model approach we used. The suggested model shown in section \ref{appendix:stepWSelection}.
 
-```{r, echo=F}
+```{r, echo=F, results='hide'}
 # Stepwise Selection
 model2.Stepwise <- stepAIC(model2.Allvar, direction = "both", trace = F)
 
@@ -383,52 +602,60 @@ summary(model2.Stepwise)
 model2.Stepwise$anova
 
 ############################## First-pass suggested output from Stepwise Regression:
-final.Stepwise.Model <- lm(log(SalePrice) ~ MSZoning + LotArea + Street + LotConfig + LandSlope +
-                             Neighborhood + Condition1 + Condition2 + BldgType + OverallQual +
-                             OverallCond + YearBuilt + YearRemodAdd + RoofStyle + RoofMatl +
-                             Exterior1st + MasVnrType + ExterCond + Foundation + BsmtQual +
-                             BsmtCond + BsmtExposure + BsmtFinSF1 + BsmtFinSF2 + BsmtUnfSF +
-                             Heating + HeatingQC + CentralAir + `1stFlrSF` + `2ndFlrSF` +
-                             LowQualFinSF + BsmtFullBath + FullBath + HalfBath + KitchenAbvGr +
-                             KitchenQual + Functional + Fireplaces + GarageCars + GarageArea +
-                             GarageQual + GarageCond + WoodDeckSF + OpenPorchSF + EnclosedPorch +
-                             `3SsnPorch` + ScreenPorch + PoolArea + PoolQC + SaleType +
-                             SaleCondition, data = train2
+final.Stepwise.Model <- lm(log(SalePrice) ~ OverallQual + GrLivArea + Neighborhood + 
+                              BsmtFinSF1 + MSSubClass + OverallCond + YearBuilt + GarageCars + 
+                              TotalBsmtSF + SaleCondition + LotArea + MSZoning + Functional + 
+                              CentralAir + KitchenQual + Condition1 + FireplaceQu + BsmtExposure + 
+                              BsmtFullBath + ScreenPorch + Exterior1st + YearRemodAdd + 
+                              GarageQual + WoodDeckSF + OpenPorchSF + Street + LotConfig + 
+                              LotFrontage + Foundation + Heating + KitchenAbvGr + EnclosedPorch + 
+                              HalfBath + FullBath + MasVnrType + BsmtFinSF2 + HeatingQC + 
+                              GarageArea + SaleType + ExterCond + PoolArea + BsmtFinType1 + 
+                              GarageYrBlt + Electrical + `3SsnPorch` + LowQualFinSF, data = train2
                            )
 
 # If needed for display, this is the final model, final validation with Stepwise Regression
-stepwise.final.model4 <- stepAIC(fitFull.all4.Final, direction = "both", trace = F)
+#stepwise.final.model4 <- stepAIC(fitFull.all4.Final, direction = "both", trace = F)
 #summary(stepwise.final.model4)
 #stepwise.final.model4$anova
 ```
 
-Custom Variable Selection 
+**Custom Variable Selection** 
 
-To develop the custom model, we employed a combination of a correlation matrix for quantitative data, analysis of the summarization of the suggested model from stepwise selection, and through direct analysis of the pairs plots. As previously mentioned, our final model included 11 linear terms and two interaction terms. We removed all variables suggested to be removed by the stepwise regression and backward elimination tests, then reprocessed the updated models until forward selection, backward elimination, and stepwise regression were in agreeance with respect to the linear terms. Once this trial-and-error process was completed, we added interaction terms based on domain knowledge and re-applied the forward selection, backward elimination, and stepwise regression methods until only significant terms - both linear and interactive - remained. We then used graphical analysis to visually confirm interaction between the interactive terms remaining.
+To develop the custom model, we employed a combination of a correlation matrix for quantitative data, analysis of the summarization of the suggested model from stepwise selection, and through direct analysis of the pairs plots. As previously mentioned, our final model included 11 linear terms and two interaction terms. We removed all variables suggested to be removed by the stepwise regression and backward elimination tests, then reprocessed the updated models until forward selection, backward elimination, and stepwise regression were in agreeance with respect to the linear terms. Once this trial-and-error process was completed, we added interaction terms based on domain knowledge and re-applied the forward selection, backward elimination, and stepwise regression methods until only significant terms - both linear and interactive - remained. We then used graphical analysis to visually confirm interaction between the interactive terms remaining. The custom model shown in section \ref{appendix:customSelection}.
 
-```{r, echo=F}
+```{r, echo=F, results='hide'}
 
-train2.numeric <- dplyr::select_if(train2, is.numeric) %>% data.frame()
+#train2.numeric <- dplyr::select_if(train2, is.numeric) %>% data.frame()
 
-flattenCorrMatrix <- function(cormatrix, pmatrix) {
-  ut <- upper.tri(cormatrix)
-  data.frame(
-    row = rownames(cormatrix)[row(cormatrix)[ut]],
-    column = rownames(cormatrix)[col(cormatrix)[ut]],
-    cor  =(cormatrix)[ut],
-    p = pmat[ut]
-    )
-}
+#flattenCorrMatrix <- function(cormatrix, pmatrix) {
+#  ut <- upper.tri(cormatrix)
+# data.frame(
+#    row = rownames(cormatrix)[row(cormatrix)[ut]],
+#    column = rownames(cormatrix)[col(cormatrix)[ut]],
+#    cor  =(cormatrix)[ut],
+#    p = pmat[ut]
+#    )
+#}
 
 #See what variables are correlated with eachother, p-values
-correlation.matrix <- rcorr(as.matrix(train2.numeric))
-corDF <- data.frame(flattenCorrMatrix(correlation.matrix$r, correlation.matrix$P))
+#correlation.matrix <- rcorr(as.matrix(train2.numeric))
+#corDF <- data.frame(flattenCorrMatrix(correlation.matrix$r, correlation.matrix$P))
 
 #Order the correlation matrix to show the highest correlated
-data.frame(corDF[order(-corDF$cor),])
-quantDataModel <- corDF[which(corDF$cor >= 0.5),]
+#data.frame(corDF[order(-corDF$cor),])
+#quantDataModel <- corDF[which(corDF$cor >= 0.5),]
 
-fitFull.all4.Final <- lm(log(SalePrice) ~ BsmtUnfSF + CentralAir + HalfBath + KitchenQual + Neighborhood + OverallCond + OverallQual + RoofMatl + `1stFlrSF` + `2ndFlrSF` + YearBuilt + MSZoning:Neighborhood + YearBuilt:Neighborhood, data = train2)
+fitFull.all4.Final <- lm(log(SalePrice) ~ MSSubClass + MSZoning + LotFrontage + 
+                            LotArea + Street + Neighborhood + 
+                            Condition1 + OverallQual + OverallCond + YearBuilt + YearRemodAdd + 
+                            ExterCond + Foundation + 
+                            BsmtExposure + BsmtFinType1 + BsmtFinSF1 + BsmtFinSF2 + BsmtUnfSF + 
+                            HeatingQC + CentralAir + Electrical + `1stFlrSF` + 
+                            `2ndFlrSF` + LowQualFinSF + BsmtFullBath + FullBath + HalfBath + 
+                            KitchenAbvGr + KitchenQual + Functional + FireplaceQu + GarageYrBlt + 
+                            GarageCars + GarageArea + GarageQual + WoodDeckSF + OpenPorchSF + 
+                            EnclosedPorch + ScreenPorch + SaleType + SaleCondition, data = train2)
 
 ######################################################################
 ###We need the graphs for interactive terms to display interaction####
@@ -437,95 +664,65 @@ fitFull.all4.Final <- lm(log(SalePrice) ~ BsmtUnfSF + CentralAir + HalfBath + Ki
 
 ## Model Assumption Assessment
 
-Address each assumption
+The assumption assessment plots were similar for all four models. The assumption assessment plots and discussion for the custom model are provided here with Figure \@ref(fig:custom-assumptions). The assumption assessment plots for the other three models are provided for reference in section \ref{appendix:assessmentPlots}.
+
+Based on the diagnostic plots below, the custom model appears to reasonably meet the assumptions of linear regression. The standardized residuals do not appear to exhibit a discernible pattern, indicating constant variance along the regression, or homoscedasticity. While there are some outliers, this does not appear to be an egregious violation. Based on the QQ plot, there is a small level of deviation on the ends of the distribution of the errors, but for the most part, the errors adhere to normality. The sample size should be sufficient to protect against this non-normality. Based on the standardized residuals vs. leverage plot, only a few values have high leverage and are outlying. However, these violations do not appear to be egregious.
 
 
-Custom Model Assumptions
+```{r, custom-assumptions, echo=F, warning=F, fig.width=5, fig.height=5, fig.align='center', fig.cap='Custom Assumption Assessment Plots', out.width = '45%', fig.pos="htbp", fig.show = 'hold'}
+#par(mfrow=c(2,2))
+#plot(fitFull.all4.Final, main = "Custom Model")
 
-Based on the below residuals vs. fitted plot, there seems to be strong linearity in the custom model, along with constant variance. Furthermore, while there is one outlier, there is not an egregious violation of any other residuals. The red line very closely approximates the gray dashed line, which furthermore supports the arguement of a well-fit model.
-
-Based on the QQ plot, there is a small level of deviation on the ends of the distribution of the errors, but for the most part, the errors adhere to normality.
-
-In analyzing the standardized residuals scale-location plot, the line has a slight curve, but for the most part is linear, indicating constant variance, or homoscedasticity.
-
-Based on the residuals vs. leverage plot, only two values have high leverage and only one point has a high Cook's distance. However, these are only three data points of over a 1,400 so this is not cause for concern.
-```{r, echo=F}
-par(mfrow=c(2,2))
-plot(fitFull.all4.Final, main = "Custom Model")
+# create plots of residuals
+basic.fit.plots(train2, fitFull.all4.Final)
+# create leverage / outlier plot
+ols_plot_resid_lev(fitFull.all4.Final)
 ```
 
-
-Forward Selection Model Assumptions
-
-Based on the below residuals vs. fitted plot, there seems to be reasonable linearity in the custom model, along with constant variance. Furthermore, while there are some outliers, there is not an egregious violation of any other residuals. The red line very closely approximates the gray dashed line, which furthermore supports the arguement for a well-fit model.
-
-Based on the QQ plot, there is a some deviation towards the tails of the distribution of the errors, but as with teh custom plots, the large majority of errors adhere to normality.
-
-In analyzing the standardized residuals scale-location plot, the line has a moderate curve, indicating some violation of homoscedasticity. However, this is due to a few outliers and as more data is added, the line should straighten out more.
-
-Based on the residuals vs. leverage plot, there are a few more values than the custom model that have high leverage or a moderately large Cook's distance. However, since these are only a few data points, there is not a large cause for concern with this model.
-```{r, echo=F}
-par(mfrow=c(2,2))
-plot(model2.Forward, main = "Forward Selection Model")
-```
-
-
-Backward Elimination Model Assumptions
-
-The backward elimination and stepwise regression models comprised the same parameters. Therefore, they shared the same plots. Compared to the forward selection model, all plots are very similar. Thus, model assumptions are roughly the same.
-
-Undisputedly, the custom model outperformed the model built strictly on the output of the forward selection, backward elimination, and stepwise regression variable selection procedures.
-```{r, echo=F}
-par(mfrow=c(2,2))
-plot(model2.Backward, main = "Backward Elimination Model")
-```
-
-Stepwise Regression model plots
-```{r, echo=F}
-par(mfrow=c(2,2))
-plot(model2.Stepwise, main = "Stepwise Regression Model")
-```
-
-
+\newpage
 
 ## Comparing Competing Models
 
+While the models from forward, backward, and stepwise selection produce higher adjusted $R^2$ values on the training data, the yield much higher errors when applied to the Kaggle test set. These selection methods appear to be overfitting to the training data, thus fail to generalize to the Kaggle test set. Undisputedly, the custom model outperformed the model built strictly on the output of the forward selection, backward elimination, and stepwise regression variable selection procedures when applied to a new dataset.
 
-
-* Adjusted $R^2$
-
-The final adjusted $R^2$ of our custom model is 0.8867:
-```{r, echo=F}
-summary(fitFull.all4.Final)$adj.r.squared ##Custom Model
+```{r, echo=F, results='hide', warning=F}
+#The final adjusted $R^2$ of our custom model is 0.9303:
+R2.custom <- summary(fitFull.all4.Final)$adj.r.squared ##Custom Model
 ```
 
-The final adjusted $R^2$ of our Forward Selection model is 0.9364:
-```{r, echo=F}
-summary(model2.Forward)$adj.r.squared
-```
-
-The final adjusted $R^2$ of our Backward Elimination model is 0.9367:
-```{r, echo=F}
-summary(model2.Backward)$adj.r.squared
-```
-
-The final adjusted $R^2$ of our Stepwise Regression model is 0.9367:
-```{r, echo=F}
-summary(model2.Stepwise)$adj.r.squared
+```{r, echo=F, results='hide', warning=F}
+#The final adjusted $R^2$ of our Forward Selection model is 0.9327:
+R2.forward <- summary(model2.Forward)$adj.r.squared
 ```
 
 
+```{r, echo=F, results='hide', warning=F}
+#The final adjusted $R^2$ of our Backward Elimination model is 0.9329:
+R2.backward <- summary(model2.Backward)$adj.r.squared
+```
 
-* CV PRESS
 
-Our cross-validated PRESS statistic output for our custom model is below.
-```{r, echo=F}
+```{r, echo=F, results='hide', warning=F}
+#The final adjusted $R^2$ of our Stepwise Regression model is 0.9327:
+R2.step <- summary(model2.Stepwise)$adj.r.squared
+```
+
+```{r, echo=F, results='hide', warning=F}
+#Our cross-validated PRESS statistic output for our custom model is below.
+
 # Set up repeated k-fold cross-validation
 train.control2 <- trainControl(method = "cv", number = 10)
 # Train the model
-model.cv2 <- train(log(SalePrice) ~ BsmtUnfSF + CentralAir + HalfBath + KitchenQual + Neighborhood +
-                     OverallCond + OverallQual + RoofMatl + `1stFlrSF` + `2ndFlrSF` + YearBuilt +
-                     MSZoning:Neighborhood + YearBuilt:Neighborhood,
+model.cv2 <- train(log(SalePrice) ~ MSSubClass + MSZoning + LotFrontage + 
+                      LotArea + Street + Neighborhood + 
+                      Condition1 + OverallQual + OverallCond + YearBuilt + YearRemodAdd + 
+                      ExterCond + Foundation + 
+                      BsmtExposure + BsmtFinType1 + BsmtFinSF1 + BsmtFinSF2 + BsmtUnfSF + 
+                      HeatingQC + CentralAir + Electrical + `1stFlrSF` + 
+                      `2ndFlrSF` + LowQualFinSF + BsmtFullBath + FullBath + HalfBath + 
+                      KitchenAbvGr + KitchenQual + Functional + FireplaceQu + GarageYrBlt + 
+                      GarageCars + GarageArea + GarageQual + WoodDeckSF + OpenPorchSF + 
+                      EnclosedPorch + ScreenPorch + SaleType + SaleCondition,
                    data = train2,
                    method = 'lm',
                    trControl = train.control2)
@@ -537,25 +734,25 @@ model.cv2
 res <- model.cv2$results
 
 # get cross-validated PRESS statistic
-PCV <- PRESS.cv(model.cv2)
-PCV
+PCV.custom <- PRESS.cv(model.cv2)
 ```
 
-Our cross-validated PRESS statistic output for our Forward Selection model is below.
-```{r, echo=F}
+```{r, echo=F, results='hide', warning=F}
+#Our cross-validated PRESS statistic output for our Forward Selection model is below.
+
 # Set up repeated k-fold cross-validation
 train.control2 <- trainControl(method = "cv", number = 10)
 # Train the model
-model.cv2 <- train(log(SalePrice) ~ OverallQual + GrLivArea + Neighborhood + BsmtFinSF1 +
-                            OverallCond + YearBuilt + TotalBsmtSF + GarageCars + MSZoning +
-                            SaleCondition + BldgType + Functional + LotArea + KitchenQual +
-                            BsmtExposure + CentralAir + Condition1 + ScreenPorch + BsmtFullBath +
-                            Heating + Fireplaces + YearRemodAdd + Exterior1st + GarageQual +
-                            WoodDeckSF + SaleType + OpenPorchSF + HeatingQC + LotConfig +
-                            EnclosedPorch + ExterCond + PoolQC + Foundation + LandSlope +
-                            RoofMatl + GarageArea + MasVnrType + HalfBath + PoolArea +
-                            `3SsnPorch` + Street + KitchenAbvGr + GarageCond + FullBath +
-                            BsmtQual + BsmtFinSF2,
+model.cv2 <- train(log(SalePrice) ~ OverallQual + GrLivArea + Neighborhood + 
+                      BsmtFinSF1 + MSSubClass + OverallCond + YearBuilt + GarageCars + 
+                      TotalBsmtSF + SaleCondition + LotArea + MSZoning + Functional + 
+                      CentralAir + KitchenQual + Condition1 + FireplaceQu + BsmtExposure + 
+                      BsmtFullBath + ScreenPorch + Exterior1st + YearRemodAdd + 
+                      GarageQual + WoodDeckSF + OpenPorchSF + Street + LotConfig + 
+                      LotFrontage + Foundation + Heating + KitchenAbvGr + EnclosedPorch + 
+                      HalfBath + FullBath + MasVnrType + BsmtFinSF2 + HeatingQC + 
+                      GarageArea + SaleType + ExterCond + PoolArea + BsmtFinType1 + 
+                      GarageYrBlt + Electrical + `3SsnPorch` + LowQualFinSF,
                    data = train2,
                    method = 'lm',
                    trControl = train.control2)
@@ -567,26 +764,25 @@ model.cv2
 res <- model.cv2$results
 
 # get cross-validated PRESS statistic
-PCV <- PRESS.cv(model.cv2)
-PCV
+PCV.forward <- PRESS.cv(model.cv2)
 ```
 
-Our cross-validated PRESS statistic output for our Backward Elimination model is below.
-```{r, echo=F}
+```{r, echo=F, results='hide', warning=F}
+#Our cross-validated PRESS statistic output for our Backward Elimination model is below.
+
 # Set up repeated k-fold cross-validation
 train.control2 <- trainControl(method = "cv", number = 10)
 # Train the model
-model.cv2 <- train(log(SalePrice) ~ MSZoning + LotArea + Street + LotConfig + LandSlope +
-                             Neighborhood + Condition1 + Condition2 + BldgType + OverallQual +
-                             OverallCond + YearBuilt + YearRemodAdd + RoofStyle + RoofMatl +
-                             Exterior1st + MasVnrType + ExterCond + Foundation + BsmtQual +
-                             BsmtCond + BsmtExposure + BsmtFinSF1 + BsmtFinSF2 + BsmtUnfSF +
-                             Heating + HeatingQC + CentralAir + `1stFlrSF` + `2ndFlrSF` +
-                             LowQualFinSF + BsmtFullBath + FullBath + HalfBath + KitchenAbvGr +
-                             KitchenQual + Functional + Fireplaces + GarageCars + GarageArea +
-                             GarageQual + GarageCond + WoodDeckSF + OpenPorchSF + EnclosedPorch +
-                             `3SsnPorch` + ScreenPorch + PoolArea + PoolQC + SaleType +
-                             SaleCondition,
+model.cv2 <- train(log(SalePrice) ~ MSSubClass + MSZoning + LotFrontage +
+                      LotArea + Street + LotConfig + LandSlope + Neighborhood +
+                      Condition1 + OverallQual + OverallCond + YearBuilt + YearRemodAdd +
+                      RoofMatl + Exterior1st + MasVnrType + ExterCond + Foundation +
+                      BsmtExposure + BsmtFinType1 + BsmtFinSF1 + BsmtFinSF2 + BsmtUnfSF +
+                      Heating + HeatingQC + CentralAir + Electrical + `1stFlrSF` +
+                      `2ndFlrSF` + LowQualFinSF + BsmtFullBath + FullBath + HalfBath +
+                      KitchenAbvGr + KitchenQual + Functional + FireplaceQu + GarageYrBlt +
+                      GarageCars + GarageArea + GarageQual + WoodDeckSF + OpenPorchSF +
+                      EnclosedPorch + ScreenPorch + PoolArea + SaleType + SaleCondition,
                    data = train2,
                    method = 'lm',
                    trControl = train.control2)
@@ -598,26 +794,25 @@ model.cv2
 res <- model.cv2$results
 
 # get cross-validated PRESS statistic
-PCV <- PRESS.cv(model.cv2)
-PCV
+PCV.backward <- PRESS.cv(model.cv2)
 ```
 
-Our cross-validated PRESS statistic output for our Stepwise Regression model is below.
-```{r, echo=F}
+```{r, echo=F, results='hide', warning=F}
+
+#Our cross-validated PRESS statistic output for our Stepwise Regression model is below.
 # Set up repeated k-fold cross-validation
 train.control2 <- trainControl(method = "cv", number = 10)
 # Train the model
-model.cv2 <- train(log(SalePrice) ~ MSZoning + LotArea + Street + LotConfig + LandSlope +
-                             Neighborhood + Condition1 + Condition2 + BldgType + OverallQual +
-                             OverallCond + YearBuilt + YearRemodAdd + RoofStyle + RoofMatl +
-                             Exterior1st + MasVnrType + ExterCond + Foundation + BsmtQual +
-                             BsmtCond + BsmtExposure + BsmtFinSF1 + BsmtFinSF2 + BsmtUnfSF +
-                             Heating + HeatingQC + CentralAir + `1stFlrSF` + `2ndFlrSF` +
-                             LowQualFinSF + BsmtFullBath + FullBath + HalfBath + KitchenAbvGr +
-                             KitchenQual + Functional + Fireplaces + GarageCars + GarageArea +
-                             GarageQual + GarageCond + WoodDeckSF + OpenPorchSF + EnclosedPorch +
-                             `3SsnPorch` + ScreenPorch + PoolArea + PoolQC + SaleType +
-                             SaleCondition,
+model.cv2 <- train(log(SalePrice) ~ OverallQual + GrLivArea + Neighborhood + 
+                      BsmtFinSF1 + MSSubClass + OverallCond + YearBuilt + GarageCars + 
+                      TotalBsmtSF + SaleCondition + LotArea + MSZoning + Functional + 
+                      CentralAir + KitchenQual + Condition1 + FireplaceQu + BsmtExposure + 
+                      BsmtFullBath + ScreenPorch + Exterior1st + YearRemodAdd + 
+                      GarageQual + WoodDeckSF + OpenPorchSF + Street + LotConfig + 
+                      LotFrontage + Foundation + Heating + KitchenAbvGr + EnclosedPorch + 
+                      HalfBath + FullBath + MasVnrType + BsmtFinSF2 + HeatingQC + 
+                      GarageArea + SaleType + ExterCond + PoolArea + BsmtFinType1 + 
+                      GarageYrBlt + Electrical + `3SsnPorch` + LowQualFinSF,
                    data = train2,
                    method = 'lm',
                    trControl = train.control2)
@@ -629,16 +824,12 @@ model.cv2
 res <- model.cv2$results
 
 # get cross-validated PRESS statistic
-PCV <- PRESS.cv(model.cv2)
-PCV
+PCV.stepwise <- PRESS.cv(model.cv2)
 ```
 
+```{r,echo=F, results='hide', warning=F}
+#Our custom model achieved a Kaggle score of 0.13290. This was our best score.
 
-
-* Kaggle score
-
-Our custom model achieved a Kaggle score of 0.14494. This was our best score.
-```{r,echo=F}
 ## To test in Kaggle, submit the produced "submit" file
 test$predicted.log.price <- predict.lm(fitFull.all4.Final, test)
 test$predicted.log.price[is.na(test$predicted.log.price)] <- mean(test$predicted.log.price, na.rm = T)
@@ -648,42 +839,59 @@ submit <- test %>% mutate(SalePrice = exp(predicted.log.price)) %>% subset(selec
 write.csv(submit, file = "./kaggle_submission.csv", row.names = F)
 ```
 
-Our Forward Selection model achieved a Kaggle score of 0.70145
-```{r,echo=F}
+```{r,echo=F, results='hide', warning=F}
+#Our Forward Selection model achieved a Kaggle score of 0.13476
+
 ## To test in Kaggle, submit the produced "submit" file
 test$predicted.log.price <- predict.lm(final.Forward.Model, test)
 test$predicted.log.price[is.na(test$predicted.log.price)] <- mean(test$predicted.log.price, na.rm = T)
 
 submit <- test %>% mutate(SalePrice = exp(predicted.log.price)) %>% subset(select=c(Id, SalePrice))
 
-write.csv(submit, file = "./kaggle_submission.csv", row.names = F)
+# write.csv(submit, file = "./kaggle_submission.csv", row.names = F)
 ```
 
-Our Backward Selection model achieved a Kaggle score of 0.73830
-```{r,echo=F}
+```{r,echo=F, results='hide', warning=F}
+#Our Backward Selection model achieved a Kaggle score of 0.13475
+
 ## To test in Kaggle, submit the produced "submit" file
 test$predicted.log.price <- predict.lm(final.Backward.Model, test)
 test$predicted.log.price[is.na(test$predicted.log.price)] <- mean(test$predicted.log.price, na.rm = T)
 
 submit <- test %>% mutate(SalePrice = exp(predicted.log.price)) %>% subset(select=c(Id, SalePrice))
 
-write.csv(submit, file = "./kaggle_submission.csv", row.names = F)
+# write.csv(submit, file = "./kaggle_submission.csv", row.names = F)
 ```
 
-Our Stepwise Regression model also achieved a Kaggle score of 0.73830
-```{r,echo=F}
+```{r,echo=F, results='hide', warning=F}
+#Our Stepwise Regression model also achieved a Kaggle score of 0.13476
+
 ## To test in Kaggle, submit the produced "submit" file
 test$predicted.log.price <- predict.lm(final.Stepwise.Model, test)
 test$predicted.log.price[is.na(test$predicted.log.price)] <- mean(test$predicted.log.price, na.rm = T)
 
 submit <- test %>% mutate(SalePrice = exp(predicted.log.price)) %>% subset(select=c(Id, SalePrice))
 
-write.csv(submit, file = "./kaggle_submission.csv", row.names = F)
+# write.csv(submit, file = "./kaggle_submission.csv", row.names = F)
+```
+
+
+```{r, echo=FALSE}
+# print accuracy metrics to md table
+
+kable(data.frame('Model' = c('Custom', 'Forward Selection', 'Backward Selection', 'Stepwise Regression'), 
+                 'Kaggle Score'=c(0.13290,0.13476,0.13475,0.13476),
+                 'CV Press'=c(PCV.custom, PCV.forward, PCV.backward, PCV.stepwise),
+                 'Adjused R Squared'=c(R2.custom, R2.forward, R2.backward, R2.step)),
+      "latex", booktabs = T)  %>%
+  kable_styling(position = "center")
 ```
 
 ## Conclusion
 
-A short summary of the analysis
+In an effort to produce very predictive model with linear regression, all explanatory variables were considered with three types of varaible selection techniques: forward selection, backward selection, stepwise selection. A custom model was initially produced by eleminating variables suggested for elimination by the automatic selection processes, exploring the data with pairwise scatter plots, and adding interaction terms based on graphical analysis and domain knowledge. Automated selection was reapplied to suggest terms from the initial custom model. The final models suggested by automated techniques produced high $R^2$ values, but performed poorly on the Kaggle test set. This suggests the automated techniques were overfitting to the training data. The final custom model, produced a high $R^2$ value and perfromed well on the Kaggle test set (see section \ref{appendix:kaggle}). This suggests that the custom model is not overfitting to the traing data and generalizes well to an unseen dataset.
+
+\newpage
 
 # Appendix
 
@@ -699,8 +907,8 @@ The scatter plot in Figure \@ref(fig:scatter-plot) shows relationship of `SalePr
 train %>% 
   ggplot(aes(x = (GrLivArea), y = (SalePrice))) +
   geom_point(alpha = 0.3) +
-  labs(title = 'Log of Sale Price vs Living Room Area', 
-       y = 'Log of Sale Price', x = 'Living Room Area (sq. ft.)')
+  labs(title = 'Sale Price vs Living Room Area', 
+       y = 'Sale Price', x = 'Living Room Area (sq. ft.)')
 ```
 
 The images below show the scatter plots of log sale price vs living room area (Figure \@ref(fig:scatter-plots)). In the image on the right, the scatter plot is shown for each neighborhood. In the image on the left the observations for all three neighborhoods are included. In all cases, a linear model appears to be reasonable to model this data.
@@ -756,18 +964,144 @@ train %>%
 
 \label{appendix:infleu-points}
 
-The two outlying observations with living room areas greater than 4000 sq. ft. appear to be from a different distribution than the main dataset. Since these are partial sales, it is possible that the sale prices do not reflect market value. For this reason, we will limit the analysis to properities with less than 3500 sq. ft.  \@ref(fig:infleu-points)
+The two outlying observations with living room areas greater than 4000 sq. ft. appear to be from a different distribution than the main dataset. Since these are partial sales, it is possible that the sale prices do not reflect market value. For this reason, we will limit the analysis to properities with less than 3500 sq. ft. (Figure \@ref(fig:infleu-points))
+
+```{r, results='hide', message=F, warning=F, echo=F}
+train <- read_csv('./data/train.csv')
+train$Neighborhood <- as.factor(train$Neighborhood)
+```
+
 
 ```{r, infleu-points, echo=FALSE, fig.width=5, fig.height=5, fig.align='center', fig.cap='Influential Points', out.width = '50%', fig.pos="htbp"}
 
 # scatter plot of observations from all three neighborhoods with labeling by `SaleCondition`
-train %>% ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
+train %>% 
+  filter(Neighborhood %in% c("Edwards", "BrkSide", "NAmes")) %>%
+  ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
   geom_point(alpha = 0.3) +
   labs(title = 'Log of Sale Price vs Living Room Area', 
        y = 'Log of Sale Price', x = 'Living Room Area (sq. ft.)') +
   geom_text(aes(label = ifelse((log(GrLivArea) > 7.75 & log(SalePrice) > 11) |
                                  (log(SalePrice) > 12.45),
                                SaleCondition, '')), hjust=0, vjust=0)
+```
+
+\newpage
+
+## Models Suggested by Automated Selection
+
+### Forward Selection
+
+\label{appendix:forSelection}
+
+The model suggested by forward selection.
+
+```r
+log(SalePrice) ~ 
+              OverallQual + GrLivArea + Neighborhood + BsmtFinSF1 +
+              OverallCond + YearBuilt + TotalBsmtSF + GarageCars + MSZoning +
+              SaleCondition + BldgType + Functional + LotArea + KitchenQual +
+              BsmtExposure + CentralAir + Condition1 + ScreenPorch + BsmtFullBath +
+              Heating + Fireplaces + YearRemodAdd + Exterior1st + GarageQual +
+              WoodDeckSF + SaleType + OpenPorchSF + HeatingQC + LotConfig +
+              EnclosedPorch + ExterCond + PoolQC + Foundation + LandSlope +
+              RoofMatl + GarageArea + MasVnrType + HalfBath + PoolArea +
+              `3SsnPorch` + Street + KitchenAbvGr + GarageCond + FullBath +
+              BsmtQual + BsmtFinSF2
+```
+
+### Backward Selection
+
+\label{appendix:backSelection}
+
+```r
+log(SalePrice) ~ 
+           MSZoning + LotArea + Street + LotConfig + LandSlope +
+           Neighborhood + Condition1 + Condition2 + BldgType + OverallQual +
+           OverallCond + YearBuilt + YearRemodAdd + RoofStyle + RoofMatl +
+           Exterior1st + MasVnrType + ExterCond + Foundation + BsmtQual +
+           BsmtCond + BsmtExposure + BsmtFinSF1 + BsmtFinSF2 + BsmtUnfSF +
+           Heating + HeatingQC + CentralAir + `1stFlrSF` + `2ndFlrSF` +
+           LowQualFinSF + BsmtFullBath + FullBath + HalfBath + KitchenAbvGr +
+           KitchenQual + Functional + Fireplaces + GarageCars + GarageArea +
+           GarageQual + GarageCond + WoodDeckSF + OpenPorchSF + EnclosedPorch +
+           `3SsnPorch` + ScreenPorch + PoolArea + PoolQC + SaleType +
+           SaleCondition
+```
+
+\newpage
+
+### Stepwise Selection
+
+\label{appendix:stepWSelection}
+
+```r
+log(SalePrice) ~ 
+           MSZoning + LotArea + Street + LotConfig + LandSlope +
+           Neighborhood + Condition1 + Condition2 + BldgType + OverallQual +
+           OverallCond + YearBuilt + YearRemodAdd + RoofStyle + RoofMatl +
+           Exterior1st + MasVnrType + ExterCond + Foundation + BsmtQual +
+           BsmtCond + BsmtExposure + BsmtFinSF1 + BsmtFinSF2 + BsmtUnfSF +
+           Heating + HeatingQC + CentralAir + `1stFlrSF` + `2ndFlrSF` +
+           LowQualFinSF + BsmtFullBath + FullBath + HalfBath + KitchenAbvGr +
+           KitchenQual + Functional + Fireplaces + GarageCars + GarageArea +
+           GarageQual + GarageCond + WoodDeckSF + OpenPorchSF + EnclosedPorch +
+           `3SsnPorch` + ScreenPorch + PoolArea + PoolQC + SaleType +
+           SaleCondition
+```
+
+### Custom Model
+
+\label{appendix:customSelection}
+
+```r
+log(SalePrice) ~ 
+            BsmtUnfSF + CentralAir + HalfBath + KitchenQual + Neighborhood +
+            OverallCond + OverallQual + RoofMatl + `1stFlrSF` + `2ndFlrSF` + 
+            YearBuilt + MSZoning:Neighborhood + YearBuilt:Neighborhood
+```
+
+## Kaggle Score
+
+\label{appendix:kaggle}
+
+The following image shows the result on Kaggle for the custom model.
+
+```{r, kaggle, echo=F, out.width='90%', fig.align='center'}
+knitr::include_graphics('./Evidence for Model Score on Kaggle.PNG')
+```
+
+\newpage
+
+## Assumption Assessment Plots for Automatic Selection Models
+
+\label{appendix:assessmentPlots}
+
+The following discussion applies to the assumption assessment for the three models produced by automatic selection.
+
+Generally, based on the diagonstic plots, these models appear to reasonably meet the assumptions for linear regression. The standardized residuals do not appear to exhibit a discernible pattern, indicating constant variance along the regression, or homoscedasticity. However, there are a small number of observations - relative to the overall sample size - with unusually high residuals. Nonetheless, this is not enough to add detrimental impact to the model. Based on the QQ plot, there is a small level of deviation on the ends of the distribution of the errors, but for the most part, the errors adhere to normality. The sample size should be sufficient to protect against this non-normality. Based on the standardized residuals vs. leverage plot, only a few values have high leverage and are outlying. Compared to the custom model (Figure \@ref(fig:custom-assumptions)), these diagnostic plots for these models show a few more influential observations with high leverage. However, these observations cannot be excluded from the model.
+
+```{r, forward-assumptions, echo=F, warning=F, fig.width=5, fig.height=5, fig.align='center', fig.cap='Forward Selection Assumption Assessment Plots', out.width = '45%', fig.pos="htbp", fig.show='hold'}
+# create plots of residuals
+basic.fit.plots(train2, model2.Forward)
+# create leverage / outlier plot
+ols_plot_resid_lev(model2.Forward)
+```
+
+
+```{r, backward-selection, echo=F, warning=F, fig.width=5, fig.height=5, fig.align='center', fig.cap='Backward Selection Assumption Assessment Plots', out.width = '45%', fig.pos="htbp", fig.show='hold'}
+# create plots of residuals
+basic.fit.plots(train2, model2.Backward)
+# create leverage / outlier plot
+ols_plot_resid_lev(model2.Backward)
+```
+
+
+```{r, stepwise-assimptions, echo=F, warning=F, fig.width=5, fig.height=5, fig.align='center', fig.cap='Stepwise Selection Assumption Assessment Plots', out.width = '45%', fig.pos="htbp", fig.show='hold'}
+# create plots of residuals
+basic.fit.plots(train2, model2.Stepwise)
+# create leverage / outlier plot
+ols_plot_resid_lev(model2.Stepwise)
 ```
 
 \newpage
@@ -1067,18 +1401,613 @@ confint(glht(model, linfct = "GrLivArea + GrLivArea:Neighborhood_BrkSide = 1"))
 
 ```
 
+\newpage
+
 ## R Code For Analysis 2
 
-Include "well commented" `code` in the appendex!
-
 ```r
-train %>% ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
-  geom_point(alpha = 0.3) +
-  labs(title = 'Log of Sale Price vs Living Room Area', 
-       y = 'Log of Sale Price', x = 'Living Room Area') +
-  geom_text(aes(label = ifelse((log(GrLivArea) > 7.75 & log(SalePrice) > 11) |
-                                 (log(SalePrice) > 12.45),
-                               SaleCondition, '')), hjust=0, vjust=0)
+# libraries
+library(knitr)
+library(tidyverse)
+library(naniar)
+library(Hmisc)
+library(GGally)
+library(corrr)
+library(MASS)
+library(caret)
+
+
+# helper files
+# source('../../helper/data_munging.R')
+
+
+#' Calculates PRESS from `caret` CV model
+#'
+#' @param model.cv Calculates press from a model 
+#' produced by `caret`
+#'
+PRESS.cv <- function(model.cv) {
+  meanN <- 0
+  folds <- model.cv$control$index
+  for (i in seq(1:length(folds))){
+    meanN <- meanN + length(folds[[i]])
+  }
+  meanN <- meanN / length(folds)
+  meanN * ((model.cv$results$RMSE)^2)
+}
+
+## Load the data into R
+
+train <- read_csv('../../data/train.csv')
+test <- read_csv('../../data/test.csv')
+
+
+## Data Cleaning
+
+###  Handle null values for continuous variables
+
+# Garage Year Built {"train": 81, "test": 78}
+train$GarageYrBlt[is.na(train$GarageYrBlt)] <- 0
+test$GarageYrBlt[is.na(test$GarageYrBlt)] <- 0
+
+# Lot Frontage {"train": 259, "test": 227}
+train$LotFrontage[is.na(train$LotFrontage)] <- mean(train$LotFrontage, na.rm=TRUE)
+test$LotFrontage[is.na(test$LotFrontage)] <- mean(test$LotFrontage, na.rm=TRUE)
+
+# MasVnrArea {"train": 8, "test": 15}
+train$MasVnrArea[is.na(train$MasVnrArea)] <- 0
+test$MasVnrArea[is.na(test$MasVnrArea)] <- 0
+
+
+###  Handle null values for categorical variables
+
+train$Alley[is.na(train$Alley)] <- 'None'
+test$Alley[is.na(test$Alley)] <- 'None'
+
+train$MasVnrType[is.na(train$MasVnrType)] <- 'None'
+test$MasVnrType[is.na(test$MasVnrType)] <- 'None'
+
+train$BsmtQual[is.na(train$BsmtQual)] <- 'None'
+test$BsmtQual[is.na(test$BsmtQual)] <- 'None'
+
+train$BsmtCond[is.na(train$BsmtCond)] <- 'None'
+test$BsmtCond[is.na(test$BsmtCond)] <- 'None'
+
+train$BsmtExposure[is.na(train$BsmtExposure)] <- 'None'
+test$BsmtExposure[is.na(test$BsmtExposure)] <- 'None'
+
+train$BsmtFinType1[is.na(train$BsmtFinType1)] <- 'None'
+test$BsmtFinType1[is.na(test$BsmtFinType1)] <- 'None'
+
+train$BsmtFinType2[is.na(train$BsmtFinType2)] <- 'None'
+test$BsmtFinType2[is.na(test$BsmtFinType2)] <- 'None'
+
+train$FireplaceQu[is.na(train$FireplaceQu)] <- 'None'
+test$FireplaceQu[is.na(test$FireplaceQu)] <- 'None'
+
+train$GarageType[is.na(train$GarageType)] <- 'None'
+test$GarageType[is.na(test$GarageType)] <- 'None'
+
+train$GarageFinish[is.na(train$GarageFinish)] <- 'None'
+test$GarageFinish[is.na(test$GarageFinish)] <- 'None'
+
+train$GarageQual[is.na(train$GarageQual)] <- 'None'
+test$GarageQual[is.na(test$GarageQual)] <- 'None'
+
+train$GarageCond[is.na(train$GarageCond)] <- 'None'
+test$GarageCond[is.na(test$GarageCond)] <- 'None'
+
+train$PoolQC[is.na(train$PoolQC)] <- 'None'
+test$PoolQC[is.na(test$PoolQC)] <- 'None'
+
+train$Fence[is.na(train$Fence)] <- 'None'
+test$Fence[is.na(test$Fence)] <- 'None'
+
+train$MiscFeature[is.na(train$MiscFeature)] <- 'None'
+test$MiscFeature[is.na(test$MiscFeature)] <- 'None'
+
+train$Electrical[is.na(train$Electrical)] <- 'SBrkr'
+test$Electrical[is.na(test$Electrical)] <- 'SBrkr'
+
+train$BldgType[is.na(train$BldgType)] <- '1Fam'
+test$BldgType[is.na(test$BldgType)] <- '1Fam'
+
+train$BsmtExposure[is.na(train$BsmtExposure)] <- 'None'
+test$BsmtExposure[is.na(test$BsmtExposure)] <- 'None'
+
+train$Neighborhood <- as.factor(train$Neighborhood)
+test$Neighborhood <- as.factor(test$Neighborhood)
+
+train$BldgType <- as.factor(train$BldgType)
+test$BldgType <- as.factor(test$BldgType)
+
+train$HouseStyle <- as.factor(train$HouseStyle)
+test$HouseStyle <- as.factor(test$HouseStyle)
+
+train$RoofStyle <- as.factor(train$RoofStyle)
+test$RoofStyle <- as.factor(test$RoofStyle)
+
+train$RoofMatl <- as.factor(train$RoofMatl)
+test$RoofMatl <- as.factor(test$RoofMatl)
+
+train$Exterior1st <- as.factor(train$Exterior1st)
+test$Exterior1st <- as.factor(test$Exterior1st)
+
+train$Exterior2nd <- as.factor(train$Exterior2nd)
+test$Exterior2nd <- as.factor(test$Exterior2nd)
+
+train$ExterQual <- as.factor(train$ExterQual)
+test$ExterQual <- as.factor(test$ExterQual)
+
+train$ExterCond <- as.factor(train$ExterCond)
+test$ExterCond <- as.factor(test$ExterCond)
+
+train$Foundation <- as.factor(train$Foundation)
+test$Foundation <- as.factor(test$Foundation)
+
+train$Heating <- as.factor(train$Heating)
+test$Heating <- as.factor(test$Heating)
+
+train$HeatingQC <- as.factor(train$HeatingQC)
+test$HeatingQC <- as.factor(test$HeatingQC)
+
+train$CentralAir <- as.factor(train$CentralAir)
+test$CentralAir <- as.factor(test$CentralAir)
+
+train$KitchenQual <- as.factor(train$KitchenQual)
+test$KitchenQual <- as.factor(test$KitchenQual)
+
+train$Functional <- as.factor(train$Functional)
+test$Functional <- as.factor(test$Functional)
+
+train$PavedDrive <- as.factor(train$PavedDrive)
+test$PavedDrive <- as.factor(test$PavedDrive)
+
+train$SaleType <- as.factor(train$SaleType)
+test$SaleType <- as.factor(test$SaleType)
+
+train$Utilities <- as.factor(train$Utilities)
+test$Utilities <- as.factor(test$Utilities)
+
+
+### set ordinal factors
+
+
+# 1)  Remove Basement Condition as it is highly correlated to Basement Quality
+# 2)  Remove Garage Condition as it is highly correlated to Garage Quality
+# 3)  Remove utilities from dataframe as it doesn't have enough observations
+#     in the 2 levels
+train = subset(train, select = -c(Utilities, BsmtCond, GarageCond) )
+test = subset(test, select = -c(Utilities, BsmtCond, GarageCond) )
+
+
+
+################################################################
+
+# MS ordinal factors
+
+train$MSSubClass <- dplyr::recode(train$MSSubClass, `30` = "30F", `180` = "180F",
+                                  `45` = "45F", `190` = "190F",
+                                  `90` = "190F", `160` = "160F", `50` = "50F",
+                                  `40` = "40F", `85` = "85F", `70` = "70F",
+                                 `80` = "80F", `20` = "20F", `75` = "75F",
+                                 `120` = "120F", `60` = "60F", `150` = "75F")
+
+test$MSSubClass <- dplyr::recode(test$MSSubClass, `30` = "30F", `180` = "180F",
+                                 `45` = "45F", `190` = "190F",
+                                  `90` = "190F", `160` = "160F", `50` = "50F",
+                                  `40` = "40F", `85` = "85F", `70` = "70F",
+                                 `80` = "80F", `20` = "20F", `75` = "75F",
+                                 `120` = "120F", `60` = "60F", `150` = "75F")
+
+
+train$MSSubClass <- as.factor(train$MSSubClass)
+test$MSSubClass <- as.factor(test$MSSubClass)
+
+train$MSZoning <- dplyr::recode(train$MSZoning, 'C (all)' = 0,
+                                'RM' = 1, 'RH' = 2, 'RL' = 3, 'FV' = 4)
+test$MSZoning <- dplyr::recode(test$MSZoning, 'C (all)' = 0,
+                               'RM' = 1, 'RH' = 2, 'RL' = 3, 'FV' = 4)
+
+################################################################
+
+# garage ordinal factors
+
+train$GarageQual <- dplyr::recode(train$GarageQual, 'None' = 0, 'Po' = 1,
+                                  'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+test$GarageQual <- dplyr::recode(test$GarageQual, 'None' = 0, 'Po' = 1,
+                                 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+
+train$GarageFinish <- dplyr::recode(train$GarageFinish, 'None' = 0, 'Unf' = 1,
+                                    'RFn' = 2, 'Fin' = 3)
+test$GarageFinish <- dplyr::recode(test$GarageFinish, 'None' = 0, 'Unf' = 1,
+                                   'RFn' = 2, 'Fin' = 3)
+
+train$GarageType <- dplyr::recode(train$GarageType, 'None' = 0, 'CarPort' = 1,
+                                  '2Types' = 2, 'Basment' = 3, 
+                                  'Detchd' = 4, 'Attchd' = 5, 'BuiltIn' = 6)
+
+test$GarageType <- dplyr::recode(test$GarageType, 'None' = 0, 'CarPort' = 1,
+                                  '2Types' = 2, 'Basment' = 3, 
+                                  'Detchd' = 4, 'Attchd' = 5, 'BuiltIn' = 6)
+
+
+# train$GarageCond <- dplyr::recode(train$GarageCond, 'None' = 0, 'Po' = 1,
+                                    'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+# test$GarageCond <- dplyr::recode(test$GarageCond, 'None' = 0, 'Po' = 1, 'Fa' = 2,
+                                   'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+
+################################################################
+
+# basement ordinal factors
+
+train$BsmtQual <- dplyr::recode(train$BsmtQual, 'None' = 0, 'Po' = 1,
+                                'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+test$BsmtQual <- dplyr::recode(test$BsmtQual, 'None' = 0, 'Po' = 1,
+                               'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+
+# train$BsmtCond <- dplyr::recode(train$BsmtCond, 'None' = 0, 'Po' = 1,
+                                  'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+# test$BsmtCond <- dplyr::recode(test$BsmtCond, 'None' = 0, 'Po' = 1,
+                                 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+
+
+train$BsmtFinType1 <- dplyr::recode(train$BsmtFinType1, 'None' = 0,
+                                    'Unf' = 1, 'LwQ' = 2, 'Rec' = 3, 
+                                    'BLQ' = 4, 'ALQ' = 5, 'GLQ' = 6)
+
+test$BsmtFinType1 <- dplyr::recode(test$BsmtFinType1, 'None' = 0,
+                                   'Unf' = 1, 'LwQ' = 2, 'Rec' = 3, 
+                                   'BLQ' = 4, 'ALQ' = 5, 'GLQ' = 6)
+
+
+train$BsmtFinType2 <- dplyr::recode(train$BsmtFinType2, 'None' = 0,
+                                    'Unf' = 1, 'LwQ' = 2, 'Rec' = 3, 
+                                    'BLQ' = 4, 'ALQ' = 5, 'GLQ' = 6)
+test$BsmtFinType2 <- dplyr::recode(test$BsmtFinType2, 'None' = 0,
+                                   'Unf' = 1, 'LwQ' = 2, 'Rec' = 3, 
+                                   'BLQ' = 4, 'ALQ' = 5, 'GLQ' = 6)
+
+
+train$BsmtExposure <- dplyr::recode(train$BsmtExposure, 'None' = 0,
+                                    'No' = 1, 'Mn' = 2, 'Av' = 3, 'Gd' = 4)
+test$BsmtExposure <- dplyr::recode(test$BsmtExposure, 'None' = 0, 'No' = 1,
+                                   'Mn' = 2, 'Av' = 3, 'Gd' = 4)
+
+################################################################
+
+# ordinal factors for misc features
+
+train$LandSlope <- dplyr::recode(train$LandSlope, 'Sev' = 0, 'Mod' = 1,
+                                 'Gtl' = 2)
+test$LandSlope <- dplyr::recode(test$LandSlope, 'Sev' = 0, 'Mod' = 1,
+                                'Gtl' = 2)
+
+train$PoolQC <- dplyr::recode(train$PoolQC, 'None' = 0, 'Po' = 1,
+                              'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+test$PoolQC <- dplyr::recode(test$PoolQC, 'None' = 0, 'Po' = 1,
+                             'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+
+
+train$FireplaceQu <- dplyr::recode(train$FireplaceQu, 'None' = 0,
+                                   'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4,
+                                   'Ex' = 5)
+test$FireplaceQu <- dplyr::recode(test$FireplaceQu, 'None' = 0,
+                                  'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4,
+                                  'Ex' = 5)
+
+################################################################
+
+
+
+### Set categorical factor variables
+
+
+train$Street <- ordered(train$Street, levels = c("Grvl", "Pave"))
+test$Street <- ordered(test$Street, levels = c("Grvl", "Pave"))
+
+train$LotShape <- ordered(train$LotShape, levels = c("Reg", "IR1",
+                          "IR2", "IR3"))
+test$LotShape <- ordered(test$LotShape, levels = c("Reg", "IR1",
+                         "IR2", "IR3"))
+
+train$LandContour <- ordered(train$LandContour,
+                             levels = c("Bnk", "Lvl", "Low", "HLS"))
+test$LandContour <- ordered(test$LandContour,
+                            levels = c("Bnk", "Lvl", "Low", "HLS"))
+
+train$LotConfig <- ordered(train$LotConfig,
+                           levels = c("Inside", "Corner", "CulDSac",
+                           "FR2", "FR3"))
+test$LotConfig <- ordered(test$LotConfig,
+                          levels = c("Inside", "Corner", "CulDSac",
+                          "FR2", "FR3"))
+
+train$Condition1 <- ordered(train$Condition1,
+                            levels = c("Artery", "Feedr", "RRAe",
+                            "Norm", "RRAn", "RRNe", "RRNn", "PosA",
+                            "PosN"))
+test$Condition1 <- ordered(test$Condition1,
+                           levels = c("Artery", "Feedr", "RRAe",
+                           "Norm", "RRAn", "RRNe", "RRNn", "PosA",
+                           "PosN"))
+
+train$Condition2 <- ordered(train$Condition2,
+                            levels = c("Artery", "RRNn","RRAn",
+                            "Feedr", "Norm", "RRAe", "PosN", "PosA"))
+test$Condition2 <- ordered(test$Condition2,
+                           levels = c("Artery", "RRNn","RRAn",
+                           "Feedr", "Norm", "RRAe", "PosN", "PosA"))
+
+train$Alley <- ordered(train$Alley, levels = c("None", "Grvl", "Pave"))
+test$Alley <- ordered(test$Alley, levels = c("None", "Grvl", "Pave"))
+
+train$MasVnrType <- ordered(train$MasVnrType,
+                            levels = c("None", "CBlock", "BrkFace",
+                            "BrkCmn", "Stone"))
+test$MasVnrType <- ordered(test$MasVnrType,
+                           levels = c("None", "CBlock", "BrkFace",
+                           "BrkCmn", "Stone"))
+
+train$Fence <- ordered(train$Fence,
+                       levels = c("None", "MnWw", "GdWo",
+                       "MnPrv", "GdPrv"))
+test$Fence <- ordered(test$Fence,
+                       levels = c("None", "MnWw", "GdWo",
+                       "MnPrv", "GdPrv"))
+
+train$Electrical <- ordered(train$Electrical,
+                            levels = c("Mix", "FuseP",
+                            "FuseF", "FuseA", "SBrkr"))
+test$Electrical <- ordered(test$Electrical,
+                           levels = c("Mix", "FuseP",
+                           "FuseF", "FuseA", "SBrkr"))
+
+train$MiscFeature <- ordered(train$MiscFeature,
+                             levels = c("None", "Othr",
+                             "Shed", "Gar2", "TenC"))
+test$MiscFeature <- ordered(test$MiscFeature,
+                            levels = c("None", "Othr",
+                            "Shed", "Gar2", "TenC"))
+
+train$SaleCondition <- factor(train$SaleCondition,
+                              levels = c("Abnorml", "AdjLand",
+                              "Alloca", "Partial", "Family", "Normal"))
+test$SaleCondition <- factor(test$SaleCondition,
+                             levels = c("Abnorml", "AdjLand",
+                             "Alloca", "Partial", "Family", "Normal"))
+
+### Model Definitions
+
+### custom model ###
+custom.model.formula <- log(SalePrice) ~ MSSubClass + MSZoning + LotFrontage + 
+    LotArea + Street + Neighborhood + 
+    Condition1 + OverallQual + OverallCond + YearBuilt + YearRemodAdd + 
+    ExterCond + Foundation + 
+    BsmtExposure + BsmtFinType1 + BsmtFinSF1 + BsmtFinSF2 + BsmtUnfSF + 
+    HeatingQC + CentralAir + Electrical + `1stFlrSF` + 
+    `2ndFlrSF` + LowQualFinSF + BsmtFullBath + FullBath + HalfBath + 
+    KitchenAbvGr + KitchenQual + Functional + FireplaceQu + GarageYrBlt + 
+    GarageCars + GarageArea + GarageQual + WoodDeckSF + OpenPorchSF + 
+    EnclosedPorch + ScreenPorch + SaleType + SaleCondition
+
+
+### forward model ###
+fwd.model.formula <- log(SalePrice) ~ OverallQual + GrLivArea + Neighborhood + 
+    BsmtFinSF1 + MSSubClass + OverallCond + YearBuilt + GarageCars + 
+    TotalBsmtSF + SaleCondition + LotArea + MSZoning + Functional + 
+    CentralAir + KitchenQual + Condition1 + FireplaceQu + BsmtExposure + 
+    BsmtFullBath + ScreenPorch + Exterior1st + YearRemodAdd + 
+    GarageQual + WoodDeckSF + OpenPorchSF + Street + LotConfig + 
+    LotFrontage + Foundation + Heating + KitchenAbvGr + EnclosedPorch + 
+    HalfBath + FullBath + MasVnrType + BsmtFinSF2 + HeatingQC + 
+    GarageArea + SaleType + ExterCond + PoolArea + BsmtFinType1 + 
+    GarageYrBlt + Electrical + `3SsnPorch` + LowQualFinSF
+
+
+### backward model ###
+bkw.model.formula <- log(SalePrice) ~ MSSubClass + MSZoning + LotFrontage +
+    LotArea + Street + LotConfig + LandSlope + Neighborhood +
+    Condition1 + OverallQual + OverallCond + YearBuilt + YearRemodAdd +
+    RoofMatl + Exterior1st + MasVnrType + ExterCond + Foundation +
+    BsmtExposure + BsmtFinType1 + BsmtFinSF1 + BsmtFinSF2 + BsmtUnfSF +
+    Heating + HeatingQC + CentralAir + Electrical + `1stFlrSF` +
+    `2ndFlrSF` + LowQualFinSF + BsmtFullBath + FullBath + HalfBath +
+    KitchenAbvGr + KitchenQual + Functional + FireplaceQu + GarageYrBlt +
+    GarageCars + GarageArea + GarageQual + WoodDeckSF + OpenPorchSF +
+    EnclosedPorch + ScreenPorch + PoolArea + SaleType + SaleCondition
+
+
+### stepwise model ###
+stw.model.formula <- log(SalePrice) ~ OverallQual + GrLivArea + Neighborhood + 
+    BsmtFinSF1 + MSSubClass + OverallCond + YearBuilt + GarageCars + 
+    TotalBsmtSF + SaleCondition + LotArea + MSZoning + Functional + 
+    CentralAir + KitchenQual + Condition1 + FireplaceQu + BsmtExposure + 
+    BsmtFullBath + ScreenPorch + Exterior1st + YearRemodAdd + 
+    GarageQual + WoodDeckSF + OpenPorchSF + Street + LotConfig + 
+    LotFrontage + Foundation + Heating + KitchenAbvGr + EnclosedPorch + 
+    HalfBath + FullBath + MasVnrType + BsmtFinSF2 + HeatingQC + 
+    GarageArea + SaleType + ExterCond + PoolArea + BsmtFinType1 + 
+    GarageYrBlt + Electrical + `3SsnPorch` + LowQualFinSF
+
+
+custom.model <- lm(custom.model.formula,
+               data = train)
+
+
+fwd.model <- lm(fwd.model.formula,
+               data = train)
+
+bkw.model <- lm(bkw.model.formula,
+               data = train)
+
+stw.model <- lm(stw.model.formula,
+               data = train)
+
+
+# Fit the model with all parameters
+fit1 <- lm(log(SalePrice) ~ ., data=train)
+
+# Fit the model with only 1 parameter
+fit2 <- lm(log(SalePrice) ~ 1, data=train)
+
+
+### Custom Model
+
+test$predicted.log.price <- predict.lm(custom.model, test)
+test$predicted.log.price[is.na(test$predicted.log.price)] <-
+  mean(test$predicted.log.price, na.rm=TRUE)
+  
+custom_submit <- test %>%
+  mutate(SalePrice = exp(predicted.log.price)) %>%
+  subset(select = c(Id, SalePrice))
+
+# write.csv(custom_submit, 
+#  file = "./cwr_kaggle_submission_custom_model.csv",
+#  row.names = FALSE)
+
+summary(custom.model)
+
+
+### Forward Model
+
+test$predicted.log.price <- predict.lm(fwd.model, test)
+test$predicted.log.price[is.na(test$predicted.log.price)] <- 
+  mean(test$predicted.log.price, na.rm=TRUE)
+  
+forward_submit <- test %>%
+  mutate(SalePrice = exp(predicted.log.price)) %>%
+  subset(select = c(Id, SalePrice))
+
+# write.csv(forward_submit, 
+#  file = "./cwr_kaggle_submission_forward_model.csv", 
+#  row.names = FALSE)
+
+summary(fwd.model)
+
+
+### Backward Model
+
+test$predicted.log.price <- predict.lm(bkw.model, test)
+test$predicted.log.price[is.na(test$predicted.log.price)] <- 
+  mean(test$predicted.log.price, na.rm=TRUE)
+  
+backward_submit <- test %>%
+  mutate(SalePrice = exp(predicted.log.price)) %>%
+  subset(select = c(Id, SalePrice))
+
+# write.csv(backward_submit,
+#  file = "./cwr_kaggle_submission_backward_model.csv",
+#  row.names = FALSE)
+
+summary(bkw.model)
+
+
+### Stepwise Model
+
+test$predicted.log.price <- predict.lm(stw.model, test)
+test$predicted.log.price[is.na(test$predicted.log.price)] <- 
+  mean(test$predicted.log.price, na.rm=TRUE)
+  
+stepwise_submit <- test %>%
+  mutate(SalePrice = exp(predicted.log.price)) %>%
+  subset(select = c(Id, SalePrice))
+
+# write.csv(stepwise_submit,
+#  file = "./cwr_kaggle_submission_stepwise_model.csv",
+#  row.names = FALSE)
+
+summary(stw.model)
+
+
+## Cross Validation
+
+### Custom Model CV
+
+# Set up repeated k-fold cross-validation
+train.control <- trainControl(method = "cv", number = 10)
+
+# Train the model
+custom.model.cv <- train(custom.model.formula, 
+                    data = train,
+                    method = 'lm',
+                    trControl = train.control)
+
+custom.model.cv
+
+
+# get cross-validated PRESS statistic
+PCV <- PRESS.cv(custom.model.cv)
+PCV
+
+
+### Forward Model CV
+
+# Set up repeated k-fold cross-validation
+train.control <- trainControl(method = "cv", number = 10)
+
+# Train the model
+fwd.model.cv <- train(fwd.model.formula, 
+                    data = train,
+                    method = 'lm',
+                    trControl = train.control)
+
+fwd.model.cv
+
+
+# get cross-validated PRESS statistic
+PCV <- PRESS.cv(fwd.model.cv)
+PCV
+
+
+### Backward Model CV
+
+# Set up repeated k-fold cross-validation
+train.control <- trainControl(method = "cv", number = 10)
+
+# Train the model
+bkw.model.cv <- train(bkw.model.formula, 
+                    data = train,
+                    method = 'lm',
+                    trControl = train.control)
+
+bkw.model.cv
+
+# get cross-validated PRESS statistic
+PCV <- PRESS.cv(bkw.model.cv)
+PCV
+
+### Stepwise Model CV
+
+# Set up repeated k-fold cross-validation
+train.control <- trainControl(method = "cv", number = 10)
+
+# Train the model
+stw.model.cv <- train(stw.model.formula, 
+                    data = train,
+                    method = 'lm',
+                    trControl = train.control)
+
+stw.model.cv
+
+
+# get cross-validated PRESS statistic
+PCV <- PRESS.cv(stw.model.cv)
+PCV
+
+### AIC functions for different model types
+
+bwd.model <- stepAIC(fit1,direction="backward")
+
+fwd.model <- stepAIC(fit2,direction="forward",scope=list(upper=fit1,lower=fit2))
+
+stw.model <- stepAIC(fit2,direction="both",scope=list(upper=fit1,lower=fit2))
+
+summary(bwd.model)
+summary(fwd.model)
+summary(stw.model)
 ```
+
+\newpage
 
 # References
