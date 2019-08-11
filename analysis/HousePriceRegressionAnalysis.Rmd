@@ -1575,89 +1575,128 @@ test$Utilities <- as.factor(test$Utilities)
 
 # 1)  Remove Basement Condition as it is highly correlated to Basement Quality
 # 2)  Remove Garage Condition as it is highly correlated to Garage Quality
-# 3)  Remove utilities from dataframe as it doesn't have enough observations in the 2 levels
+# 3)  Remove utilities from dataframe as it doesn't have enough observations
+#     in the 2 levels
 train = subset(train, select = -c(Utilities, BsmtCond, GarageCond) )
 test = subset(test, select = -c(Utilities, BsmtCond, GarageCond) )
 
 
 
-###################################################################################################################
+################################################################
 
+# MS ordinal factors
 
-train$MSSubClass <- dplyr::recode(train$MSSubClass, `30` = "30F", `180` = "180F", `45` = "45F", `190` = "190F",
-                                  `90` = "190F", `160` = "160F", `50` = "50F", `40` = "40F", `85` = "85F", `70` = "70F",
-                                 `80` = "80F", `20` = "20F", `75` = "75F", `120` = "120F", `60` = "60F", `150` = "75F")
+train$MSSubClass <- dplyr::recode(train$MSSubClass, `30` = "30F", `180` = "180F",
+                                  `45` = "45F", `190` = "190F",
+                                  `90` = "190F", `160` = "160F", `50` = "50F",
+                                  `40` = "40F", `85` = "85F", `70` = "70F",
+                                 `80` = "80F", `20` = "20F", `75` = "75F",
+                                 `120` = "120F", `60` = "60F", `150` = "75F")
 
-test$MSSubClass <- dplyr::recode(test$MSSubClass, `30` = "30F", `180` = "180F", `45` = "45F", `190` = "190F",
-                                  `90` = "190F", `160` = "160F", `50` = "50F", `40` = "40F", `85` = "85F", `70` = "70F",
-                                 `80` = "80F", `20` = "20F", `75` = "75F", `120` = "120F", `60` = "60F", `150` = "75F")
+test$MSSubClass <- dplyr::recode(test$MSSubClass, `30` = "30F", `180` = "180F",
+                                 `45` = "45F", `190` = "190F",
+                                  `90` = "190F", `160` = "160F", `50` = "50F",
+                                  `40` = "40F", `85` = "85F", `70` = "70F",
+                                 `80` = "80F", `20` = "20F", `75` = "75F",
+                                 `120` = "120F", `60` = "60F", `150` = "75F")
 
 
 train$MSSubClass <- as.factor(train$MSSubClass)
 test$MSSubClass <- as.factor(test$MSSubClass)
 
+train$MSZoning <- dplyr::recode(train$MSZoning, 'C (all)' = 0,
+                                'RM' = 1, 'RH' = 2, 'RL' = 3, 'FV' = 4)
+test$MSZoning <- dplyr::recode(test$MSZoning, 'C (all)' = 0,
+                               'RM' = 1, 'RH' = 2, 'RL' = 3, 'FV' = 4)
 
-###################################################################################################################
-train$GarageQual <- dplyr::recode(train$GarageQual, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
-test$GarageQual <- dplyr::recode(test$GarageQual, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+################################################################
 
-train$GarageFinish <- dplyr::recode(train$GarageFinish, 'None' = 0, 'Unf' = 1, 'RFn' = 2, 'Fin' = 3)
-test$GarageFinish <- dplyr::recode(test$GarageFinish, 'None' = 0, 'Unf' = 1, 'RFn' = 2, 'Fin' = 3)
+# garage ordinal factors
 
-train$GarageType <- dplyr::recode(train$GarageType, 'None' = 0, 'CarPort' = 1, '2Types' = 2, 'Basment' = 3, 
-'Detchd' = 4, 'Attchd' = 5, 'BuiltIn' = 6)
+train$GarageQual <- dplyr::recode(train$GarageQual, 'None' = 0, 'Po' = 1,
+                                  'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+test$GarageQual <- dplyr::recode(test$GarageQual, 'None' = 0, 'Po' = 1,
+                                 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
 
-test$GarageType <- dplyr::recode(test$GarageType, 'None' = 0, 'CarPort' = 1, '2Types' = 2, 'Basment' = 3, 
-'Detchd' = 4, 'Attchd' = 5, 'BuiltIn' = 6)
+train$GarageFinish <- dplyr::recode(train$GarageFinish, 'None' = 0, 'Unf' = 1,
+                                    'RFn' = 2, 'Fin' = 3)
+test$GarageFinish <- dplyr::recode(test$GarageFinish, 'None' = 0, 'Unf' = 1,
+                                   'RFn' = 2, 'Fin' = 3)
 
+train$GarageType <- dplyr::recode(train$GarageType, 'None' = 0, 'CarPort' = 1,
+                                  '2Types' = 2, 'Basment' = 3, 
+                                  'Detchd' = 4, 'Attchd' = 5, 'BuiltIn' = 6)
 
-# train$GarageCond <- dplyr::recode(train$GarageCond, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
-# test$GarageCond <- dplyr::recode(test$GarageCond, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
-
-##################################################################################################################
-
-
-train$BsmtQual <- dplyr::recode(train$BsmtQual, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
-test$BsmtQual <- dplyr::recode(test$BsmtQual, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
-
-# train$BsmtCond <- dplyr::recode(train$BsmtCond, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
-# test$BsmtCond <- dplyr::recode(test$BsmtCond, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
-
-
-train$BsmtFinType1 <- dplyr::recode(train$BsmtFinType1, 'None' = 0, 'Unf' = 1, 'LwQ' = 2, 'Rec' = 3, 
-'BLQ' = 4, 'ALQ' = 5, 'GLQ' = 6)
-
-test$BsmtFinType1 <- dplyr::recode(test$BsmtFinType1, 'None' = 0, 'Unf' = 1, 'LwQ' = 2, 'Rec' = 3, 
-'BLQ' = 4, 'ALQ' = 5, 'GLQ' = 6)
+test$GarageType <- dplyr::recode(test$GarageType, 'None' = 0, 'CarPort' = 1,
+                                  '2Types' = 2, 'Basment' = 3, 
+                                  'Detchd' = 4, 'Attchd' = 5, 'BuiltIn' = 6)
 
 
-train$BsmtFinType2 <- dplyr::recode(train$BsmtFinType2, 'None' = 0, 'Unf' = 1, 'LwQ' = 2, 'Rec' = 3, 
-'BLQ' = 4, 'ALQ' = 5, 'GLQ' = 6)
-test$BsmtFinType2 <- dplyr::recode(test$BsmtFinType2, 'None' = 0, 'Unf' = 1, 'LwQ' = 2, 'Rec' = 3, 
-'BLQ' = 4, 'ALQ' = 5, 'GLQ' = 6)
+# train$GarageCond <- dplyr::recode(train$GarageCond, 'None' = 0, 'Po' = 1,
+                                    'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+# test$GarageCond <- dplyr::recode(test$GarageCond, 'None' = 0, 'Po' = 1, 'Fa' = 2,
+                                   'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+
+################################################################
+
+# basement ordinal factors
+
+train$BsmtQual <- dplyr::recode(train$BsmtQual, 'None' = 0, 'Po' = 1,
+                                'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+test$BsmtQual <- dplyr::recode(test$BsmtQual, 'None' = 0, 'Po' = 1,
+                               'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+
+# train$BsmtCond <- dplyr::recode(train$BsmtCond, 'None' = 0, 'Po' = 1,
+                                  'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+# test$BsmtCond <- dplyr::recode(test$BsmtCond, 'None' = 0, 'Po' = 1,
+                                 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
 
 
-train$BsmtExposure <- dplyr::recode(train$BsmtExposure, 'None' = 0, 'No' = 1, 'Mn' = 2, 'Av' = 3, 'Gd' = 4)
-test$BsmtExposure <- dplyr::recode(test$BsmtExposure, 'None' = 0, 'No' = 1, 'Mn' = 2, 'Av' = 3, 'Gd' = 4)
+train$BsmtFinType1 <- dplyr::recode(train$BsmtFinType1, 'None' = 0,
+                                    'Unf' = 1, 'LwQ' = 2, 'Rec' = 3, 
+                                    'BLQ' = 4, 'ALQ' = 5, 'GLQ' = 6)
 
-##################################################################################################################
-
-train$LandSlope <- dplyr::recode(train$LandSlope, 'Sev' = 0, 'Mod' = 1, 'Gtl' = 2)
-test$LandSlope <- dplyr::recode(test$LandSlope, 'Sev' = 0, 'Mod' = 1, 'Gtl' = 2)
-
-
-train$MSZoning <- dplyr::recode(train$MSZoning, 'C (all)' = 0, 'RM' = 1, 'RH' = 2, 'RL' = 3, 'FV' = 4)
-test$MSZoning <- dplyr::recode(test$MSZoning, 'C (all)' = 0, 'RM' = 1, 'RH' = 2, 'RL' = 3, 'FV' = 4)
+test$BsmtFinType1 <- dplyr::recode(test$BsmtFinType1, 'None' = 0,
+                                   'Unf' = 1, 'LwQ' = 2, 'Rec' = 3, 
+                                   'BLQ' = 4, 'ALQ' = 5, 'GLQ' = 6)
 
 
-train$PoolQC <- dplyr::recode(train$PoolQC, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
-test$PoolQC <- dplyr::recode(test$PoolQC, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+train$BsmtFinType2 <- dplyr::recode(train$BsmtFinType2, 'None' = 0,
+                                    'Unf' = 1, 'LwQ' = 2, 'Rec' = 3, 
+                                    'BLQ' = 4, 'ALQ' = 5, 'GLQ' = 6)
+test$BsmtFinType2 <- dplyr::recode(test$BsmtFinType2, 'None' = 0,
+                                   'Unf' = 1, 'LwQ' = 2, 'Rec' = 3, 
+                                   'BLQ' = 4, 'ALQ' = 5, 'GLQ' = 6)
 
 
-train$FireplaceQu <- dplyr::recode(train$FireplaceQu, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
-test$FireplaceQu <- dplyr::recode(test$FireplaceQu, 'None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+train$BsmtExposure <- dplyr::recode(train$BsmtExposure, 'None' = 0,
+                                    'No' = 1, 'Mn' = 2, 'Av' = 3, 'Gd' = 4)
+test$BsmtExposure <- dplyr::recode(test$BsmtExposure, 'None' = 0, 'No' = 1,
+                                   'Mn' = 2, 'Av' = 3, 'Gd' = 4)
 
-##################################################################################################################
+################################################################
+
+# ordinal factors for misc features
+
+train$LandSlope <- dplyr::recode(train$LandSlope, 'Sev' = 0, 'Mod' = 1,
+                                 'Gtl' = 2)
+test$LandSlope <- dplyr::recode(test$LandSlope, 'Sev' = 0, 'Mod' = 1,
+                                'Gtl' = 2)
+
+train$PoolQC <- dplyr::recode(train$PoolQC, 'None' = 0, 'Po' = 1,
+                              'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+test$PoolQC <- dplyr::recode(test$PoolQC, 'None' = 0, 'Po' = 1,
+                             'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+
+
+train$FireplaceQu <- dplyr::recode(train$FireplaceQu, 'None' = 0,
+                                   'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4,
+                                   'Ex' = 5)
+test$FireplaceQu <- dplyr::recode(test$FireplaceQu, 'None' = 0,
+                                  'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4,
+                                  'Ex' = 5)
+
+################################################################
 
 
 
@@ -1667,38 +1706,76 @@ test$FireplaceQu <- dplyr::recode(test$FireplaceQu, 'None' = 0, 'Po' = 1, 'Fa' =
 train$Street <- ordered(train$Street, levels = c("Grvl", "Pave"))
 test$Street <- ordered(test$Street, levels = c("Grvl", "Pave"))
 
-train$LotShape <- ordered(train$LotShape, levels = c("Reg", "IR1", "IR2", "IR3"))
-test$LotShape <- ordered(test$LotShape, levels = c("Reg", "IR1", "IR2", "IR3"))
+train$LotShape <- ordered(train$LotShape, levels = c("Reg", "IR1",
+                          "IR2", "IR3"))
+test$LotShape <- ordered(test$LotShape, levels = c("Reg", "IR1",
+                         "IR2", "IR3"))
 
-train$LandContour <- ordered(train$LandContour, levels = c("Bnk", "Lvl", "Low", "HLS"))
-test$LandContour <- ordered(test$LandContour, levels = c("Bnk", "Lvl", "Low", "HLS"))
+train$LandContour <- ordered(train$LandContour,
+                             levels = c("Bnk", "Lvl", "Low", "HLS"))
+test$LandContour <- ordered(test$LandContour,
+                            levels = c("Bnk", "Lvl", "Low", "HLS"))
 
-train$LotConfig <- ordered(train$LotConfig, levels = c("Inside", "Corner", "CulDSac", "FR2", "FR3"))
-test$LotConfig <- ordered(test$LotConfig, levels = c("Inside", "Corner", "CulDSac", "FR2", "FR3"))
+train$LotConfig <- ordered(train$LotConfig,
+                           levels = c("Inside", "Corner", "CulDSac",
+                           "FR2", "FR3"))
+test$LotConfig <- ordered(test$LotConfig,
+                          levels = c("Inside", "Corner", "CulDSac",
+                          "FR2", "FR3"))
 
-train$Condition1 <- ordered(train$Condition1, levels = c("Artery", "Feedr", "RRAe", "Norm", "RRAn", "RRNe", "RRNn", "PosA", "PosN"))
-test$Condition1 <- ordered(test$Condition1, levels = c("Artery", "Feedr", "RRAe", "Norm", "RRAn", "RRNe", "RRNn", "PosA", "PosN"))
+train$Condition1 <- ordered(train$Condition1,
+                            levels = c("Artery", "Feedr", "RRAe",
+                            "Norm", "RRAn", "RRNe", "RRNn", "PosA",
+                            "PosN"))
+test$Condition1 <- ordered(test$Condition1,
+                           levels = c("Artery", "Feedr", "RRAe",
+                           "Norm", "RRAn", "RRNe", "RRNn", "PosA",
+                           "PosN"))
 
-train$Condition2 <- ordered(train$Condition2, levels = c("Artery", "RRNn","RRAn","Feedr", "Norm", "RRAe", "PosN", "PosA"))
-test$Condition2 <- ordered(test$Condition2, levels = c("Artery", "RRNn","RRAn","Feedr", "Norm", "RRAe", "PosN", "PosA"))
+train$Condition2 <- ordered(train$Condition2,
+                            levels = c("Artery", "RRNn","RRAn",
+                            "Feedr", "Norm", "RRAe", "PosN", "PosA"))
+test$Condition2 <- ordered(test$Condition2,
+                           levels = c("Artery", "RRNn","RRAn",
+                           "Feedr", "Norm", "RRAe", "PosN", "PosA"))
 
 train$Alley <- ordered(train$Alley, levels = c("None", "Grvl", "Pave"))
 test$Alley <- ordered(test$Alley, levels = c("None", "Grvl", "Pave"))
 
-train$MasVnrType <- ordered(train$MasVnrType, levels = c("None", "CBlock", "BrkFace", "BrkCmn", "Stone"))
-test$MasVnrType <- ordered(test$MasVnrType, levels = c("None", "CBlock", "BrkFace", "BrkCmn", "Stone"))
+train$MasVnrType <- ordered(train$MasVnrType,
+                            levels = c("None", "CBlock", "BrkFace",
+                            "BrkCmn", "Stone"))
+test$MasVnrType <- ordered(test$MasVnrType,
+                           levels = c("None", "CBlock", "BrkFace",
+                           "BrkCmn", "Stone"))
 
-train$Fence <- ordered(train$Fence, levels = c("None", "MnWw", "GdWo", "MnPrv", "GdPrv"))
-test$Fence <- ordered(test$Fence, levels = c("None", "MnWw", "GdWo", "MnPrv", "GdPrv"))
+train$Fence <- ordered(train$Fence,
+                       levels = c("None", "MnWw", "GdWo",
+                       "MnPrv", "GdPrv"))
+test$Fence <- ordered(test$Fence,
+                       levels = c("None", "MnWw", "GdWo",
+                       "MnPrv", "GdPrv"))
 
-train$Electrical <- ordered(train$Electrical, levels = c("Mix", "FuseP", "FuseF", "FuseA", "SBrkr"))
-test$Electrical <- ordered(test$Electrical, levels = c("Mix", "FuseP", "FuseF", "FuseA", "SBrkr"))
+train$Electrical <- ordered(train$Electrical,
+                            levels = c("Mix", "FuseP",
+                            "FuseF", "FuseA", "SBrkr"))
+test$Electrical <- ordered(test$Electrical,
+                           levels = c("Mix", "FuseP",
+                           "FuseF", "FuseA", "SBrkr"))
 
-train$MiscFeature <- ordered(train$MiscFeature, levels = c("None", "Othr", "Shed", "Gar2", "TenC"))
-test$MiscFeature <- ordered(test$MiscFeature, levels = c("None", "Othr", "Shed", "Gar2", "TenC"))
+train$MiscFeature <- ordered(train$MiscFeature,
+                             levels = c("None", "Othr",
+                             "Shed", "Gar2", "TenC"))
+test$MiscFeature <- ordered(test$MiscFeature,
+                            levels = c("None", "Othr",
+                            "Shed", "Gar2", "TenC"))
 
-train$SaleCondition <- factor(train$SaleCondition, levels = c("Abnorml", "AdjLand", "Alloca", "Partial", "Family", "Normal"))
-test$SaleCondition <- factor(test$SaleCondition, levels = c("Abnorml", "AdjLand", "Alloca", "Partial", "Family", "Normal"))
+train$SaleCondition <- factor(train$SaleCondition,
+                              levels = c("Abnorml", "AdjLand",
+                              "Alloca", "Partial", "Family", "Normal"))
+test$SaleCondition <- factor(test$SaleCondition,
+                             levels = c("Abnorml", "AdjLand",
+                             "Alloca", "Partial", "Family", "Normal"))
 
 ### Model Definitions
 
@@ -1778,13 +1855,16 @@ fit2 <- lm(log(SalePrice) ~ 1, data=train)
 ### Custom Model
 
 test$predicted.log.price <- predict.lm(custom.model, test)
-test$predicted.log.price[is.na(test$predicted.log.price)] <- mean(test$predicted.log.price, na.rm=TRUE)
+test$predicted.log.price[is.na(test$predicted.log.price)] <-
+  mean(test$predicted.log.price, na.rm=TRUE)
   
 custom_submit <- test %>%
   mutate(SalePrice = exp(predicted.log.price)) %>%
   subset(select = c(Id, SalePrice))
 
-# write.csv(custom_submit, file = "./cwr_kaggle_submission_custom_model.csv", row.names = FALSE)
+# write.csv(custom_submit, 
+#  file = "./cwr_kaggle_submission_custom_model.csv",
+#  row.names = FALSE)
 
 summary(custom.model)
 
@@ -1792,13 +1872,16 @@ summary(custom.model)
 ### Forward Model
 
 test$predicted.log.price <- predict.lm(fwd.model, test)
-test$predicted.log.price[is.na(test$predicted.log.price)] <- mean(test$predicted.log.price, na.rm=TRUE)
+test$predicted.log.price[is.na(test$predicted.log.price)] <- 
+  mean(test$predicted.log.price, na.rm=TRUE)
   
 forward_submit <- test %>%
   mutate(SalePrice = exp(predicted.log.price)) %>%
   subset(select = c(Id, SalePrice))
 
-# write.csv(forward_submit, file = "./cwr_kaggle_submission_forward_model.csv", row.names = FALSE)
+# write.csv(forward_submit, 
+#  file = "./cwr_kaggle_submission_forward_model.csv", 
+#  row.names = FALSE)
 
 summary(fwd.model)
 
@@ -1806,13 +1889,16 @@ summary(fwd.model)
 ### Backward Model
 
 test$predicted.log.price <- predict.lm(bkw.model, test)
-test$predicted.log.price[is.na(test$predicted.log.price)] <- mean(test$predicted.log.price, na.rm=TRUE)
+test$predicted.log.price[is.na(test$predicted.log.price)] <- 
+  mean(test$predicted.log.price, na.rm=TRUE)
   
 backward_submit <- test %>%
   mutate(SalePrice = exp(predicted.log.price)) %>%
   subset(select = c(Id, SalePrice))
 
-# write.csv(backward_submit, file = "./cwr_kaggle_submission_backward_model.csv", row.names = FALSE)
+# write.csv(backward_submit,
+#  file = "./cwr_kaggle_submission_backward_model.csv",
+#  row.names = FALSE)
 
 summary(bkw.model)
 
@@ -1820,13 +1906,16 @@ summary(bkw.model)
 ### Stepwise Model
 
 test$predicted.log.price <- predict.lm(stw.model, test)
-test$predicted.log.price[is.na(test$predicted.log.price)] <- mean(test$predicted.log.price, na.rm=TRUE)
+test$predicted.log.price[is.na(test$predicted.log.price)] <- 
+  mean(test$predicted.log.price, na.rm=TRUE)
   
 stepwise_submit <- test %>%
   mutate(SalePrice = exp(predicted.log.price)) %>%
   subset(select = c(Id, SalePrice))
 
-# write.csv(stepwise_submit, file = "./cwr_kaggle_submission_stepwise_model.csv", row.names = FALSE)
+# write.csv(stepwise_submit,
+#  file = "./cwr_kaggle_submission_stepwise_model.csv",
+#  row.names = FALSE)
 
 summary(stw.model)
 
@@ -1917,9 +2006,6 @@ stw.model <- stepAIC(fit2,direction="both",scope=list(upper=fit1,lower=fit2))
 summary(bwd.model)
 summary(fwd.model)
 summary(stw.model)
-
-
-
 ```
 
 \newpage
