@@ -964,12 +964,20 @@ train %>%
 
 \label{appendix:infleu-points}
 
-The two outlying observations with living room areas greater than 4000 sq. ft. appear to be from a different distribution than the main dataset. Since these are partial sales, it is possible that the sale prices do not reflect market value. For this reason, we will limit the analysis to properities with less than 3500 sq. ft.  \@ref(fig:infleu-points)
+The two outlying observations with living room areas greater than 4000 sq. ft. appear to be from a different distribution than the main dataset. Since these are partial sales, it is possible that the sale prices do not reflect market value. For this reason, we will limit the analysis to properities with less than 3500 sq. ft. (Figure \@ref(fig:infleu-points))
+
+```{r, results='hide', message=F, warning=F, echo=F}
+train <- read_csv('./data/train.csv')
+train$Neighborhood <- as.factor(train$Neighborhood)
+```
+
 
 ```{r, infleu-points, echo=FALSE, fig.width=5, fig.height=5, fig.align='center', fig.cap='Influential Points', out.width = '50%', fig.pos="htbp"}
 
 # scatter plot of observations from all three neighborhoods with labeling by `SaleCondition`
-train %>% ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
+train %>% 
+  filter(Neighborhood %in% c("Edwards", "BrkSide", "NAmes")) %>%
+  ggplot(aes(x = (GrLivArea), y = log(SalePrice))) +
   geom_point(alpha = 0.3) +
   labs(title = 'Log of Sale Price vs Living Room Area', 
        y = 'Log of Sale Price', x = 'Living Room Area (sq. ft.)') +
