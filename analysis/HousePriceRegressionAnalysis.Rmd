@@ -247,7 +247,7 @@ In response to the analysis commissioned by Century 21, the log transform of pro
 
 ## Question of Interest
 
-Century 21 has commissioned a second analysis using the same data set, expanded to include as many of the 80 total features, plus the index split, as required to determine the sale price of residential properties across all neighborhoods of Ames, Iowa, beyond only the three - Edwards, Northwest Ames, and Brookside - previously commissioned for analysis.
+Century 21 has commissioned a second analysis using the same dataset for the creation of a very predictive model of `SalePrice`. The analysis will be expanded to include as many of the 80 total features as required to determine the sale price of residential properties across all neighborhoods of Ames, Iowa, beyond only the three - Edwards, Northwest Ames, and Brookside - previously commissioned for analysis.
 
 ## Modeling
 
