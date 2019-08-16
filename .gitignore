@@ -39,3 +39,4 @@ rsconnect/
 HousePriceRegressionAnalysis_files/
 *.tex
 
+.Rproj.user
