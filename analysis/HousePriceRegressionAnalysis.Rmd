@@ -93,14 +93,14 @@ We will consider two models: the logarithm of sale price as the response of livi
 **Reduced Model**
 
 \begin{equation}
-\mu \lbrace log(SalePrice) \rbrace = \beta_0 + \beta_1(LivingRoomArea) (\#eq:reduced)
+\mu \lbrace log(SalePrice) \rbrace = \hat{\beta_0} + \hat{\beta_1} (LivingRoomArea) (\#eq:reduced)
 \end{equation}
 
 **Full Model**
 
 \begin{align}
-\mu \lbrace log(SalePrice) \rbrace = \beta_0 + \beta_1(LivingRoomArea) +  \beta_2(Brookside) +\beta_3(NorthwestAmes) + \nonumber\\
-\beta_3(Brookside)(LivingRoomArea) + \beta_4(NorthwestAmes)(LivingRoomArea) (\#eq:full)
+\mu \lbrace log(SalePrice) \rbrace = \hat{\beta_0} + \hat{\beta_1} (LivingRoomArea) +  \hat{\beta_2} (Brookside) + \hat{\beta_3} (NorthwestAmes) + \nonumber\\
+\hat{\beta_3} (Brookside)(LivingRoomArea) + \hat{\beta_4} (NorthwestAmes)(LivingRoomArea) (\#eq:full)
 \end{align}
 
 \newpage
