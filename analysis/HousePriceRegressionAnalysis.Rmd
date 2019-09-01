@@ -762,6 +762,8 @@ log(SalePrice) ~
 
 \label{appendix:backSelection}
 
+The model suggested by backward selection.
+
 ```r
 log(SalePrice) ~ 
            MSZoning + LotArea + Street + LotConfig + LandSlope +
@@ -783,6 +785,8 @@ log(SalePrice) ~
 
 \label{appendix:stepWSelection}
 
+The model suggested by stepwise selection.
+
 ```r
 log(SalePrice) ~ 
            MSZoning + LotArea + Street + LotConfig + LandSlope +
@@ -801,6 +805,8 @@ log(SalePrice) ~
 ### Custom Model
 
 \label{appendix:customSelection}
+
+The model constructed by hand.
 
 ```r
 log(SalePrice) ~ 
