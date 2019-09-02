@@ -82,26 +82,35 @@ Century 21 has commissioned an analysis of this data to determine how the sale p
 
 Linear regression will be used to model sale price as a response of the living room area. From the initial exploratory data analysis, it was determined that sale prices should be log-transformed to meet the model assumptions for linearity (see section \ref{appendix:linearity}), thus improving our models fit and reducing standard error. Additionally, two observations were removed as they appeared to be from a different population than the other observations in the dataset (see section \ref{appendix:infleu-points}); therefore, analysis only considers properties with living rooms less than 3500 sq. ft. in area.
 
-We will consider two models: the logarithm of sale price as the response of living room area (1), the reduced model, and the logarithm of sale price as the response of living room area accounting for differences in the three neighborhood of interest (Brookside, Northwest Ames, and Edwards) where Edwards will be used as the reference (2), the full model. An extra sums of square (ESS) test will be used to verify that the addition of `Neighborhood` improves the model.
+We will use extra sums of square (ESS) tests to determine if a neighborhood should be added in the model.
+We start with the logarithm of sale price as the response of living room area and build up a model with neighborhood.
+The equations (1-3) below show the models considered. 
+The Edwards neightborhood is used for reference.
 
-**Reduced Model**
+**Base Model**
 
 \begin{equation}
-\mu \lbrace log(SalePrice) \rbrace = \hat{\beta_0} + \hat{\beta_1} (LivingRoomArea) (\#eq:reduced)
+\mu \lbrace log(SalePrice) \rbrace = \hat{\beta_0} + \hat{\beta_1} (LivingRoomArea) (\#eq:Base)
 \end{equation}
 
-**Full Model**
+**Additive Model**
+
+\begin{equation}
+\mu \lbrace log(SalePrice) \rbrace = \hat{\beta_0} + \hat{\beta_1} (LivingRoomArea) +  \hat{\beta_2} (Brookside) + \hat{\beta_3} (NorthwestAmes) (\#eq:Additive)
+\end{equation}
+
+**Interaction Model**
 
 \begin{align}
 \mu \lbrace log(SalePrice) \rbrace = \hat{\beta_0} + \hat{\beta_1} (LivingRoomArea) +  \hat{\beta_2} (Brookside) + \hat{\beta_3} (NorthwestAmes) + \nonumber\\
-\hat{\beta_3} (Brookside)(LivingRoomArea) + \hat{\beta_4} (NorthwestAmes)(LivingRoomArea) (\#eq:full)
+\hat{\beta_3} (Brookside)(LivingRoomArea) + \hat{\beta_4} (NorthwestAmes)(LivingRoomArea) (\#eq:Interaction)
 \end{align}
 
 \newpage
 
-The ESS test provides convincing evidence that the interaction terms are useful for the model (p-value < 0.0001); thus, we will continue with the full model.
+### ESS Tests Between Models
 
-```{r, ESS, echo=FALSE}
+```{r, ESS-setup, results='hide', echo=FALSE}
 # filter data for analysis 1
 train.mod <- train %>% 
   filter(Neighborhood %in% c("Edwards", "BrkSide", "NAmes"))
@@ -111,24 +120,50 @@ train.mod$Neighborhood <- factor(train.mod$Neighborhood, levels = c("Edwards", "
 # create dummy variables with Neighborhood == 'Edwards' as reference
 train.mod <- get.dummies(train.mod, "Neighborhood", reference = 'Edwards')
 
-# full model formula
-model.formula = log(SalePrice) ~ (GrLivArea) + 
+# interaction model formula
+model.interaction.formula = log(SalePrice) ~ (GrLivArea) + 
      Neighborhood_BrkSide + 
      Neighborhood_NAmes +
      (GrLivArea) * Neighborhood_BrkSide + 
      (GrLivArea) * Neighborhood_NAmes
-# reduced model formula
-model.reduced.formula = log(SalePrice) ~ (GrLivArea) + 
+# additive model formula
+model.add.formula = log(SalePrice) ~ (GrLivArea) + 
      Neighborhood_BrkSide + 
-     Neighborhood_NAmes
+     Neighborhood_NAmes 
+# base model formula
+model.base.formula = log(SalePrice) ~ (GrLivArea)
+```
 
+**Comparison: Base Model to Additive Model**
+
+The following ESS test provides convincing evidence that the addition of the additive neighborhood terms
+is an improvement over the base model (p-value < 0.0001).
+
+```{r, ESS1, echo=FALSE}
 # fit models
-model <- lm(formula = model.formula, data = train.mod)
-model.reduced <- lm(formula = model.reduced.formula, data = train.mod)
+model <- lm(formula = model.add.formula, data = train.mod)
+model.reduced <- lm(formula = model.base.formula, data = train.mod)
 # ESS test on models
 anova(model.reduced, model)
-
 ```
+
+**Comparison: Additive Model to Interaction Model**
+
+The following ESS test provides convincing evidence that the addition of the interaction neighborhood terms
+is an improvement over the additive model (p-value < 0.0001).
+
+```{r, ESS2, echo=FALSE}
+# fit models
+model <- lm(formula = model.interaction.formula, data = train.mod)
+model.reduced <- lm(formula = model.add.formula, data = train.mod)
+# ESS test on models
+anova(model.reduced, model)
+```
+
+Based on the two ESS tests, the interaction model appears to be significant;
+thus, we will continue with the interaction model.
+
+\newpage
 
 ## Model Assumptions Assessment
 
@@ -151,19 +186,18 @@ basic.fit.plots(train.mod, model)
 ols_plot_resid_lev(model)
 ```
 
-\newpage
 
 ## Comparing Competing Models
 
-The two models were trained and validated on the training dataset using 10-fold cross validation. The table below summerizes the performance of the models with RMSE, adjusted $R^2$, and PRESS. These results show that the full model is an improvement over the reduced model, which is consistent with the result of the ESS test.
+The three models were trained and validated on the training dataset using 10-fold cross validation. The table below summerizes the performance of the models with RMSE, adjusted $R^2$, and PRESS. These results show that the interaction model produces the best performance, which is consistent with the result of the ESS test.
 
 ```{r, cross-validation, results='hide', message=FALSE, include=FALSE, echo=FALSE}
 ## cross validate the full model
 
-# Set up repeated k-fold cross-validation
+# Set up k-fold cross-validation
 train.control <- trainControl(method = "cv", number = 10)
 # Train the model
-model.cv <- train(model.formula, 
+model.cv <- train(model.interaction.formula, 
                     data = train.mod,
                     method = 'lm',
                     trControl = train.control)
@@ -176,12 +210,14 @@ res <- model.cv$results
 # get cross-validated PRESS statistic
 PCV <- PRESS.cv(model.cv)
 
+
+
 ## cross validate the reduced model
 
-# Set up repeated k-fold cross-validation
+# Set up k-fold cross-validation
 train.control <- trainControl(method = "cv", number = 10)
 # Train the model
-model.reduced.cv <- train(model.reduced.formula, 
+model.reduced.cv <- train(model.add.formula, 
                     data = train.mod,
                     method = 'lm',
                     trControl = train.control)
@@ -193,21 +229,41 @@ res.red <- model.reduced.cv$results
 
 # get cross-validated PRESS statistic
 PCV.red <- PRESS.cv(model.reduced.cv)
+
+## cross validate the base model
+
+# Set up k-fold cross-validation
+train.control <- trainControl(method = "cv", number = 10)
+# Train the model
+model.base.cv <- train(model.base.formula, 
+                    data = train.mod,
+                    method = 'lm',
+                    trControl = train.control)
+# print model summary
+model.base.cv
+
+# get the CV results
+base.red <- model.base.cv$results
+
+# get cross-validated PRESS statistic
+PCV.base <- PRESS.cv(model.base.cv)
 ```
 
 ```{r, echo=FALSE}
 # print accuracy metrics to md table
-kable(data.frame('Model' = c('Full Model', 'Reduced Model'), 
-                 'RMSE'=c(res$RMSE, res.red$RMSE),
-                 'CV Press'=c(PCV, PCV.red),
-                 'Adjused R Squared'=c(res$Rsquared, res.red$Rsquared)),
+kable(data.frame('Model' = c('Interaction Model', 'Additive Model', 'Base Model'), 
+                 'RMSE'=c(res$RMSE, res.red$RMSE, base.red$RMSE),
+                 'CV Press'=c(PCV, PCV.red, PCV.base),
+                 'Adjused R Squared'=c(res$Rsquared, res.red$Rsquared, base.red$Rsquared)),
       "latex", booktabs = T)  %>%
   kable_styling(position = "center")
 ```
 
+\newpage
+
 ## Parameters
 
-The following table summerizes the parameter estimates for the full model.
+The following table summerizes the parameter estimates for the interaction model.
 
 ```{r, echo=FALSE}
 # extract the model estimates from the model summary
@@ -243,13 +299,9 @@ Since the sampling procedure is not known and this is an observational study, th
 
 ## Conclusion
 
-```{r, echo=FALSE, results='hide'}
-# summary of model to get overall test
-summary(lm(model.formula, data = train.mod))
-```
-
-
 In response to the analysis commissioned by Century 21, the log transform of property sale price was modeled as a linear response to the property living room area for residential properties in Ames, IA. It was determined that it was necessary to include interaction terms to allow for the influence of neighborhood on sale price. Based on the model, there is strong evidence of an associated multiplicative increase in median sale price for an increase in living room area (p-vlue < 0.0001, overall F-test).
+
+\newpage
 
 # Analysis Question II
 
@@ -262,8 +314,6 @@ Century 21 has commissioned a second analysis using the same dataset for the cre
 Through analyzing our variable selection and cross-validation processes - along with our nascant domain knowledge of residential real estate - we ultimately arrived at a multiple linear regression model featuring 11 linear predictor variables and two interaction terms. Specifically, our variable selection process included direct analysis of a correlation plot and a correlation matrix as well as performing forward selection, backward elimination, and stepwise regression. 
 
 Regarding missing data, we imputed NA values for 19 variables using a combination of the data dictionary provided by Century 21 as well as our domain knowledge. After building models with and without transformations applied to variables, we noted no significaznt difference in variable selection from our selection process so elected to use non-transformed predictor variables. We did, however, use the log-transformed `SalePrice` applied in the first analysis.
-
-# Here
 
 **Forward Selection**
 
@@ -733,6 +783,7 @@ train.mod %>%
                                  (log(SalePrice) > 12.45),
                                SaleCondition, '')), hjust=0, vjust=0)
 ```
+
 
 \newpage
 
