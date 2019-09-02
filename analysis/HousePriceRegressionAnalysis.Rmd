@@ -49,16 +49,9 @@ source('./helper/visual.R')
 source('./helper/data_munging.R')
 source('./helper/performance.R')
 
-# load data
-#train <- read_csv('./data/train.csv')
-
-# data for analysis 2
-#train <- read_csv('./data/train.csv')
-#test <- read_csv('./data/test.csv')
-
 load('./data/data.RData')
 
-# 
+# filter to analysis data
 train <- train %>% filter(GrLivArea < 4000)
 ```
 
@@ -344,13 +337,7 @@ model2.Forward <- stepAIC(model2.forward.Start, direction = "forward", trace = F
 summary(model2.Forward)
 model2.Forward$anova
 
-##### If needed for display, this is the final model, final pass with Forward Selection#####
-
-#model2.final.Forward <- stepAIC(fitFull.all4.Final, direction = "forward", trace = F, scope = formula(model2.Allvar))
-# summary(model2.final.Forward)
-# model2.final.Forward$anova
-
-############################## First-pass suggested output from Forward Selection:
+# Suggested output from Forward Selection:
 final.Forward.Model <- lm(log(SalePrice) ~ OverallQual + GrLivArea + Neighborhood + 
                             BsmtFinSF1 + MSSubClass + OverallCond + YearBuilt + GarageCars + 
                             TotalBsmtSF + SaleCondition + LotArea + MSZoning + Functional + 
@@ -376,7 +363,7 @@ model2.Backward <- stepAIC(model2.Allvar, direction = "backward", trace = F, sco
 summary(model2.Backward)
 model2.Backward$anova
 
-############################## First-pass suggested output from Backward Elimination:
+# Suggested output from Backward Elimination:
 final.Backward.Model <- lm(log(SalePrice) ~ MSSubClass + MSZoning + LotFrontage +
                               LotArea + Street + LotConfig + LandSlope + Neighborhood +
                               Condition1 + OverallQual + OverallCond + YearBuilt + YearRemodAdd +
@@ -388,11 +375,6 @@ final.Backward.Model <- lm(log(SalePrice) ~ MSSubClass + MSZoning + LotFrontage 
                               GarageCars + GarageArea + GarageQual + WoodDeckSF + OpenPorchSF +
                               EnclosedPorch + ScreenPorch + PoolArea + SaleType + SaleCondition, data = train
                            )
-
-##### If needed for display, this is the final model, final validation with Backward Elimination
-#model2.final.Backward <- stepAIC(fitFull.all4.Final, direction = "backward", trace = F)
-# summary(model2.final.Backward)
-# model2.final.Backward$anova
 ```
 
 **Stepwise Regression**
@@ -406,7 +388,7 @@ model2.Stepwise <- stepAIC(model2.Allvar, direction = "both", trace = F)
 summary(model2.Stepwise)
 model2.Stepwise$anova
 
-############################## First-pass suggested output from Stepwise Regression:
+# Suggested output from Stepwise Regression:
 final.Stepwise.Model <- lm(log(SalePrice) ~ OverallQual + GrLivArea + Neighborhood + 
                               BsmtFinSF1 + MSSubClass + OverallCond + YearBuilt + GarageCars + 
                               TotalBsmtSF + SaleCondition + LotArea + MSZoning + Functional + 
@@ -419,10 +401,6 @@ final.Stepwise.Model <- lm(log(SalePrice) ~ OverallQual + GrLivArea + Neighborho
                               GarageYrBlt + Electrical + `3SsnPorch` + LowQualFinSF, data = train
                            )
 
-# If needed for display, this is the final model, final validation with Stepwise Regression
-#stepwise.final.model4 <- stepAIC(fitFull.all4.Final, direction = "both", trace = F)
-#summary(stepwise.final.model4)
-#stepwise.final.model4$anova
 ```
 
 \newpage
@@ -432,26 +410,6 @@ final.Stepwise.Model <- lm(log(SalePrice) ~ OverallQual + GrLivArea + Neighborho
 To develop the custom model, we employed a combination of a correlation matrix for quantitative data, analysis of the summarization of the suggested model from stepwise selection, and through direct analysis of the pairs plots. As previously mentioned, our final model included 11 linear terms and two interaction terms. We removed all variables suggested to be removed by the stepwise regression and backward elimination tests, then reprocessed the updated models until forward selection, backward elimination, and stepwise regression were in agreeance with respect to the linear terms. Once this trial-and-error process was completed, we added interaction terms based on domain knowledge and re-applied the forward selection, backward elimination, and stepwise regression methods until only significant terms - both linear and interactive - remained. We then used graphical analysis to visually confirm interaction between the interactive terms remaining. The custom model shown in section \ref{appendix:customSelection}.
 
 ```{r, echo=F, results='hide'}
-
-#train.numeric <- dplyr::select_if(train, is.numeric) %>% data.frame()
-
-#flattenCorrMatrix <- function(cormatrix, pmatrix) {
-#  ut <- upper.tri(cormatrix)
-# data.frame(
-#    row = rownames(cormatrix)[row(cormatrix)[ut]],
-#    column = rownames(cormatrix)[col(cormatrix)[ut]],
-#    cor  =(cormatrix)[ut],
-#    p = pmat[ut]
-#    )
-#}
-
-#See what variables are correlated with eachother, p-values
-#correlation.matrix <- rcorr(as.matrix(train.numeric))
-#corDF <- data.frame(flattenCorrMatrix(correlation.matrix$r, correlation.matrix$P))
-
-#Order the correlation matrix to show the highest correlated
-#data.frame(corDF[order(-corDF$cor),])
-#quantDataModel <- corDF[which(corDF$cor >= 0.5),]
 
 fitFull.all4.Final <- lm(log(SalePrice) ~ MSSubClass + MSZoning + LotFrontage + 
                             LotArea + Street + Neighborhood + 
@@ -464,9 +422,6 @@ fitFull.all4.Final <- lm(log(SalePrice) ~ MSSubClass + MSZoning + LotFrontage +
                             GarageCars + GarageArea + GarageQual + WoodDeckSF + OpenPorchSF + 
                             EnclosedPorch + ScreenPorch + SaleType + SaleCondition, data = train)
 
-######################################################################
-###We need the graphs for interactive terms to display interaction####
-######################################################################
 ```
 
 ## Model Assumption Assessment
@@ -477,8 +432,6 @@ Based on the diagnostic plots below, the custom model appears to reasonably meet
 
 
 ```{r, custom-assumptions, echo=F, warning=F, fig.width=5, fig.height=5, fig.align='center', fig.cap='Custom Assumption Assessment Plots', out.width = '45%', fig.pos="htbp", fig.show = 'hold'}
-#par(mfrow=c(2,2))
-#plot(fitFull.all4.Final, main = "Custom Model")
 
 # create plots of residuals
 basic.fit.plots(train, fitFull.all4.Final)
