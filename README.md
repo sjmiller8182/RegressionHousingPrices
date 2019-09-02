@@ -28,6 +28,7 @@ The [Codebook](https://github.com/sjmiller8182/RegressionHousingPrices/blob/mast
     .
     ├── analysis                            # Primary analysis files
     |    ├── exploratory_data_analysis      # Rmarkdown files for EDA
+    |    ├── studies                        # Rmarkdown files for primary analysis questions
     |    ├── helper                         # Files containing helper functions
     │    └── data                           # Raw data and merge automation files
     ├── CodeBook.md                         # Information regarding the computational environment, code, and data
