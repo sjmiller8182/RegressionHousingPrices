@@ -6,9 +6,7 @@ Created by [Stuart Miller](https://github.com/sjmiller8182), [Paul Adams](https:
 
 Project using multiple linear regression to model prices of houses in Ames, IA.
 
-## Analysis 
-
-### Analysis Files
+## Analysis Files
 
 * [Regression Analysis Paper (pdf)](https://github.com/sjmiller8182/RegressionHousingPrices/blob/master/analysis/HousePriceRegressionAnalysis.pdf): A paper covering the analysis. 
 * [Regression Analysis (Rmd)](https://github.com/sjmiller8182/RegressionHousingPrices/blob/master/analysis/HousePriceRegressionAnalysis.Rmd): A markdown file with the analysis.
