@@ -4,19 +4,9 @@ This code book describes the data and the computational environment.
 
 ## Data
 
-TODO: Add description
+The [Ames, IA dataset](https://www.kaggle.com/c/house-prices-advanced-regression-techniques) was aquired from Kaggle. The [data README](https://github.com/sjmiller8182/RegressionHousingPrices/blob/master/analysis/data/readme.md) provides more information on the data.
 
 Data is included in git repo because it is light-weight and in git-friendly format.
-
-## R Variables
-
-TODO: Add main R variables
-
-## Code
-
-TODO: Code file descriptions
-
-* All analysis code files are located at `./analysis/`
 
 ## Libraries
 
