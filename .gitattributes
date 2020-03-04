@@ -1,0 +1,3 @@
+# override linguist - ignore documentation
+analysis/studies/chance/* linguist-documentation
+analysis/studies/paul/* linguist-documentation
